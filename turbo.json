@@ -1,0 +1,43 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": ["openapi.yaml"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
+    },
+    "build:css": {
+      "outputs": ["dist/styles.css"]
+    },
+    "@loom-loyalty/sdk#build": {
+      "dependsOn": ["^build"],
+      "outputs": [
+        "dist/**",
+        "src/generated/**",
+        "src/client/index.ts",
+        "src/client/loom-loyalty.ts",
+        "src/client/resources/**"
+      ]
+    },
+    "@loom-loyalty/sdk#type-check": {
+      "dependsOn": ["@loom-loyalty/sdk#build"],
+      "outputs": []
+    },
+    "@loom-loyalty/test-utils#build": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
+    "lint": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
+    "type-check": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    }
+  }
+}

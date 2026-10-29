@@ -1,0 +1,11 @@
+{
+  "description": "Tier.name change uses tierFieldDiff which marks `name` as warning severity → safe modify-cosmetic.",
+  "safe": [
+    {
+      "kind": "modify-cosmetic",
+      "entity": { "type": "tier", "code": "silver" }
+    }
+  ],
+  "breaking": [],
+  "dataLoss": []
+}

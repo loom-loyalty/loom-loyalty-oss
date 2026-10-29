@@ -1,0 +1,51 @@
+{
+  "name": "@loom-loyalty/config",
+  "version": "0.0.4",
+  "private": false,
+  "license": "Apache-2.0",
+  "description": "Shared configurations for Loom Loyalty monorepo",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "type": "module",
+  "exports": {
+    "./tsconfig/base.json": "./tsconfig/base.json",
+    "./tsconfig/react-library.json": "./tsconfig/react-library.json",
+    "./tsconfig/react-app.json": "./tsconfig/react-app.json",
+    "./tsconfig/node.json": "./tsconfig/node.json",
+    "./prettier": "./prettier/index.mjs",
+    "./eslint": "./eslint/index.mjs",
+    "./tailwind/postcss": "./tailwind/postcss.mjs",
+    "./tailwind/base.css": "./tailwind/base.css"
+  },
+  "files": [
+    "tsconfig",
+    "prettier",
+    "eslint",
+    "tailwind"
+  ],
+  "devDependencies": {
+    "@eslint/js": "catalog:",
+    "@typescript-eslint/eslint-plugin": "catalog:",
+    "@typescript-eslint/parser": "catalog:",
+    "eslint": "catalog:",
+    "eslint-plugin-react": "catalog:",
+    "eslint-plugin-react-hooks": "catalog:",
+    "globals": "catalog:",
+    "prettier": "catalog:",
+    "prettier-plugin-organize-imports": "catalog:",
+    "prettier-plugin-tailwindcss": "catalog:",
+    "typescript": "catalog:"
+  },
+  "peerDependencies": {
+    "eslint": ">=9.0.0",
+    "prettier": ">=3.0.0",
+    "typescript": ">=5.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/loom-loyalty/loom-loyalty-oss.git",
+    "directory": "packages/config"
+  }
+}

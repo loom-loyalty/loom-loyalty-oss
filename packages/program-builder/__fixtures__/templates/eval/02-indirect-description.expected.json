@@ -1,0 +1,10 @@
+{
+  "description": "Indirect prose — signal is present but phrased as marketing copy. Medium-to-high confidence expected.",
+  "extractions": [
+    {
+      "expectedField": "program.description",
+      "expectedValueMatches": ["loyal", "regular", "thank"],
+      "minimumConfidence": 0.65
+    }
+  ]
+}

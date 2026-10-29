@@ -1,0 +1,10 @@
+{
+  "description": "Prose mentions numeric earning rates but they're vague (\"around five\", \"give or take\", \"haven't pinned the exact rules down\"). Model should extract a string description without committing to specific numbers — and confidence should reflect the explicit uncertainty.",
+  "extractions": [
+    {
+      "expectedField": "program.description",
+      "expectNullOrLowConfidence": true,
+      "maximumConfidence": 0.7
+    }
+  ]
+}

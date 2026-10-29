@@ -1,0 +1,12 @@
+{
+  "description": "Tier.pointsThreshold is fatal in tierFieldDiff — changing it lands in breaking with field='pointsThreshold'.",
+  "safe": [],
+  "breaking": [
+    {
+      "kind": "modify",
+      "entity": { "type": "tier", "code": "silver" },
+      "field": "pointsThreshold"
+    }
+  ],
+  "dataLoss": []
+}

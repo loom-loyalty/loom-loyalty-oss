@@ -1,0 +1,10 @@
+{
+  "description": "Clear, direct single-field description. High-confidence extraction expected.",
+  "extractions": [
+    {
+      "expectedField": "program.description",
+      "expectedValueMatches": ["coffee", "point", "rewarding"],
+      "minimumConfidence": 0.8
+    }
+  ]
+}

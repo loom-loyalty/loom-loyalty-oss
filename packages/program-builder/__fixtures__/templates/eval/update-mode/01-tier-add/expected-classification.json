@@ -1,0 +1,11 @@
+{
+  "description": "Adding a new tier 'gold' lands in the safe bucket as an add op.",
+  "safe": [
+    {
+      "kind": "add",
+      "entity": { "type": "tier", "code": "gold" }
+    }
+  ],
+  "breaking": [],
+  "dataLoss": []
+}

@@ -1,0 +1,10 @@
+{
+  "description": "Prose contains bold/italic, ordered + unordered lists, and inline code. Model should extract a clean plain-text summary — the description should NOT contain raw asterisks, dashes, or backticks.",
+  "extractions": [
+    {
+      "expectedField": "program.description",
+      "expectedValueMatches": ["record", "vinyl", "members", "rewards"],
+      "minimumConfidence": 0.7
+    }
+  ]
+}

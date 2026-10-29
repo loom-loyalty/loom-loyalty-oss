@@ -1,0 +1,77 @@
+{
+  "name": "@loom-loyalty/sdk",
+  "version": "0.11.0",
+  "private": false,
+  "license": "Apache-2.0",
+  "description": "SDK for Loom Loyalty platform with React Query hooks and TypeScript types",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./core": {
+      "types": "./dist/core/index.d.ts",
+      "import": "./dist/core/index.js"
+    },
+    "./client": {
+      "types": "./dist/client/index.d.ts",
+      "import": "./dist/client/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "generate": "orval && pnpm generate:fix && pnpm generate:barrel && pnpm generate:client && pnpm generate:format && pnpm generate:validate",
+    "generate:fix": "node scripts/fix-generated.mjs",
+    "generate:format": "prettier --write src/generated src/client",
+    "generate:validate": "node scripts/validate-generated.mjs",
+    "generate:barrel": "cd src/generated/api && ls -1 *.ts | grep -v index.ts | sed 's/.ts$//' | sed \"s/^/export * from '.\\//\" | sed \"s/$/';/\" > index.ts",
+    "generate:client": "node scripts/generate-client.mjs",
+    "generate:types": "openapi-typescript ../../openapi.yaml -o ./src/generated/openapi-types.ts",
+    "prebuild": "pnpm generate",
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src --ignore-pattern 'src/generated/**'",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "clean": "rm -rf dist src/generated"
+  },
+  "dependencies": {
+    "date-fns": "catalog:"
+  },
+  "peerDependencies": {
+    "@tanstack/react-query": ">=5.0.0",
+    "@workos-inc/authkit-react": ">=0.13.0",
+    "react": ">=18.0.0",
+    "zod": ">=3.0.0"
+  },
+  "devDependencies": {
+    "@loom-loyalty/config": "workspace:*",
+    "@tanstack/react-query": "catalog:",
+    "@types/react": "catalog:",
+    "@workos-inc/authkit-react": "catalog:",
+    "openapi-typescript": "catalog:",
+    "orval": "catalog:",
+    "react": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:",
+    "yaml": "catalog:",
+    "zod": "catalog:"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/loom-loyalty/loom-loyalty-oss.git",
+    "directory": "packages/sdk"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "description": "Freeform section contains internal H3 sub-headers. Model should treat the whole block as one freeform value, not parse the sub-headers as fresh field delimiters.",
+  "extractions": [
+    {
+      "expectedField": "program.description",
+      "expectedValueMatches": ["bookstore", "book", "points"],
+      "minimumConfidence": 0.7
+    }
+  ]
+}

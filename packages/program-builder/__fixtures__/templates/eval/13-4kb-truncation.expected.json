@@ -1,0 +1,10 @@
+{
+  "description": "Prose exceeds the 4 KB section cap, so the parser truncates it before the extractor sees it. Model should still extract a coherent description from the head — the key Sunbeam Coffee + points + Portland signal lives in the first 600 bytes, well inside the cap. Tests graceful degradation under truncation.",
+  "extractions": [
+    {
+      "expectedField": "program.description",
+      "expectedValueMatches": ["sunbeam", "coffee", "points", "portland", "regular"],
+      "minimumConfidence": 0.65
+    }
+  ]
+}

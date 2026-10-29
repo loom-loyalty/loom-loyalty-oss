@@ -1,0 +1,12 @@
+{
+  "description": "awardRule.rulePayload.eventActionsExpression is fatal in SHAPE_FIELDS.eventRule — changing it lands as breaking.",
+  "safe": [],
+  "breaking": [
+    {
+      "kind": "modify",
+      "entity": { "type": "eventRule", "code": "coffee-loyalty-earn" },
+      "field": "eventActionsExpression"
+    }
+  ],
+  "dataLoss": []
+}

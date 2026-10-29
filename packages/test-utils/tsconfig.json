@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "@loom-loyalty/config/tsconfig/base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "lib": ["ES2022", "DOM"],
+    "types": ["node", "vitest/globals"]
+  },
+  "include": ["src/**/*"]
+}

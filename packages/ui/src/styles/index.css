@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+/* Scan this package's component files for Tailwind classes */
+@source "../**/*.tsx";
+
+/* Import design tokens and custom utilities */
+@import "./globals.css";

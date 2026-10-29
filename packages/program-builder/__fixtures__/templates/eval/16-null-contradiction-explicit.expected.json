@@ -1,0 +1,10 @@
+{
+  "description": "Backbone declares a points-per-dollar award rule; prose explicitly says no points are earned. Direct contradiction. Model should defer to the structured backbone — return null OR a low-confidence description that flags the inconsistency rather than echoing 'no points are earned.'",
+  "extractions": [
+    {
+      "expectedField": "program.description",
+      "expectNullOrLowConfidence": true,
+      "maximumConfidence": 0.5
+    }
+  ]
+}

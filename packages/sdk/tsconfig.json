@@ -1,0 +1,16 @@
+{
+  "extends": "@loom-loyalty/config/tsconfig/react-library.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "forceConsistentCasingInFileNames": false
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
+}

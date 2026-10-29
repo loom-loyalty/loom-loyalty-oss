@@ -1,0 +1,10 @@
+{
+  "description": "Lorem-ipsum with no program semantics. Extractor should return null value OR confidence < 0.5.",
+  "extractions": [
+    {
+      "expectedField": "program.description",
+      "expectNullOrLowConfidence": true,
+      "maximumConfidence": 0.5
+    }
+  ]
+}

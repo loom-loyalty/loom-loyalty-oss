@@ -1,0 +1,10 @@
+{
+  "description": "Targets badges[1].description — exercises the badge-array nesting parallel to tiers. Validates that the extractor handles array indices on collections other than tiers.",
+  "extractions": [
+    {
+      "expectedField": "badges[1].description",
+      "expectedValueMatches": ["early bird", "morning", "8 AM", "weekday"],
+      "minimumConfidence": 0.7
+    }
+  ]
+}

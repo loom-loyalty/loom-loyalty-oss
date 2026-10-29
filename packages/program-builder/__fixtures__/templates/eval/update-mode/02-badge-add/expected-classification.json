@@ -1,0 +1,11 @@
+{
+  "description": "Adding a new badge 'loyalty-veteran' lands in the safe bucket as an add op.",
+  "safe": [
+    {
+      "kind": "add",
+      "entity": { "type": "badge", "code": "loyalty-veteran" }
+    }
+  ],
+  "breaking": [],
+  "dataLoss": []
+}

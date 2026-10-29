@@ -1,0 +1,11 @@
+{
+  "description": "Currency.name change is in SHAPE_FIELDS.currency.warning — lands as safe modify-cosmetic.",
+  "safe": [
+    {
+      "kind": "modify-cosmetic",
+      "entity": { "type": "currency", "code": "bean" }
+    }
+  ],
+  "breaking": [],
+  "dataLoss": []
+}

@@ -1,0 +1,10 @@
+{
+  "description": "Deliberately vague prose with TBD language. Extractor should return low confidence or null value.",
+  "extractions": [
+    {
+      "expectedField": "program.description",
+      "expectNullOrLowConfidence": true,
+      "maximumConfidence": 0.6
+    }
+  ]
+}

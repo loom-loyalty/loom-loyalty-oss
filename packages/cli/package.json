@@ -1,0 +1,59 @@
+{
+  "name": "@loom-loyalty/cli",
+  "version": "0.7.0",
+  "private": false,
+  "license": "Apache-2.0",
+  "description": "treadle: the Loom Loyalty CLI - configuration as code (plan/apply), OpenAPI spec download, API client generation and Hub config management",
+  "engines": {
+    "node": ">=18.2.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "type": "module",
+  "bin": {
+    "treadle": "./bin/treadle.js"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "bin"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src",
+    "clean": "rm -rf dist",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@loom-loyalty/core": "workspace:*",
+    "open": "catalog:",
+    "tsx": "catalog:",
+    "yaml": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@loom-loyalty/config": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/loom-loyalty/loom-loyalty-oss.git",
+    "directory": "packages/cli"
+  }
+}

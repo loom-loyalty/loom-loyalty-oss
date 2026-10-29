@@ -1,0 +1,60 @@
+{
+  "name": "@loom-loyalty/notifications-knock",
+  "version": "0.2.3",
+  "private": false,
+  "license": "Apache-2.0",
+  "description": "Knock in-app feed adapter for the Loom Loyalty notification inbox",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@knocklabs/client": "0.22.2",
+    "@loom-loyalty/core": "workspace:*",
+    "@loom-loyalty/sdk": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "@tanstack/react-query": ">=5.0.0"
+  },
+  "devDependencies": {
+    "@loom-loyalty/config": "workspace:*",
+    "@testing-library/react": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "jsdom": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:",
+    "@tanstack/react-query": "catalog:"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/loom-loyalty/loom-loyalty-oss.git",
+    "directory": "packages/notifications-knock"
+  }
+}

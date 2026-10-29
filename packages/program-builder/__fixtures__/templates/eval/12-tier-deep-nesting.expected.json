@@ -1,0 +1,10 @@
+{
+  "description": "Path beyond tiers[1] — exercises array-index parsing at depth 2 with the third tier (index 2). The model should extract the gold-tier description verbatim from the prose.",
+  "extractions": [
+    {
+      "expectedField": "tiers[2].description",
+      "expectedValueMatches": ["priority", "birthday", "perks", "gold"],
+      "minimumConfidence": 0.7
+    }
+  ]
+}

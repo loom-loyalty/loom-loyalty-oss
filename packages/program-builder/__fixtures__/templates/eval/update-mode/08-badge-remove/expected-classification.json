@@ -1,0 +1,11 @@
+{
+  "description": "Removing badge 'loyalty-veteran' from the spec lands in dataLoss.",
+  "safe": [],
+  "breaking": [],
+  "dataLoss": [
+    {
+      "kind": "remove",
+      "entity": { "type": "badge", "code": "loyalty-veteran" }
+    }
+  ]
+}

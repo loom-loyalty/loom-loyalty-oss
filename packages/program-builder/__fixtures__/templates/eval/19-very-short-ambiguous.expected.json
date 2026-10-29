@@ -1,0 +1,10 @@
+{
+  "description": "Three random keyboard-walk strings (no real words). Zero semantic signal. Model should return null or very low confidence — refusing to invent a description from nothing is the correct behavior.",
+  "extractions": [
+    {
+      "expectedField": "program.description",
+      "expectNullOrLowConfidence": true,
+      "maximumConfidence": 0.4
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "description": "Percentages (15%, 20%, 10%) live in prose. Model should extract the bonus-narrative intent without treating those numbers as structured award-rule values.",
+  "extractions": [
+    {
+      "expectedField": "program.description",
+      "expectedValueMatches": ["bonus", "weekend", "holiday", "birthday"],
+      "minimumConfidence": 0.65
+    }
+  ]
+}

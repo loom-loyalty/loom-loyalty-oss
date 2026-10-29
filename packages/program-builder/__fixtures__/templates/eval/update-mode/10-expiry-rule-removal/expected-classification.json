@@ -1,0 +1,11 @@
+{
+  "description": "ExpiryRule removed entirely (singleton present in before, absent in after) → dataLoss.",
+  "safe": [],
+  "breaking": [],
+  "dataLoss": [
+    {
+      "kind": "remove",
+      "entity": { "type": "expiryRule", "code": "bean-expiry" }
+    }
+  ]
+}

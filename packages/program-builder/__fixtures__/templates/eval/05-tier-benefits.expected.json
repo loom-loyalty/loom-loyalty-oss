@@ -1,0 +1,10 @@
+{
+  "description": "Array-indexed path targeting tier benefits description. Concrete signal.",
+  "extractions": [
+    {
+      "expectedField": "tiers[1].description",
+      "expectedValueMatches": ["VIP", "brunch"],
+      "minimumConfidence": 0.75
+    }
+  ]
+}

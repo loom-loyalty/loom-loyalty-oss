@@ -1,0 +1,10 @@
+{
+  "description": "Targets a path that doesn't exist on ProgramSpec. The extractor's downstream merge will drop the value via Zod, but the eval validates the model's behavior at the prompt boundary — null or low confidence for unfamiliar paths, not hallucinated success.",
+  "extractions": [
+    {
+      "expectedField": "program.tier1BonusPercent",
+      "expectNullOrLowConfidence": true,
+      "maximumConfidence": 0.5
+    }
+  ]
+}

@@ -1,0 +1,820 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Loom Design Guidelines - Loyalty Dashboard Theme */
+:root {
+  /* =================================================================
+     RAW COLOR PALETTE (internal use only - override semantic tokens)
+     ================================================================= */
+
+  /* Teal Palette */
+  --raw-teal-50: #f0fdfa;
+  --raw-teal-100: #ccfbf1;
+  --raw-teal-400: #0891b2;
+  --raw-teal-500: #0e7490;
+  --raw-teal-600: #0e7490;
+  --raw-teal-700: #155e75;
+  --raw-teal-800: #065570;
+  --raw-teal-900: #0f4c5c;
+  --raw-teal-950: #052e38;
+  --raw-teal-hover: #044557;
+
+  /* Emerald Palette */
+  --raw-emerald-50: #d1fae5;
+  --raw-emerald-500: #059669;
+  --raw-emerald-600: #047857;
+  --raw-emerald-700: #065f46;
+
+  /* Gold/Amber Palette */
+  --raw-gold-50: #fef3c7;
+  --raw-gold-500: #f59e0b;
+  --raw-gold-600: #d97706;
+  --raw-gold-700: #b45309;
+  --raw-gold-800: #92400e;
+
+  /* Blue Palette */
+  --raw-blue-500: #3b82f6;
+
+  /* Neutral Palette */
+  --raw-cream: #fffcf7;
+  --raw-olive-sage: #e9f1e8;
+  --raw-sage-200: #dfe5dd;
+  --raw-sage-300: #d0d8ce;
+  --raw-stone-100: #f3f0eb;
+  --raw-stone-200: #e7e5e0;
+  --raw-stone-300: #d6d3d1;
+  --raw-stone-400: #a8a29e;
+  --raw-stone-500: #78716c;
+  --raw-gray-400: #9ca3af;
+  --raw-gray-500: #6b7280;
+  --raw-gray-600: #4b5563;
+  --raw-gray-700: #374151;
+  --raw-gray-800: #1f2937;
+
+  /* =================================================================
+     SEMANTIC TOKENS (override these for theming)
+     ================================================================= */
+
+  /* Core UI Colors */
+  --background: var(--raw-cream);
+  --foreground: var(--raw-gray-800);
+  --card: #ffffff;
+  --surface: var(--raw-olive-sage);
+  --card-foreground: var(--raw-gray-800);
+  --popover: #ffffff;
+  --popover-foreground: var(--raw-gray-800);
+  /* Modal scrim: a light warm-gray veil that keeps the page legible behind dialogs */
+  --overlay: color-mix(in srgb, var(--raw-gray-800) 40%, transparent);
+  --border: var(--raw-sage-200);
+  --input: #ffffff;
+  --input-border: var(--raw-sage-300);
+  --card-border: var(--raw-sage-300);
+
+  /* Shared application chrome */
+  --chrome: var(--raw-olive-sage);
+  --chrome-foreground: var(--foreground);
+  --chrome-muted-foreground: var(--raw-gray-600);
+  --chrome-border: var(--primary);
+
+  /* Primary Color Scale (for buttons, links, active states) */
+  --primary: var(--raw-teal-500);
+  --primary-dark: var(--raw-teal-800);
+  --primary-darker: var(--raw-teal-hover);
+  --primary-foreground: #ffffff;
+
+  /* Accent Color Scale (for highlights, CTAs, badges) */
+  --accent: var(--raw-gold-500);
+  --accent-dark: var(--raw-gold-600);
+  --accent-darker: var(--raw-gold-700);
+  --accent-darkest: var(--raw-gold-800);
+  --accent-foreground: #78350f;
+
+  /* Success Color Scale (for positive states, growth indicators) */
+  --success: var(--raw-emerald-500);
+  --success-dark: var(--raw-emerald-600);
+  --success-darker: var(--raw-emerald-700);
+  --success-foreground: #ffffff;
+
+  /* Secondary Color Scale (lighter cyan for stat cards, info states) */
+  --secondary: var(--raw-teal-400);
+  --secondary-dark: var(--raw-teal-500);
+  --secondary-foreground: #ffffff;
+
+  /* Muted Colors */
+  --muted: var(--raw-olive-sage);
+  --muted-foreground: var(--raw-gray-600); /* 6.5:1 on olive-sage surfaces, 7.4:1 on cream */
+
+  /* Skeleton loaders: a sage neutral. A blue-gray foreground tint over cream reads as blush pink. */
+  --skeleton: var(--raw-sage-300);
+
+  /* Destructive Color (brick red per DESIGN.md — softer than #dc2626) */
+  --destructive: #c0392b;
+  --destructive-foreground: #ffffff;
+
+  /* Warning Color (uses accent/gold palette) */
+  --warning: var(--raw-gold-500);
+  --warning-dark: var(--raw-gold-600);
+  --warning-foreground: #78350f;
+
+  /* Info/Feature Badge Colors (blue per DESIGN.md) */
+  --info: #3b82f6;
+  --info-light: #dbeafe;
+  --info-foreground: #1e40af;
+
+  /* Status Badge Colors */
+  --status-active-bg: #d1fae5;
+  --status-active-fg: #065f46;
+  --status-inactive-bg: var(--muted);
+  --status-inactive-fg: var(--raw-gray-800);
+  --status-pending-bg: #fef3c7;
+  --status-pending-fg: #78350f;
+  --status-error-bg: #fee2e2;
+  --status-error-fg: #991b1b;
+  --status-trial-bg: #dbeafe;
+  --status-trial-fg: #1e40af;
+
+  /* Category Badge Colors (for metadata types) */
+  --category-metadata-bg: #f1f5f9;
+  --category-metadata-fg: #334155;
+  --category-data-type-bg: #dbeafe;
+  --category-data-type-fg: #1d4ed8;
+  --category-item-bg: #f3e8ff;
+  --category-item-fg: #7c3aed;
+  --category-location-bg: #dcfce7;
+  --category-location-fg: #15803d;
+  --category-country-bg: #fef3c7;
+  --category-country-fg: #b45309;
+
+  /* Focus Ring */
+  --ring: var(--primary);
+
+  /* Sidebar Semantic Colors */
+  --sidebar-rail-from: var(--raw-teal-900);
+  --sidebar-rail-to: var(--raw-teal-950);
+  --sidebar-main-from: var(--raw-teal-700);
+  --sidebar-main-to: var(--raw-teal-800);
+  --sidebar: var(--raw-teal-700);
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: var(--accent);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--primary);
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: var(--primary);
+  --sidebar-ring: var(--accent);
+
+  /* Chart Colors */
+  --chart-1: var(--primary);
+  --chart-2: var(--success);
+  --chart-3: var(--accent);
+  --chart-4: var(--primary-dark);
+  --chart-5: var(--success-dark);
+
+  /* Tier Badge Colors (for gamification) */
+  --tier-platinum-from: var(--raw-gray-700);
+  --tier-platinum-to: var(--raw-gray-800);
+  --tier-platinum-foreground: #ffffff;
+  --tier-platinum-ring: var(--raw-gray-600);
+  --tier-gold-from: var(--raw-gold-50);
+  --tier-gold-to: #fde68a;
+  --tier-gold-foreground: #78350f;
+  --tier-gold-ring: #fcd34d;
+  --tier-silver-from: #f3f4f6;
+  --tier-silver-to: #e5e7eb;
+  --tier-silver-foreground: var(--raw-gray-800);
+  --tier-silver-ring: var(--raw-gray-400);
+  --tier-bronze-from: #ffedd5;
+  --tier-bronze-to: #fed7aa;
+  --tier-bronze-foreground: #7c2d12;
+  --tier-bronze-ring: #fdba74;
+  --tier-default-from: var(--raw-olive-sage);
+  --tier-default-to: var(--raw-sage-200);
+  --tier-default-foreground: var(--raw-gray-700);
+  --tier-default-ring: var(--raw-sage-200);
+
+  /* AI Chat Tokens — derived from semantic primary for brand consistency */
+  --ai-assistant-bubble: var(--muted);
+  --ai-thinking-pulse: var(--primary);
+
+  /* =================================================================
+     OPENUI THEME OVERRIDES — map Loom tokens to OpenUI CSS variables
+     ================================================================= */
+
+  /* Surfaces & backgrounds */
+  --openui-background: var(--background);
+  /* OpenUI "foreground" is their elevated surface (card-like), not text color */
+  --openui-foreground: var(--card);
+  --openui-sunk: var(--muted);
+  --openui-highlight-subtle: var(--muted);
+  --openui-base-overlay: hsl(from var(--primary) h s l / 0.06);
+
+  /* Text */
+  --openui-text-neutral-primary: var(--foreground);
+  --openui-text-neutral-secondary: var(--muted-foreground);
+  --openui-text-neutral-tertiary: var(--muted-foreground);
+
+  /* Borders */
+  --openui-border-default: var(--border);
+  --openui-border-subtle: var(--border);
+
+  /* Chat-specific */
+  --openui-chat-user-response-bg: var(--primary-dark);
+  --openui-chat-user-response-text: var(--primary-foreground);
+
+  /* Interactive accent — teal instead of default blue */
+  --openui-interactive-accent: var(--primary);
+  --openui-interactive-accent-hover: var(--primary-dark);
+  --openui-interactive-accent-text: var(--primary-foreground);
+
+  /* Typography */
+  --openui-text-heading-sm: 600 1rem/1.4 "Figtree", system-ui, sans-serif;
+  --openui-text-heading-xs: 600 0.875rem/1.4 "Figtree", system-ui, sans-serif;
+  --openui-text-body-sm: 400 0.875rem/1.5 "Figtree", system-ui, sans-serif;
+  --openui-text-body-xs: 400 0.8125rem/1.5 "Figtree", system-ui, sans-serif;
+
+  /* Spacing */
+  --openui-radius-m: 0.5rem;
+  --openui-radius-l: 0.625rem;
+  --openui-radius-xl: 0.75rem;
+  --openui-radius-2xl: 1rem;
+
+  /* Visualization Tokens (used by D3 charts in THREADS components) */
+  --viz-primary: var(--primary);
+  --viz-secondary: var(--success);
+  --viz-accent: var(--accent);
+  --viz-info: var(--raw-blue-500);
+  --viz-highlight: var(--destructive);
+  --viz-neutral: var(--muted-foreground);
+  --viz-neutral-light: var(--raw-stone-400);
+  --viz-border: var(--border);
+
+  /* -----------------------------------------------------------------
+     Lifecycle-funnel stage palette — a deliberate full-spectrum ramp
+     for the funnel centerpiece (NOT general chrome; restraint still
+     governs the rest of the app per DESIGN.md). Each stage gets a
+     bright, saturated gradient; the sequence runs cool → gold apex →
+     warm so the silhouette doubles as a health read. No purple/violet
+     (DESIGN.md anti-pattern). `from` is the brighter top stop, `to`
+     the deeper bottom stop (vertical gradient within each band).
+     ----------------------------------------------------------------- */
+  --viz-funnel-1-from: #3b82f6; /* Awareness  — blue    */
+  --viz-funnel-1-to: #2563eb;
+  --viz-funnel-2-from: #06b6d4; /* Engagement — cyan    */
+  --viz-funnel-2-to: #0891b2;
+  --viz-funnel-3-from: #14b8a6; /* Conversion — teal    */
+  --viz-funnel-3-to: #0e7490;
+  --viz-funnel-4-from: #10b981; /* Retention  — emerald */
+  --viz-funnel-4-to: #059669;
+  --viz-funnel-5-from: #22c55e; /* Loyalty    — green   */
+  --viz-funnel-5-to: #16a34a;
+  --viz-funnel-6-from: #fbbf24; /* Advocacy   — gold (apex) */
+  --viz-funnel-6-to: #f59e0b;
+  --viz-funnel-7-from: #fb923c; /* Support    — orange  */
+  --viz-funnel-7-to: #ea580c;
+  --viz-funnel-8-from: #fb7185; /* Lapse      — rose    */
+  --viz-funnel-8-to: #e11d48;
+  --viz-funnel-9-from: #ef4444; /* Inactive   — brick   */
+  --viz-funnel-9-to: #c0392b;
+
+  /* Shadows (grounded, physical per DESIGN.md) — suffixed to avoid circular ref in @theme inline */
+  --shadow-sm-value: 0 1px 2px rgba(31, 41, 55, 0.04), 0 0 0 1px rgba(31, 41, 55, 0.06);
+  --shadow-md-value: 0 4px 12px rgba(31, 41, 55, 0.06), 0 0 0 1px rgba(31, 41, 55, 0.04);
+  --shadow-hover-value: 0 4px 16px rgba(14, 116, 144, 0.08), 0 0 0 1px rgba(14, 116, 144, 0.12);
+  --shadow-lg-value: 0 8px 24px rgba(31, 41, 55, 0.08), 0 0 0 1px rgba(31, 41, 55, 0.04);
+
+  /* Border Radius base: lg = 12px; the scale is derived in @theme below */
+  --radius: 0.75rem;
+}
+
+@theme inline {
+  --font-sans: "Figtree", "Figtree Fallback", system-ui, sans-serif;
+  --font-serif:
+    "Figtree", "Figtree Fallback", system-ui, sans-serif; /* serif retired: headings are Figtree 600 */
+  --font-mono: "Geist Mono", "Geist Mono Fallback", monospace;
+
+  /* Shadow utilities (DESIGN.md grounded shadows) */
+  --shadow-sm: var(--shadow-sm-value);
+  --shadow-md: var(--shadow-md-value);
+  --shadow-hover: var(--shadow-hover-value);
+  --shadow-lg: var(--shadow-lg-value);
+
+  /* =================================================================
+     TAILWIND COLOR MAPPINGS (uses semantic tokens from :root)
+     ================================================================= */
+
+  /* Core UI Colors */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-overlay: var(--overlay);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-surface: var(--surface);
+  --color-input-border: var(--input-border);
+  --color-card-border: var(--card-border);
+  --color-chrome: var(--chrome);
+  --color-chrome-foreground: var(--chrome-foreground);
+  --color-chrome-muted-foreground: var(--chrome-muted-foreground);
+  --color-chrome-border: var(--chrome-border);
+  --color-ring: var(--ring);
+
+  /* Primary Color Scale */
+  --color-primary: var(--primary);
+  --color-primary-dark: var(--primary-dark);
+  --color-primary-darker: var(--primary-darker);
+  --color-primary-foreground: var(--primary-foreground);
+
+  /* Accent Color Scale */
+  --color-accent: var(--accent);
+  --color-accent-dark: var(--accent-dark);
+  --color-accent-darker: var(--accent-darker);
+  --color-accent-darkest: var(--accent-darkest);
+  --color-accent-foreground: var(--accent-foreground);
+
+  /* Success Color Scale */
+  --color-success: var(--success);
+  --color-success-dark: var(--success-dark);
+  --color-success-darker: var(--success-darker);
+  --color-success-foreground: var(--success-foreground);
+
+  /* Secondary Color Scale */
+  --color-secondary: var(--secondary);
+  --color-secondary-dark: var(--secondary-dark);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  /* Muted Colors */
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-skeleton: var(--skeleton);
+
+  /* Destructive Color */
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  /* Warning Color */
+  --color-warning: var(--warning);
+  --color-warning-dark: var(--warning-dark);
+  --color-warning-foreground: var(--warning-foreground);
+
+  /* Info/Feature Badge Colors */
+  --color-info: var(--info);
+  --color-info-light: var(--info-light);
+  --color-info-foreground: var(--info-foreground);
+
+  /* Status Badge Colors */
+  --color-status-active-bg: var(--status-active-bg);
+  --color-status-active-fg: var(--status-active-fg);
+  --color-status-inactive-bg: var(--status-inactive-bg);
+  --color-status-inactive-fg: var(--status-inactive-fg);
+  --color-status-pending-bg: var(--status-pending-bg);
+  --color-status-pending-fg: var(--status-pending-fg);
+  --color-status-error-bg: var(--status-error-bg);
+  --color-status-error-fg: var(--status-error-fg);
+  --color-status-trial-bg: var(--status-trial-bg);
+  --color-status-trial-fg: var(--status-trial-fg);
+
+  /* Category Badge Colors */
+  --color-category-metadata-bg: var(--category-metadata-bg);
+  --color-category-metadata-fg: var(--category-metadata-fg);
+  --color-category-data-type-bg: var(--category-data-type-bg);
+  --color-category-data-type-fg: var(--category-data-type-fg);
+  --color-category-item-bg: var(--category-item-bg);
+  --color-category-item-fg: var(--category-item-fg);
+  --color-category-location-bg: var(--category-location-bg);
+  --color-category-location-fg: var(--category-location-fg);
+  --color-category-country-bg: var(--category-country-bg);
+  --color-category-country-fg: var(--category-country-fg);
+
+  /* Sidebar Colors */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-rail-from: var(--sidebar-rail-from);
+  --color-sidebar-rail-to: var(--sidebar-rail-to);
+  --color-sidebar-main-from: var(--sidebar-main-from);
+  --color-sidebar-main-to: var(--sidebar-main-to);
+
+  /* Chart Colors */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* Tier Badge Colors */
+  --color-tier-platinum-from: var(--tier-platinum-from);
+  --color-tier-platinum-to: var(--tier-platinum-to);
+  --color-tier-platinum-foreground: var(--tier-platinum-foreground);
+  --color-tier-platinum-ring: var(--tier-platinum-ring);
+  --color-tier-gold-from: var(--tier-gold-from);
+  --color-tier-gold-to: var(--tier-gold-to);
+  --color-tier-gold-foreground: var(--tier-gold-foreground);
+  --color-tier-gold-ring: var(--tier-gold-ring);
+  --color-tier-silver-from: var(--tier-silver-from);
+  --color-tier-silver-to: var(--tier-silver-to);
+  --color-tier-silver-foreground: var(--tier-silver-foreground);
+  --color-tier-silver-ring: var(--tier-silver-ring);
+  --color-tier-bronze-from: var(--tier-bronze-from);
+  --color-tier-bronze-to: var(--tier-bronze-to);
+  --color-tier-bronze-foreground: var(--tier-bronze-foreground);
+  --color-tier-bronze-ring: var(--tier-bronze-ring);
+  --color-tier-default-from: var(--tier-default-from);
+  --color-tier-default-to: var(--tier-default-to);
+  --color-tier-default-foreground: var(--tier-default-foreground);
+  --color-tier-default-ring: var(--tier-default-ring);
+
+  /* AI Chat Colors */
+  --color-ai-assistant-bubble: var(--ai-assistant-bubble);
+  --color-ai-thinking-pulse: var(--ai-thinking-pulse);
+
+  /* Border Radius — sm 4px, md 8px, lg 12px, xl 16px, 2xl 20px (DESIGN.md).
+     Radii step down as elements nest: modal (2xl) > panel (lg) > control (md) > chip (sm). */
+  --radius-sm: calc(var(--radius) - 8px);
+  --radius-md: calc(var(--radius) - 4px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    /* Paper grain texture per DESIGN.md — subtle noise at 1-2% opacity */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.015'/%3E%3C/svg%3E");
+  }
+
+  /* Reduced motion support for accessibility */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer utilities {
+  /* Custom gradient utilities (use semantic tokens) */
+  .gradient-primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  }
+
+  .gradient-success {
+    background: linear-gradient(135deg, var(--success) 0%, var(--success-dark) 100%);
+  }
+
+  .gradient-accent {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+  }
+
+  .gradient-primary-success {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--success) 100%);
+  }
+
+  /* Sidebar gradients */
+  .gradient-sidebar-rail {
+    background: linear-gradient(
+      to bottom,
+      var(--sidebar-rail-from) 0%,
+      var(--sidebar-rail-to) 100%
+    );
+  }
+
+  .gradient-sidebar-main {
+    background: linear-gradient(
+      to bottom,
+      var(--sidebar-main-from) 0%,
+      var(--sidebar-main-to) 100%
+    );
+  }
+
+  /* Glassmorphism card style */
+  .glass {
+    background: color-mix(in srgb, var(--card) 80%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  /* Custom scrollbar styling */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: var(--border);
+    border-radius: 3px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: var(--muted-foreground);
+  }
+
+  /* =================================================================
+     LOADING SPLASH SCREEN ANIMATIONS
+     ================================================================= */
+
+  /*
+   * Each .loom-bar fades/slides in with staggered delays,
+   * then the whole icon gently pulses to signal ongoing activity.
+   */
+
+  /* Keyframes */
+  /*
+   * IMPORTANT: Use individual `translate` / `scale` properties (not the
+   * shorthand `transform`) so they compose with the SVG `transform="rotate(...)"`
+   * attribute instead of overwriting it — which would flatten all bars to vertical.
+   */
+  @keyframes loom-bar-in {
+    0% {
+      opacity: 0;
+      translate: 0 6px;
+      scale: 0.85;
+    }
+    60% {
+      opacity: 1;
+      translate: 0 -1px;
+      scale: 1.02;
+    }
+    100% {
+      opacity: 1;
+      translate: 0 0;
+      scale: 1;
+    }
+  }
+
+  @keyframes loom-icon-breathe {
+    0%,
+    100% {
+      scale: 1;
+      opacity: 1;
+    }
+    50% {
+      scale: 1.04;
+      opacity: 0.88;
+    }
+  }
+
+  @keyframes loom-progress-sweep {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(200%);
+    }
+  }
+
+  @keyframes loom-progress-pulse {
+    0%,
+    100% {
+      opacity: 0.6;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes loom-message-in {
+    0% {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Icon bar colors — semantic tokens instead of hardcoded hex */
+  .loading-splash .loom-color-primary {
+    fill: var(--primary);
+  }
+  .loading-splash .loom-color-accent {
+    fill: var(--accent);
+  }
+  .loading-splash .loom-color-accent-dark {
+    fill: var(--accent-dark);
+  }
+  .loading-splash .loom-color-success {
+    fill: var(--success);
+  }
+
+  /* Bar stagger — each .loom-bar starts hidden, then plays in */
+  .loading-splash .loom-bar {
+    opacity: 0;
+    animation: loom-bar-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  .loading-splash .loom-bar-1 {
+    animation-delay: 0.05s;
+  }
+  .loading-splash .loom-bar-2 {
+    animation-delay: 0.12s;
+  }
+  .loading-splash .loom-bar-3 {
+    animation-delay: 0.19s;
+  }
+  .loading-splash .loom-bar-4 {
+    animation-delay: 0.26s;
+  }
+  .loading-splash .loom-bar-5 {
+    animation-delay: 0.33s;
+  }
+  .loading-splash .loom-bar-6 {
+    animation-delay: 0.4s;
+  }
+  .loading-splash .loom-bar-7 {
+    animation-delay: 0.47s;
+  }
+  .loading-splash .loom-bar-8 {
+    animation-delay: 0.54s;
+  }
+  .loading-splash .loom-bar-9 {
+    animation-delay: 0.61s;
+  }
+  .loading-splash .loom-bar-10 {
+    animation-delay: 0.68s;
+  }
+
+  /* After all bars are in, the icon gently breathes */
+  .loading-splash .loom-icon-container {
+    animation: loom-icon-breathe 2.8s ease-in-out 1s infinite;
+  }
+
+  /* Progress track — thin bar with rounded ends, scales with viewport */
+  .loading-splash .loom-progress-track {
+    position: relative;
+    width: 100px;
+    height: 3px;
+    border-radius: 2px;
+    background-color: var(--border);
+    overflow: hidden;
+    animation: loom-progress-pulse 2.8s ease-in-out 0.8s infinite;
+  }
+
+  @media (min-width: 640px) {
+    .loading-splash .loom-progress-track {
+      width: 140px;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .loading-splash .loom-progress-track {
+      width: 180px;
+      height: 4px;
+      border-radius: 3px;
+    }
+  }
+
+  /* Gradient fill that sweeps across the track */
+  .loading-splash .loom-progress-fill {
+    position: absolute;
+    inset: 0;
+    width: 60%;
+    border-radius: inherit;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--primary) 30%,
+      var(--accent) 70%,
+      transparent 100%
+    );
+    animation: loom-progress-sweep 1.8s cubic-bezier(0.4, 0, 0.2, 1) 0.6s infinite;
+  }
+
+  /* Message fades in after bars */
+  .loading-splash p {
+    opacity: 0;
+    animation: loom-message-in 0.4s ease-out 0.8s forwards;
+  }
+}
+/* =================================================================
+   OPENUI MESSAGE LIST OVERRIDES — Weave chat sheet (packages/ui/src/ai)
+   The sheet's header, welcome, tool activity, loader, and composer are Loom
+   components; only OpenUI's scroll area and message list are styled here.
+   ================================================================= */
+
+.loom-chat-thread .openui-agent-thread-scroll-area {
+  padding: 20px 0 32px;
+  scroll-padding-top: 20px;
+  font-family: "Figtree", system-ui, sans-serif;
+}
+
+/* Edge fades match the sheet's cream background, not OpenUI's card surface */
+.loom-chat-thread .openui-agent-thread-scroll-container::before {
+  height: 16px;
+  background: linear-gradient(to bottom, var(--background) 0%, transparent 100%);
+}
+
+.loom-chat-thread .openui-agent-thread-scroll-container::after {
+  height: 24px;
+  background: linear-gradient(to top, var(--background) 0%, transparent 100%);
+}
+
+.loom-chat-thread .openui-agent-thread-messages {
+  display: flex;
+  flex-direction: column;
+  max-width: none;
+  padding: 0 20px;
+  gap: 20px;
+}
+
+/* OpenUI sizes the last turn so a new user message can scroll to the top of a
+   full-page chat; the sheet's header, composer, and padding take ~280px. */
+.loom-chat-thread
+  .openui-agent-thread-scroll-area--user-message-anchor
+  .openui-agent-thread-messages
+  > *:last-child {
+  min-height: calc(100dvh - 280px);
+}
+
+/* No avatar column in the sheet, so assistant content uses the full width */
+.loom-chat-thread .openui-agent-thread-message-assistant {
+  padding-right: 0;
+}
+
+.loom-chat-thread .openui-agent-thread-message-user {
+  padding-left: 48px;
+}
+
+.loom-chat-thread .openui-agent-thread-message-user__content {
+  background-color: var(--primary-dark);
+  color: var(--primary-foreground);
+  border-radius: 16px 16px 4px 16px;
+  padding: 10px 14px;
+  font:
+    400 0.875rem/1.5 "Figtree",
+    system-ui,
+    sans-serif;
+}
+
+.loom-chat-thread .openui-agent-thread-scroll-latest {
+  border-color: var(--border);
+  background-color: var(--card);
+  color: var(--muted-foreground);
+  box-shadow: var(--shadow-md);
+}
+
+.loom-chat-thread .openui-agent-thread-scroll-latest:hover {
+  color: var(--primary-dark);
+  border-color: var(--secondary);
+}
+
+/* Shimmer for in-progress text in the chat sheet (tool activity, thinking):
+   a lighter band sweeps across muted text. Static under reduced motion. */
+.loom-shimmer {
+  color: var(--muted-foreground);
+  background-image: linear-gradient(
+    90deg,
+    var(--muted-foreground) 0%,
+    var(--muted-foreground) 35%,
+    var(--foreground) 50%,
+    var(--muted-foreground) 65%,
+    var(--muted-foreground) 100%
+  );
+  background-size: 250% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: loom-shimmer 2s linear infinite;
+}
+
+@keyframes loom-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce), (forced-colors: active) {
+  .loom-shimmer {
+    animation: none;
+    -webkit-text-fill-color: currentColor;
+    background-image: none;
+  }
+}

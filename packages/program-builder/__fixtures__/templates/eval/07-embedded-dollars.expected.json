@@ -1,0 +1,10 @@
+{
+  "description": "Currency amounts ($5, $100, $20, $500) are inside the prose, not in structured fields. Model should extract the cashback narrative without echoing the numbers as if they were rules.",
+  "extractions": [
+    {
+      "expectedField": "program.description",
+      "expectedValueMatches": ["cashback", "back", "spend", "earn"],
+      "minimumConfidence": 0.7
+    }
+  ]
+}

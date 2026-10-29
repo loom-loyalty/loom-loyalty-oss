@@ -1,0 +1,15 @@
+{
+  "description": "Two freeform fields — description and marketingNotes. Both have clear signal; both should extract independently.",
+  "extractions": [
+    {
+      "expectedField": "program.description",
+      "expectedValueMatches": ["tiered", "loyal"],
+      "minimumConfidence": 0.75
+    },
+    {
+      "expectedField": "marketingNotes",
+      "expectedValueMatches": ["launch", "email"],
+      "minimumConfidence": 0.7
+    }
+  ]
+}

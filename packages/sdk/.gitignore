@@ -1,0 +1,7 @@
+# Generated code - regenerated at build time
+src/generated/
+
+# Generated client files (base-resource.ts is hand-written, keep it)
+src/client/index.ts
+src/client/loom-loyalty.ts
+src/client/resources/

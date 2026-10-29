@@ -1,0 +1,10 @@
+{
+  "description": "Backbone has 2 tiers; prose insists on 4. With contradiction detection (PR-E system-prompt rule), the extractor should set confidence ≤0.3 with a `reasoning` line. Bar tightened from 0.8 → 0.4 to lock in the new behavior — a regression that lets the LLM happily summarize contradictory prose at 0.5+ now fails the eval. Re-run `pnpm --filter @loom-loyalty/ai-server test:eval` after model swaps to re-validate.",
+  "extractions": [
+    {
+      "expectedField": "program.description",
+      "expectNullOrLowConfidence": true,
+      "maximumConfidence": 0.4
+    }
+  ]
+}

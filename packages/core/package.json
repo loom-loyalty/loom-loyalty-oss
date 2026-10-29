@@ -1,0 +1,103 @@
+{
+  "name": "@loom-loyalty/core",
+  "version": "0.7.3",
+  "private": false,
+  "license": "Apache-2.0",
+  "description": "Headless foundation for Loom Loyalty Hub - providers, hooks, and types",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./types": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/types/index.js"
+    },
+    "./providers": {
+      "types": "./dist/providers/index.d.ts",
+      "import": "./dist/providers/index.js"
+    },
+    "./hooks": {
+      "types": "./dist/hooks/index.d.ts",
+      "import": "./dist/hooks/index.js"
+    },
+    "./plugins": {
+      "types": "./dist/plugins/index.d.ts",
+      "import": "./dist/plugins/index.js"
+    },
+    "./config": {
+      "types": "./dist/config/index.d.ts",
+      "import": "./dist/config/index.js"
+    },
+    "./environment-registry": {
+      "types": "./dist/environment-registry/index.d.ts",
+      "import": "./dist/environment-registry/index.js"
+    },
+    "./utils": {
+      "types": "./dist/utils/index.d.ts",
+      "import": "./dist/utils/index.js"
+    },
+    "./ai": {
+      "types": "./dist/ai/index.d.ts",
+      "import": "./dist/ai/index.js"
+    },
+    "./feature-flags": {
+      "types": "./dist/feature-flags/index.d.ts",
+      "import": "./dist/feature-flags/index.js"
+    },
+    "./notifications": {
+      "types": "./dist/notifications/index.d.ts",
+      "import": "./dist/notifications/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src",
+    "test": "vitest run",
+    "clean": "rm -rf dist"
+  },
+  "peerDependencies": {
+    "@tanstack/react-query": ">=5.0.0",
+    "react": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@loom-loyalty/config": "workspace:*",
+    "@tanstack/react-query": "catalog:",
+    "@testing-library/react": "catalog:",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "jsdom": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "dependencies": {
+    "@loom-loyalty/sdk": "workspace:*",
+    "@openfeature/core": "1.12.0",
+    "@openfeature/ofrep-web-provider": "0.4.3",
+    "@openfeature/react-sdk": "1.4.1",
+    "@openfeature/web-sdk": "1.10.0",
+    "date-fns": "catalog:",
+    "lucide-react": "catalog:"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/loom-loyalty/loom-loyalty-oss.git",
+    "directory": "packages/core"
+  }
+}

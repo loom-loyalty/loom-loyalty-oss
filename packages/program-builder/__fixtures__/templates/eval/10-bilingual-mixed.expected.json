@@ -1,0 +1,10 @@
+{
+  "description": "Mixed Spanish/English prose. Model should produce a coherent description in either language (or both) — the unicode/code-switching shouldn't drop confidence below the floor.",
+  "extractions": [
+    {
+      "expectedField": "program.description",
+      "expectedValueMatches": ["bakery", "puntos", "points", "panadería", "loyalty"],
+      "minimumConfidence": 0.6
+    }
+  ]
+}

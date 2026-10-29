@@ -1,0 +1,11 @@
+{
+  "description": "Removing tier 'gold' from the spec lands in dataLoss — high-impact, default unchecked in the UI.",
+  "safe": [],
+  "breaking": [],
+  "dataLoss": [
+    {
+      "kind": "remove",
+      "entity": { "type": "tier", "code": "gold" }
+    }
+  ]
+}
