@@ -66,7 +66,7 @@ catalog:
   tailwind-merge: 3.4.0
   tailwindcss: 4.1.18
   tsx: 4.21.0
-  turbo: 2.8.4
+  turbo: 2.9.14
   typescript: 5.9.3
   vitest: 3.2.4
   yaml: 2.8.2
