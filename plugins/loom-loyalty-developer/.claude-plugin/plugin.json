@@ -1,0 +1,13 @@
+{
+  "name": "loom-loyalty-developer",
+  "description": "Set up and maintain a Loom Loyalty tenant with treadle, the API and the SDK.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Loom Loyalty",
+    "url": "https://www.loomloyalty.com"
+  },
+  "homepage": "https://docs.loomloyalty.com",
+  "repository": "https://github.com/loom-loyalty/loom-loyalty-oss",
+  "license": "Apache-2.0",
+  "keywords": ["loyalty", "treadle", "cli", "api", "sdk"]
+}
