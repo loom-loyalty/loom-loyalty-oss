@@ -1,6 +1,6 @@
 {
   "name": "@loom-loyalty/cli",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "private": false,
   "license": "Apache-2.0",
   "description": "treadle: the Loom Loyalty CLI - configuration as code (plan/apply), OpenAPI spec download, API client generation and Hub config management",

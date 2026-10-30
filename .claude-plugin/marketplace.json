@@ -1,0 +1,24 @@
+{
+  "name": "loom-loyalty",
+  "owner": {
+    "name": "Loom Loyalty",
+    "url": "https://www.loomloyalty.com"
+  },
+  "metadata": {
+    "description": "Agent skills and the MCP connector for Loom Loyalty, the loyalty platform."
+  },
+  "plugins": [
+    {
+      "name": "loom-loyalty-marketing",
+      "source": "./plugins/loom-loyalty-marketing",
+      "description": "Launch campaigns and offers and read results in Claude, through the Loom Loyalty connector.",
+      "category": "productivity"
+    },
+    {
+      "name": "loom-loyalty-developer",
+      "source": "./plugins/loom-loyalty-developer",
+      "description": "Set up and maintain a Loom Loyalty tenant with treadle, the API and the SDK.",
+      "category": "development"
+    }
+  ]
+}

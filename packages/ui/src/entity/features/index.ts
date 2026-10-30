@@ -35,6 +35,12 @@ export {
 export { getBadgeColumnsExtended } from "./badges/badge-columns.js";
 export { BadgeDetail, type BadgeDetailProps } from "./badges/badge-detail.js";
 export { BadgeFormSheet } from "./badges/badge-form-sheet.js";
+export {
+  BadgeShelf,
+  type BadgeShelfItem,
+  type BadgeShelfProps,
+  type BadgeShelfStatus,
+} from "./badges/badge-shelf.js";
 export { BadgeSkeleton } from "./badges/badge-skeleton.js";
 export {
   BADGE_STANDARD_FIELDS,

@@ -1,6 +1,6 @@
 {
   "name": "@loom-loyalty/notifications-knock",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "private": false,
   "license": "Apache-2.0",
   "description": "Knock in-app feed adapter for the Loom Loyalty notification inbox",

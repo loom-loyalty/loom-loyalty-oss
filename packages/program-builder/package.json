@@ -1,6 +1,6 @@
 {
   "name": "@loom-loyalty/program-builder",
-  "version": "0.6.9",
+  "version": "0.6.10",
   "private": false,
   "license": "Apache-2.0",
   "description": "Shared program executor, spec types, linter, and shape-diff for Loom Loyalty program creation flows (wizard + AI)",
