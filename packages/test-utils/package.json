@@ -40,7 +40,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "axe-core": "4.11.3",
+    "axe-core": "4.14.0",
     "msw": "2.13.6",
     "vitest-axe": "0.1.0"
   },

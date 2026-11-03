@@ -92,8 +92,8 @@ export interface NotExpression {
 }
 
 // -- Equality --
-// `value` is optional: the schema uses `z.unknown()`, which Zod infers as
-// optional, and an omitted value is a valid "compare against null/undefined".
+// `value` is optional: the schema uses `z.unknown().optional()` (Zod 4.4+
+// treats a bare `z.unknown()` key as required), and an omitted value is a valid "compare against null/undefined".
 export interface EqualsExpression {
   equals: {
     path: string;
@@ -482,7 +482,7 @@ function makeExpressionSchema(includeActions: boolean): z.ZodType<Expression> {
         z.object({
           equals: z.object({
             path: jsonPathSchema,
-            value: z.unknown(),
+            value: z.unknown().optional(),
             extractValueFromPath: z.boolean(),
             preOperation: preOperationSchema.optional(),
             defaultResult: z.boolean(),
@@ -492,7 +492,7 @@ function makeExpressionSchema(includeActions: boolean): z.ZodType<Expression> {
         z.object({
           notEquals: z.object({
             path: jsonPathSchema,
-            value: z.unknown(),
+            value: z.unknown().optional(),
             extractValueFromPath: z.boolean(),
             preOperation: preOperationSchema.optional(),
             defaultResult: z.boolean(),

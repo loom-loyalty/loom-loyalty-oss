@@ -20254,6 +20254,297 @@ paths:
             application/problem+json:
               schema:
                 $ref: "#/components/schemas/ProblemDetail"
+  /unprocessed-events/{eventId}:
+    get:
+      tags:
+        - operations/unprocessed-events
+      summary: Get an unprocessed event
+      description: Returns one unprocessed event, whatever its status, with its data and latest staff action.
+      operationId: event-engine_getUnprocessedEvent
+      parameters:
+        - name: eventId
+          in: path
+          description: Event ID
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The unprocessed event
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnprocessedEvent"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "404":
+          description: Not an unprocessed event in this environment, or archived
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+  /unprocessed-events:
+    get:
+      tags:
+        - operations/unprocessed-events
+      summary: List unprocessed events
+      description: Returns a page of the environment's unprocessed events, newest first. With no status, only OPEN events are listed; with no eventStartDateTime, the last 90 days. No-member events appear only for event types that save unprocessed events, until they are archived. The page's totalSize is the count for the filter, so a size of 1 reads the open count.
+      operationId: event-engine_listUnprocessedEvents
+      parameters:
+        - name: reason
+          in: query
+          explode: false
+          schema:
+            nullable: true
+            allOf:
+              - $ref: "#/components/schemas/UnprocessedEventReason"
+        - name: status
+          in: query
+          explode: false
+          schema:
+            nullable: true
+            allOf:
+              - $ref: "#/components/schemas/UnprocessedEventStatus"
+        - name: eventTypeCode
+          in: query
+          explode: false
+          schema:
+            type: string
+            nullable: true
+        - name: eventStartDateTime
+          in: query
+          explode: false
+          schema:
+            type: string
+            format: date-time
+            nullable: true
+        - name: eventEndDateTime
+          in: query
+          explode: false
+          schema:
+            type: string
+            format: date-time
+            nullable: true
+        - name: page
+          in: query
+          description: Page number (zero-based)
+          explode: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+          example: 0
+        - name: size
+          in: query
+          description: Page size
+          explode: false
+          schema:
+            maximum: 100
+            type: integer
+            format: int32
+            default: 25
+          example: 25
+      responses:
+        "200":
+          description: Page of unprocessed events
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PageUnprocessedEvent"
+        "400":
+          description: Invalid filter
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+  /unprocessed-event-actions/{unprocessedEventActionId}:
+    get:
+      tags:
+        - operations/unprocessed-events
+      summary: Get a staff action
+      description: Returns one staff action on an unprocessed event.
+      operationId: event-engine_getUnprocessedEventAction
+      parameters:
+        - name: unprocessedEventActionId
+          in: path
+          description: Action ID
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The action
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnprocessedEventAction"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "404":
+          description: No such action in this environment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+  /unprocessed-event-actions:
+    get:
+      tags:
+        - operations/unprocessed-events
+      summary: List an event's staff actions
+      description: "Returns every staff action on one event, newest first: who retried or dismissed it, when, the member chosen, the reason given, and what the retry did."
+      operationId: event-engine_listUnprocessedEventActions
+      parameters:
+        - name: eventId
+          in: query
+          description: The event whose actions to list
+          required: true
+          explode: false
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The event's actions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UnprocessedEventAction"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+    post:
+      tags:
+        - operations/unprocessed-events
+      summary: Retry or dismiss unprocessed events
+      description: Applies one action to 1 to 100 events. RETRY runs each event through the engine again, keeping its event ID; with a customerId, no-member events are processed against that member instead of being matched again (the member's identifiers are not changed). DISMISS closes OPEN events and needs a note giving the reason. Events that cannot be acted on are skipped and listed with the reason; the rest are acted on.
+      operationId: event-engine_createUnprocessedEventAction
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUnprocessedEventActionRequest"
+        required: true
+      responses:
+        "200":
+          description: The actions recorded and the events skipped
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseUnprocessedEventActionResult"
+        "400":
+          description: Invalid request, a DISMISS without a note (UNPROCESSED_EVENT_DISMISS_NOTE_REQUIRED) or with a customerId (UNPROCESSED_EVENT_DISMISS_MEMBER_NOT_ALLOWED)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "402":
+          description: "Payment required: the organization's billing has lapsed, so writes are refused until billing is updated. The error envelope's description is PAYMENT_REQUIRED."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
   /{entityType}/{entityId}/event-rules:
     get:
       tags:
@@ -41777,6 +42068,9 @@ tags:
   - name: operations/flow-executions
     description: Flow runtime observability
     x-displayName: Flow Executions
+  - name: operations/unprocessed-events
+    description: Events that matched no member or failed a rule
+    x-displayName: Unprocessed Events
   - name: operations/entity-event-rules
     description: Entity event rule operations
     x-displayName: Entity Event Rules
@@ -44069,6 +44363,36 @@ components:
           allOf:
             - $ref: "#/components/schemas/TraceMode"
       description: Expression tracing for every event rule of a program
+    CreateUnprocessedEventActionRequest:
+      required:
+        - actionType
+        - eventIds
+      type: object
+      properties:
+        eventIds:
+          maxItems: 100
+          minItems: 1
+          type: array
+          description: The events to act on (1 to 100)
+          items:
+            pattern: ^[a-zA-Z][a-zA-Z0-9]{1,3}_[a-fA-F0-9]{32}$
+            type: string
+            format: uuid
+          x-size-message: Between 1 and 100 event IDs are required
+        actionType:
+          description: RETRY or DISMISS
+          allOf:
+            - $ref: "#/components/schemas/UnprocessedEventActionType"
+        customerId:
+          pattern: ^[a-zA-Z][a-zA-Z0-9]{1,3}_[a-fA-F0-9]{32}$
+          type: string
+          description: "RETRY only: process no-member events against this member instead of matching again"
+          nullable: true
+        note:
+          maxLength: 1000
+          type: string
+          description: "Required for DISMISS: why the events are being dismissed. Optional note on a RETRY"
+          nullable: true
     EntityTargetProgressRequest:
       title: Entity Target Progress Request
       oneOf:
@@ -44104,6 +44428,39 @@ components:
         achieved:
           type: boolean
           description: Whether the selected counter cycle is achieved. This is target-truth and is independent of any displayThreshold override used to render progress.
+    EventStatus:
+      type: string
+      enum:
+        - QUEUED
+        - NO_CUSTOMER_ENTITY
+        - NO_EVENT_RULES
+        - PROCESSING
+        - PROCESSED
+        - SKIPPED
+        - FAILED
+        - UPDATED
+        - CANCELLED
+    EventEngineEventTarget:
+      required:
+        - entityType
+      type: object
+      properties:
+        entityType:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/EntityType"
+        firstName:
+          type: string
+          nullable: true
+        lastName:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        phoneNumber:
+          type: string
+          nullable: true
     FlowExecutionState:
       type: string
       enum:
@@ -44124,6 +44481,21 @@ components:
         - COMPLETED
         - CANCELLED
         - FAILED
+    PageUnprocessedEvent:
+      required:
+        - totalPages
+        - totalSize
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/SliceUnprocessedEvent"
+        - type: object
+          properties:
+            totalSize:
+              type: integer
+              format: int64
+            totalPages:
+              type: integer
+              format: int32
     ResponseEntityTargetProgressResponse:
       type: object
       properties:
@@ -44137,6 +44509,209 @@ components:
           format: date-time
         data:
           $ref: "#/components/schemas/EntityTargetProgressResponse"
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: integer
+              message:
+                type: string
+      required:
+        - success
+      additionalProperties: false
+    UnprocessedEventStatus:
+      type: string
+      enum:
+        - OPEN
+        - RESOLVED
+        - DISMISSED
+    UnprocessedEventReason:
+      type: string
+      enum:
+        - NO_MEMBER
+        - RULE_FAILED
+    UnprocessedEventActionType:
+      type: string
+      enum:
+        - RETRY
+        - DISMISS
+    UnprocessedEventActionSkip:
+      type: object
+      properties:
+        eventId:
+          pattern: ^[a-zA-Z][a-zA-Z0-9]{1,3}_[a-fA-F0-9]{32}$
+          type: string
+          description: The event that was skipped
+        code:
+          type: string
+          description: The error catalog code for why it was skipped
+        message:
+          type: string
+          description: A readable reason it was skipped
+    UnprocessedEventActionResult:
+      type: object
+      properties:
+        actions:
+          type: array
+          description: The actions recorded, one per event acted on
+          items:
+            $ref: "#/components/schemas/UnprocessedEventAction"
+        skipped:
+          type: array
+          description: The events that were not acted on, and why
+          items:
+            $ref: "#/components/schemas/UnprocessedEventActionSkip"
+    UnprocessedEventAction:
+      type: object
+      properties:
+        unprocessedEventActionId:
+          pattern: ^[a-zA-Z][a-zA-Z0-9]{1,3}_[a-fA-F0-9]{32}$
+          type: string
+          description: The action's ID
+        eventId:
+          pattern: ^[a-zA-Z][a-zA-Z0-9]{1,3}_[a-fA-F0-9]{32}$
+          type: string
+          description: The event the action was taken on
+        actionType:
+          description: RETRY or DISMISS
+          allOf:
+            - $ref: "#/components/schemas/UnprocessedEventActionType"
+        reason:
+          description: Why the event was unprocessed when the action was taken
+          allOf:
+            - $ref: "#/components/schemas/UnprocessedEventReason"
+        customerId:
+          pattern: ^[a-zA-Z][a-zA-Z0-9]{1,3}_[a-fA-F0-9]{32}$
+          type: string
+          description: The member a retry processed the event against, when staff chose one
+          nullable: true
+        note:
+          type: string
+          description: The reason staff gave for a dismissal, or an optional note on a retry
+          nullable: true
+        resultStatus:
+          description: "The event's status when the retry returned: QUEUED for an event type processed in the background, whose current state is the unprocessed event's status; null for a dismissal"
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/EventStatus"
+        resultDescription:
+          type: string
+          description: Why a retry still did not process the event, when it did not
+          nullable: true
+        createdUserId:
+          pattern: ^[a-zA-Z][a-zA-Z0-9]{1,3}_[a-fA-F0-9]{32}$
+          type: string
+          description: The user who took the action
+        createdDateTime:
+          type: string
+          description: When the action was taken
+          format: date-time
+    UnprocessedEvent:
+      type: object
+      properties:
+        eventId:
+          pattern: ^[a-zA-Z][a-zA-Z0-9]{1,3}_[a-fA-F0-9]{32}$
+          type: string
+          description: The event's ID
+        reason:
+          description: NO_MEMBER or RULE_FAILED
+          allOf:
+            - $ref: "#/components/schemas/UnprocessedEventReason"
+        status:
+          description: OPEN, RESOLVED or DISMISSED
+          allOf:
+            - $ref: "#/components/schemas/UnprocessedEventStatus"
+        eventTypeCode:
+          type: string
+          description: The event type code
+          nullable: true
+        eventSubTypeIdentifier:
+          type: string
+          description: The event sub-type identifier
+          nullable: true
+        eventDateTime:
+          type: string
+          description: When the event happened
+          format: date-time
+        customerId:
+          pattern: ^[a-zA-Z][a-zA-Z0-9]{1,3}_[a-fA-F0-9]{32}$
+          type: string
+          description: The member the event is recorded against; null while no member matched
+          nullable: true
+        eventTarget:
+          description: The identifiers the event carried (name, email, phone) when no member matched
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/EventEngineEventTarget"
+        statusDescription:
+          type: string
+          description: "Why the event did not process: the rule's failure message for RULE_FAILED"
+          nullable: true
+        statusCode:
+          type: string
+          description: The catalog code of the rule's rejection, when it had one
+          nullable: true
+        archivalDateTime:
+          type: string
+          description: When a no-member event stops being kept; null for rule failures
+          format: date-time
+          nullable: true
+        latestAction:
+          description: The most recent staff action on this event
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/UnprocessedEventAction"
+        eventData:
+          description: The event's data; returned by the single-event read only
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/EventEngineEventData"
+    SliceUnprocessedEvent:
+      required:
+        - content
+        - empty
+        - numberOfElements
+        - offset
+        - pageNumber
+        - pageable
+        - size
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/UnprocessedEvent"
+        pageable:
+          $ref: "#/components/schemas/Pageable"
+        pageNumber:
+          type: integer
+          format: int32
+        offset:
+          type: integer
+          format: int64
+        size:
+          type: integer
+          format: int32
+        empty:
+          type: boolean
+        numberOfElements:
+          type: integer
+          format: int32
+    ResponseUnprocessedEventActionResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        eventId:
+          type: string
+          format: uuid
+        eventDateTime:
+          type: string
+          format: date-time
+        data:
+          $ref: "#/components/schemas/UnprocessedEventActionResult"
         errors:
           type: array
           items:
@@ -76895,6 +77470,75 @@ x-loom-error-catalog:
     placeholders: []
     retry: SKIP
     source: CommonErrorCode
+  - code: UNPROCESSED_EVENT_NOT_OPEN
+    status: 409
+    title: Unprocessed event not open
+    description: The event was already processed or dismissed, so there is nothing to retry or dismiss.
+    messageTemplate: Event {eventId} is not open
+    placeholders:
+      - eventId
+    retry: SKIP
+    source: UnprocessedEventErrorCode
+  - code: UNPROCESSED_EVENT_NOT_FOUND
+    status: 404
+    title: Unprocessed event not found
+    description: No event with this id is waiting as unprocessed in the caller's organization and environment, or it was archived. Check the event id.
+    messageTemplate: Unprocessed event {eventId} was not found
+    placeholders:
+      - eventId
+    retry: SKIP
+    source: UnprocessedEventErrorCode
+  - code: UNPROCESSED_EVENT_MEMBER_CHOICE_NOT_ALLOWED
+    status: 400
+    title: Member choice not allowed
+    description: The event already has a member and a rule failed on it, so it can only be retried as it is. Leave customerId out for rule failures.
+    messageTemplate: A member can only be chosen for an event that matched no member
+    placeholders: []
+    retry: RETRY
+    source: UnprocessedEventErrorCode
+  - code: UNPROCESSED_EVENT_DISMISS_NOTE_REQUIRED
+    status: 400
+    title: Dismissal reason required
+    description: Send a note saying why the events are being dismissed.
+    messageTemplate: A dismissal needs a note giving the reason
+    placeholders: []
+    retry: RETRY
+    source: UnprocessedEventErrorCode
+  - code: UNPROCESSED_EVENT_DISMISS_MEMBER_NOT_ALLOWED
+    status: 400
+    title: Member not allowed on dismissal
+    description: Leave customerId out when dismissing events; it only applies to a RETRY.
+    messageTemplate: A dismissal cannot choose a member
+    placeholders: []
+    retry: RETRY
+    source: UnprocessedEventErrorCode
+  - code: UNPROCESSED_EVENT_DATA_MISSING
+    status: 409
+    title: Event data missing
+    description: The event's original data was not kept, so it cannot be run again. Resend it from the source system.
+    messageTemplate: Event {eventId} has no stored data to retry
+    placeholders:
+      - eventId
+    retry: SKIP
+    source: UnprocessedEventErrorCode
+  - code: UNPROCESSED_EVENT_NOT_RETRYABLE
+    status: 409
+    title: Event not retryable
+    description: A redemption the member made in the rewards portal is settled by that attempt, so running it again could spend points the member did not choose to spend twice. Ask the member to redeem again, or dismiss the event.
+    messageTemplate: Event {eventId} is a member's own portal redemption and cannot be retried by staff
+    placeholders:
+      - eventId
+    retry: SKIP
+    source: UnprocessedEventErrorCode
+  - code: UNPROCESSED_EVENT_ACTION_NOT_FOUND
+    status: 404
+    title: Unprocessed event action not found
+    description: No action with this id exists in the caller's organization and environment. Check the action id.
+    messageTemplate: Unprocessed event action {unprocessedEventActionId} was not found
+    placeholders:
+      - unprocessedEventActionId
+    retry: SKIP
+    source: UnprocessedEventErrorCode
   - code: UNSUPPORTED_MEDIA_TYPE
     status: 415
     title: Unsupported media type

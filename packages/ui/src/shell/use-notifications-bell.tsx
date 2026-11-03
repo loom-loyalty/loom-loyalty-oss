@@ -17,7 +17,8 @@ export type NotificationsBellProps = Pick<
  * TopHeader props for the bell, from the feed in `NotificationFeedProvider`.
  * With no feed (the inbox is off) the bell is hidden. Opening the panel marks
  * everything seen; choosing an item marks it read, closes the panel and hands
- * its link to `onOpenLink`, which routes it within or across apps.
+ * its link to `onOpenLink`, which routes it within or across apps, or opens an
+ * external link in a new tab.
  */
 export function useNotificationsBell(
   onOpenLink: (link: NotificationLink) => void

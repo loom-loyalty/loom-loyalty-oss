@@ -63,6 +63,16 @@ export function LoomToolActivity({
 
   const rows: TimelineStep[] =
     steps.length > 0 ? steps : activities.map((activity) => ({ type: "activity", activity }));
+  // Earlier calls never get results, so they stay "running"; only the latest
+  // running step's dot lights up.
+  let liveActivityId: string | undefined;
+  if (working) {
+    for (const row of rows) {
+      if (row.type === "activity" && stepState(row.activity, isLast) === "running") {
+        liveActivityId = row.activity.id;
+      }
+    }
+  }
 
   return (
     <div data-testid="loom-tool-activity" data-state={working ? "working" : "done"}>
@@ -77,7 +87,9 @@ export function LoomToolActivity({
           !working && errorCount > 0 && "text-destructive hover:text-destructive"
         )}
       >
-        <span className={cn(working && "loom-shimmer")} aria-live="polite">
+        {/* Open, the title sits to the right of the thread, in line with the
+            step labels; the thread starts level with its middle. */}
+        <span className={cn(expanded && "pl-5", working && "loom-shimmer")} aria-live="polite">
           {title}
         </span>
         <ChevronRight
@@ -89,7 +101,15 @@ export function LoomToolActivity({
         />
       </button>
       {expanded && (
-        <ol id={bodyId} className="pb-1">
+        <ol
+          id={bodyId}
+          className={cn(
+            // The thread's first segment: from the title's middle to the first dot.
+            "relative pb-1",
+            "before:bg-border before:absolute before:-top-[22px] before:left-[3px] before:h-[28px] before:w-px",
+            working && "loom-thread-live"
+          )}
+        >
           {rows.map((row) =>
             row.type === "text" ? (
               <TimelineRow key={row.id} state="done">
@@ -100,6 +120,7 @@ export function LoomToolActivity({
                 key={row.activity.id}
                 activity={row.activity}
                 state={stepState(row.activity, isLast)}
+                live={row.activity.id === liveActivityId}
               />
             )
           )}
@@ -109,12 +130,20 @@ export function LoomToolActivity({
   );
 }
 
-function ActivityRow({ activity, state }: { activity: ToolActivity; state: ToolStepState }) {
+function ActivityRow({
+  activity,
+  state,
+  live,
+}: {
+  activity: ToolActivity;
+  state: ToolStepState;
+  live: boolean;
+}) {
   const label = getToolLabel(activity.toolName);
   const input = hasContent(activity.input) ? JSON.stringify(activity.input, null, 2) : null;
   const output = activity.result || activity.errorText || null;
   return (
-    <TimelineRow state={state}>
+    <TimelineRow state={state} live={live}>
       <p
         className={cn(
           state === "running" && "loom-shimmer",
@@ -147,18 +176,36 @@ const DOT_CLASS: Record<ToolStepState, string> = {
   error: "bg-destructive",
 };
 
-/** One step on the timeline: a dot on a 1px rail that runs down to the next step. */
-function TimelineRow({ state, children }: { state: ToolStepState; children: React.ReactNode }) {
+/**
+ * One step on the timeline: a dot on the thread. Each segment of the thread
+ * ends at a dot (the list draws the first, from the title; each row draws the
+ * one from its dot down to the next), so while the turn works the glow that
+ * travels down every segment reaches its dot at the same point in the cycle,
+ * and the running dot lights up as it arrives.
+ */
+function TimelineRow({
+  state,
+  live = false,
+  children,
+}: {
+  state: ToolStepState;
+  live?: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <li
       className={cn(
         "relative pb-2.5 pl-5 text-sm last:pb-0",
-        "before:bg-border before:absolute before:top-4 before:bottom-0 before:left-[3px] before:w-px last:before:hidden"
+        "before:bg-border before:absolute before:top-[13px] before:-bottom-1.5 before:left-[3px] before:w-px last:before:hidden"
       )}
     >
       <span
         aria-hidden="true"
-        className={cn("absolute top-[7px] left-0 size-[7px] rounded-full", DOT_CLASS[state])}
+        className={cn(
+          "absolute top-1.5 left-0 size-[7px] rounded-full",
+          DOT_CLASS[state],
+          live && "loom-dot-live"
+        )}
       />
       {children}
     </li>

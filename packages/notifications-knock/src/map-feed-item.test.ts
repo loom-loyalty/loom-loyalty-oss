@@ -146,4 +146,29 @@ describe("mapFeedItem", () => {
     expect(item.title).toBe("Export failed: nightly");
     expect(item.body).toBe("Run 42");
   });
+
+  it("links out only to the status page", () => {
+    const linkFor = (data: Record<string, unknown>) => mapFeedItem(feedItem({ data })).link;
+    expect(linkFor({ externalUrl: "https://status.loomloyalty.com/#incident-42" })).toEqual({
+      app: "external",
+      url: "https://status.loomloyalty.com/#incident-42",
+    });
+    for (const externalUrl of [
+      "http://status.loomloyalty.com/#incident-42",
+      "javascript:alert(1)",
+      "https://evil.test/#incident-42",
+      "https://status.loomloyalty.com.evil.test/",
+      "https://status.loomloyalty.com@evil.test/",
+      "https://status.loomloyalty.com:8443/",
+      "//status.loomloyalty.com/",
+      "not a url",
+      42,
+    ]) {
+      expect(linkFor({ externalUrl })).toBeUndefined();
+    }
+    // An app path still wins over an external link.
+    expect(
+      linkFor({ hubPath: "/incidents", externalUrl: "https://status.loomloyalty.com/" })
+    ).toEqual({ app: "hub", path: "/incidents" });
+  });
 });

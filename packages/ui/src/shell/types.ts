@@ -13,8 +13,14 @@ export interface PrimaryNavSection {
   id: string;
   /** Lucide icon component */
   icon: LucideIcon;
-  /** Display label (shown as tooltip and in expanded state) */
+  /** Display label (accessible name, tooltip, and secondary sidebar heading) */
   label: string;
+  /**
+   * One-word caption shown under the icon in the rail. Defaults to `label`;
+   * set it when `label` is longer than one short word. Keep it a word that
+   * appears in `label` so the visible text matches the accessible name.
+   */
+  railLabel?: string;
   /** Route href for direct navigation */
   href: string;
   /** Optional badge count or indicator */
@@ -79,8 +85,10 @@ export type SecondaryNavGetter = (sectionId: string, pathname: string) => Second
 export interface QuickAction {
   /** Lucide icon component */
   icon: LucideIcon;
-  /** Display label (used for tooltip) */
+  /** Display label (used for tooltip and accessible name) */
   label: string;
+  /** One-word caption shown under the icon in the rail. Defaults to `label`. */
+  railLabel?: string;
   /** Route href or action handler */
   href?: string;
   /** Click handler (alternative to href) */

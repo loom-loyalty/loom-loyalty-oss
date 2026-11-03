@@ -81,6 +81,9 @@ function plain(markdown: string): string {
     .trim();
 }
 
+/** Origins an item may link out to; anything else in `externalUrl` is ignored. */
+const EXTERNAL_LINK_ORIGINS = new Set(["https://status.loomloyalty.com"]);
+
 function linkFrom(data: Record<string, unknown> | null): NotificationLink | undefined {
   const hubPath = data?.hubPath;
   if (typeof hubPath === "string" && hubPath.startsWith("/")) {
@@ -90,5 +93,17 @@ function linkFrom(data: Record<string, unknown> | null): NotificationLink | unde
   if (typeof dashboardPath === "string" && dashboardPath.startsWith("/")) {
     return { app: "dashboard", path: dashboardPath };
   }
-  return undefined;
+  return externalLinkFrom(data?.externalUrl);
+}
+
+function externalLinkFrom(value: unknown): NotificationLink | undefined {
+  if (typeof value !== "string") return undefined;
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return undefined;
+  }
+  // URL.origin is scheme + exact host + port, so lookalike hosts and other schemes don't match.
+  return EXTERNAL_LINK_ORIGINS.has(url.origin) ? { app: "external", url: url.href } : undefined;
 }

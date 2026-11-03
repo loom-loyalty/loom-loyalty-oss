@@ -158,6 +158,34 @@ export interface PackageInstallPlanRecord {
   action: PackageInstallAction;
   /** Why, for a CONFLICT, BLOCKED or an UPDATE */
   reason?: string | null;
+  /**
+   * For a CONFLICT, each record it names that neither the manifest nor the organization has. Older
+   * Platforms leave it out.
+   */
+  missing?: PackageMissingReference[] | null;
+}
+
+/** A record a planned record names that neither the manifest nor the organization has. */
+export interface PackageMissingReference {
+  /** The missing record's kind: METADATA for a lookup value, EVENT_TYPE, PROGRAM, ... */
+  kind: string;
+  /** For a metadata value, its metadata type's code, such as PROGRAM_TYPE */
+  type?: string | null;
+  code: string;
+  /** The manifest key that names it, such as typeCode or programCodes */
+  field: string;
+}
+
+/** An active enable-in-environment policy: how records reach an organization environment. */
+export interface EnablePolicy {
+  code: string;
+  name?: string;
+  targetEnvironmentCode: string;
+  entityTypes?: string[];
+  appliesToAllEntityTypes?: boolean;
+  active?: boolean;
+  /** True when every step of its workflow approves automatically */
+  autoEnable?: boolean;
 }
 
 export interface PackageInstallPlan {

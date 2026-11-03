@@ -5,6 +5,8 @@ export {
 } from "./notification-feed-provider";
 export type {
   NotificationActionKind,
+  NotificationAppLink,
+  NotificationExternalLink,
   NotificationFeedAdapter,
   NotificationFeedItem,
   NotificationFeedProviderProps,

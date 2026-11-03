@@ -160,7 +160,7 @@ export function WizardLayout({
             {/* Form Content - scrollable when content overflows */}
             <div
               ref={contentScrollRef}
-              className="scrollbar-thin flex-1 overflow-y-auto px-6 py-6 lg:px-8"
+              className="flex-1 scrollbar-thin overflow-y-auto px-6 py-6 lg:px-8"
             >
               {description && <p className="text-muted-foreground mb-6 text-sm">{description}</p>}
               {contentSlot}

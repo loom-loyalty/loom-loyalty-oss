@@ -7,6 +7,10 @@
     "url": "https://www.loomloyalty.com"
   },
   "homepage": "https://docs.loomloyalty.com",
+  "icon": "./.claude-plugin/icon.png",
+  "documentationUrl": "https://docs.loomloyalty.com",
+  "privacyPolicyUrl": "https://www.loomloyalty.com/privacy",
+  "termsOfServiceUrl": "https://www.loomloyalty.com/terms",
   "repository": "https://github.com/loom-loyalty/loom-loyalty-oss",
   "license": "Apache-2.0",
   "keywords": ["loyalty", "treadle", "cli", "api", "sdk"]

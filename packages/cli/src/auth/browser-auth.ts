@@ -16,19 +16,41 @@ interface AuthResult {
   token: string;
 }
 
+/** What a saved sign-in's callback brings: a one-time code, or a token from an older dashboard. */
+export type SavedAuthResult =
+  | { code: string; token?: undefined }
+  | { token: string; code?: undefined };
+
 interface AuthOptions {
   /** Dashboard URL (default: https://dashboard.loomloyalty.com) */
   dashboardUrl?: string;
   /** Timeout in milliseconds (default: 5 minutes) */
   timeout?: number;
+  /** The organization or environment id to sign in to; without one, the browser shows the picker */
+  organization?: string;
+  /**
+   * A PKCE S256 challenge: the dashboard then signs the CLI in with a session of its own and
+   * answers with a one-time code to trade, with the verifier, for that session's tokens.
+   */
+  codeChallenge?: string;
 }
 
 const DEFAULT_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 
 /**
- * Authenticate via browser and return JWT token
+ * Authenticate via browser and return JWT token (or, with a `codeChallenge`, a one-time code)
  */
-export async function authenticateViaBrowser(options: AuthOptions = {}): Promise<AuthResult> {
+export function authenticateViaBrowser(
+  options?: AuthOptions & { codeChallenge?: undefined }
+): Promise<AuthResult>;
+// eslint-disable-next-line no-redeclare -- TypeScript overloads, not a second declaration
+export function authenticateViaBrowser(
+  options: AuthOptions & { codeChallenge: string }
+): Promise<SavedAuthResult>;
+// eslint-disable-next-line no-redeclare -- the overloads' implementation
+export async function authenticateViaBrowser(
+  options: AuthOptions = {}
+): Promise<AuthResult | SavedAuthResult> {
   if (process.env.CI) {
     throw new Error(
       "Browser-based authentication is unavailable in CI (no interactive browser). " +
@@ -63,6 +85,7 @@ export async function authenticateViaBrowser(options: AuthOptions = {}): Promise
 
       if (url.pathname === "/callback") {
         const token = url.searchParams.get("token");
+        const code = options.codeChallenge ? url.searchParams.get("code") : null;
         const error = url.searchParams.get("error");
 
         if (error) {
@@ -84,7 +107,7 @@ export async function authenticateViaBrowser(options: AuthOptions = {}): Promise
           return;
         }
 
-        if (token) {
+        if (token || code) {
           // Return success page (using CSS named colors for standalone HTML)
           res.writeHead(200, { "Content-Type": "text/html" });
           res.end(`
@@ -98,7 +121,7 @@ export async function authenticateViaBrowser(options: AuthOptions = {}): Promise
             </html>
           `);
           cleanup();
-          resolve({ token });
+          resolve(code ? { code } : { token: token! });
           return;
         }
 
@@ -132,13 +155,16 @@ export async function authenticateViaBrowser(options: AuthOptions = {}): Promise
       }
 
       const callbackUrl = `http://127.0.0.1:${address.port}/callback`;
-      const authUrl = `${dashboardUrl}/api/cli/token?callback=${encodeURIComponent(callbackUrl)}`;
+      const authUrl = new URL("/api/cli/token", dashboardUrl);
+      authUrl.searchParams.set("callback", callbackUrl);
+      if (options.organization) authUrl.searchParams.set("organization", options.organization);
+      if (options.codeChallenge) authUrl.searchParams.set("code_challenge", options.codeChallenge);
 
       console.log("\nOpening browser for authentication...");
       console.log(`If the browser doesn't open, visit:\n${authUrl}\n`);
 
       // Open browser (don't wait for it to close)
-      open(authUrl, { wait: false })
+      open(authUrl.toString(), { wait: false })
         .then((cp) => {
           // Unref the child process so it doesn't keep Node alive
           cp.unref();
