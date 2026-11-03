@@ -67,4 +67,35 @@ describe("useNotificationsBell", () => {
     });
     await waitFor(() => expect(screen.queryByText(/approval needed/i)).toBeNull());
   });
+
+  it("hands an external link to the app unchanged", async () => {
+    const feed = adapter({
+      items: [
+        {
+          id: "msg_2",
+          title: "Investigating: Elevated API errors",
+          createdAt: new Date().toISOString(),
+          read: false,
+          done: false,
+          actionKind: "info",
+          link: { app: "external", url: "https://status.loomloyalty.com/#incident-42" },
+        },
+      ],
+    });
+    const onOpenLink = vi.fn();
+    render(
+      <NotificationFeedProvider adapter={feed}>
+        <Header onOpenLink={onOpenLink} />
+      </NotificationFeedProvider>
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /notifications, 1 unread/i }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: /^investigating: elevated api errors/i })
+    );
+    expect(onOpenLink).toHaveBeenCalledWith({
+      app: "external",
+      url: "https://status.loomloyalty.com/#incident-42",
+    });
+  });
 });

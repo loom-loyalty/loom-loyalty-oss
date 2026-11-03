@@ -111,11 +111,33 @@ function getActiveSectionId(
   return best?.id ?? rootShortcut ?? sections[0]?.id;
 }
 
+/** Shared box for rail links and buttons: a 60px-wide tile, at least 44px tall, icon over caption. */
+const railItemClasses =
+  "flex min-h-11 w-15 shrink-0 flex-col items-center justify-center gap-1 rounded-lg px-0.5 py-1.5 transition-all";
+
+/**
+ * The one-word caption under a rail icon. It is hidden from assistive tech
+ * because the link already carries the full label as its accessible name.
+ */
+function RailCaption({ children, active = false }: { children: string; active?: boolean }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        "w-full truncate text-center text-[10px] leading-3 font-medium",
+        active ? "text-white" : "text-white/80"
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
 /**
  * Two-tier sidebar component with independent navigation levels.
  * Responsive: Shows Sheet drawer on mobile, static sidebar on desktop.
  *
- * - **Icon Rail (Tier 1)**: Primary sections displayed as icons (64px)
+ * - **Icon Rail (Tier 1)**: Primary sections displayed as icons with a one-word caption (64px)
  * - **Primary Sidebar (Tier 2)**: Context-sensitive sub-navigation (224px)
  */
 export function Sidebar({
@@ -179,7 +201,7 @@ export function Sidebar({
           </div>
 
           {/* Section Icons */}
-          <nav className="flex flex-1 flex-col items-center gap-2 py-4">
+          <nav className="flex min-h-0 flex-1 flex-col items-center gap-1 overflow-x-hidden overflow-y-auto py-3">
             {sections.map((section) => {
               const isActive = section.id === activeSectionId;
               const Icon = section.icon;
@@ -188,7 +210,7 @@ export function Sidebar({
                   key={section.id}
                   href={section.href}
                   className={cn(
-                    "flex size-11 items-center justify-center rounded-lg transition-all",
+                    railItemClasses,
                     isActive
                       ? "bg-primary text-white shadow-md"
                       : "text-white/50 hover:bg-white/10 hover:text-white",
@@ -198,6 +220,7 @@ export function Sidebar({
                   onClick={(e: React.MouseEvent) => handleClick(section.href, e)}
                 >
                   <Icon className="h-5 w-5" aria-hidden="true" />
+                  <RailCaption active={isActive}>{section.railLabel ?? section.label}</RailCaption>
                   <span className="sr-only">{section.label}</span>
                 </Link>
               );
@@ -206,11 +229,14 @@ export function Sidebar({
 
           {/* Quick Actions at Bottom */}
           {quickActions.length > 0 && (
-            <div className="flex flex-col items-center gap-2 border-t border-white/10 py-4">
+            <div className="flex flex-col items-center gap-1 border-t border-white/10 py-3">
               {quickActions.map((action) => {
                 const Icon = action.icon;
-                const iconClasses =
-                  "flex size-11 items-center justify-center rounded-lg text-white/50 transition-all hover:bg-white/10 hover:text-white";
+                const iconClasses = cn(
+                  railItemClasses,
+                  "text-white/50 hover:bg-white/10 hover:text-white"
+                );
+                const caption = <RailCaption>{action.railLabel ?? action.label}</RailCaption>;
                 if (action.href && action.external) {
                   return (
                     <Tooltip key={action.label}>
@@ -223,8 +249,9 @@ export function Sidebar({
                           className={cn(iconClasses, "relative")}
                         >
                           <Icon className="h-5 w-5" aria-hidden="true" />
+                          {caption}
                           <ExternalLink
-                            className="absolute right-1 bottom-1 h-2.5 w-2.5 opacity-60"
+                            className="absolute top-1 right-1 h-2.5 w-2.5 opacity-60"
                             aria-hidden="true"
                           />
                         </a>
@@ -243,6 +270,7 @@ export function Sidebar({
                         onClick={(e: React.MouseEvent) => handleClick(action.href!, e)}
                       >
                         <Icon className="h-5 w-5" aria-hidden="true" />
+                        {caption}
                       </Link>
                     </TooltipTrigger>
                     <TooltipContent>{action.label}</TooltipContent>
@@ -256,6 +284,7 @@ export function Sidebar({
                         aria-label={action.label}
                       >
                         <Icon className="h-5 w-5" aria-hidden="true" />
+                        {caption}
                       </button>
                     </TooltipTrigger>
                     <TooltipContent>{action.label}</TooltipContent>

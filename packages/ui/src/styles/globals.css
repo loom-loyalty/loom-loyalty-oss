@@ -811,10 +811,62 @@
   }
 }
 
+/* The tool timeline's thread while Weave works: a glow travels down each
+   rail segment, like a shuttle carrying thread through a loom. Every segment
+   ends at a dot, so the glow reaches it about 81% through the cycle
+   (glow 60% of the segment, swept from -150% to 250%). */
+.loom-thread-live::before,
+.loom-thread-live > li::before {
+  left: 2.5px;
+  width: 2px;
+  background-image: linear-gradient(to bottom, transparent, var(--primary), transparent);
+  background-repeat: no-repeat;
+  background-size: 100% 60%;
+  animation: loom-thread-live 1.4s linear infinite;
+}
+
+@keyframes loom-thread-live {
+  from {
+    background-position: 0 -150%;
+  }
+  to {
+    background-position: 0 250%;
+  }
+}
+
+/* The running step's dot lights up as the thread's glow reaches it (about
+   80% through the same 1.4s cycle), then settles back. */
+.loom-dot-live {
+  animation: loom-dot-live 1.4s linear infinite;
+}
+
+@keyframes loom-dot-live {
+  0%,
+  65% {
+    background-color: var(--primary);
+    box-shadow: 0 0 0 0 transparent;
+  }
+  82% {
+    background-color: var(--primary);
+    box-shadow: 0 0 6px 2px color-mix(in oklab, var(--primary) 60%, transparent);
+  }
+  100% {
+    background-color: var(--primary);
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
 @media (prefers-reduced-motion: reduce), (forced-colors: active) {
   .loom-shimmer {
     animation: none;
     -webkit-text-fill-color: currentColor;
+    background-image: none;
+  }
+
+  .loom-thread-live::before,
+  .loom-thread-live > li::before,
+  .loom-dot-live {
+    animation: none;
     background-image: none;
   }
 }

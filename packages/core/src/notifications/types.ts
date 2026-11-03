@@ -18,10 +18,19 @@ export interface NotificationFeedItem {
   link?: NotificationLink;
 }
 
-/** Where an item leads: a path in one of the apps. */
-export interface NotificationLink {
+/** Where an item leads: a path in one of the apps, or a page outside them (opened in a new tab). */
+export type NotificationLink = NotificationAppLink | NotificationExternalLink;
+
+/** A path in the Hub or the Dashboard. */
+export interface NotificationAppLink {
   app: "hub" | "dashboard";
   path: string;
+}
+
+/** An absolute `https:` URL outside the apps, such as an incident on the status page. */
+export interface NotificationExternalLink {
+  app: "external";
+  url: string;
 }
 
 export type NotificationFeedStatus = "disabled" | "loading" | "ready" | "error";

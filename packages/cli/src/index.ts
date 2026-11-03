@@ -5,6 +5,8 @@
  * - generate: Download OpenAPI spec and regenerate API client
  * - plan, apply, status: Manage the organization's configuration from loom-loyalty-config.yaml
  * - pull: Write the organization's live configuration to loom-loyalty-config.yaml
+ * - use: Save the organization environment a deployment signs in to, in .treadlerc
+ * - logout: Forget the sign-in saved in the keychain
  * - config: Manage Hub configuration (generate, push, pull, validate)
  */
 
@@ -12,9 +14,12 @@ import { readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { runConfigCommand } from "./commands/config.js";
+import { runDoctorCommand } from "./commands/doctor.js";
 import { generate, parseArgs } from "./commands/generate.js";
+import { runLogoutCommand } from "./commands/logout.js";
 import { runManifestCommand } from "./commands/manifest.js";
 import { runPullCommand } from "./commands/pull.js";
+import { runUseCommand } from "./commands/use.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -55,8 +60,23 @@ export async function main(args: string[]): Promise<void> {
       break;
     }
 
+    case "doctor": {
+      process.exitCode = await runDoctorCommand(args.slice(1));
+      break;
+    }
+
     case "pull": {
       process.exitCode = await runPullCommand(args.slice(1));
+      break;
+    }
+
+    case "use": {
+      process.exitCode = await runUseCommand(args.slice(1));
+      break;
+    }
+
+    case "logout": {
+      process.exitCode = await runLogoutCommand(args.slice(1));
       break;
     }
 
@@ -104,7 +124,10 @@ Commands:
   plan        Show what applying loom-loyalty-config.yaml would change
   apply       Apply loom-loyalty-config.yaml; --env promotes through the approval workflow
   status      List workflow requests waiting for the manifest's records
+  doctor      Check sign-in, organization, permissions, dependencies and drift; --fix repairs what it can
   pull        Write the organization's live configuration to loom-loyalty-config.yaml
+  use         Save the organization environment to sign in to, in .treadlerc
+  logout      Forget the sign-in saved in your keychain
   config      Hub configuration files; the manifest's hub: section replaces push and pull
   help        Show this help message
   version     Show version number

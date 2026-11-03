@@ -17,7 +17,7 @@ import {
   SCHEMA_V1,
   sectionRecordCount,
 } from "../manifest/schema.js";
-import { createApiClient, DEFAULT_DEPLOYMENT, DEPLOYMENTS } from "../utils/deployment.js";
+import { createApiClient, defaultDeployment, DEPLOYMENTS } from "../utils/deployment.js";
 import { colors } from "../utils/output.js";
 import { EXIT_ERROR, EXIT_OK } from "./manifest.js";
 
@@ -28,6 +28,8 @@ export interface PullOptions {
   deployment: string;
   /** A WorkOS session token or an llk_ M2M API key; without one, a browser login */
   token?: string;
+  /** The organization or environment id a browser login signs in to; else .treadlerc's, else picked */
+  organization?: string;
   /** The manifest's code; without it, the existing file's */
   code?: string;
   /** One program's code: pull that program and everything it uses */
@@ -52,7 +54,7 @@ type Log = (line: string) => void;
 export function parsePullArgs(args: string[]): PullOptions | { error: string } | { help: true } {
   const options: PullOptions = {
     file: DEFAULT_MANIFEST_FILE,
-    deployment: DEFAULT_DEPLOYMENT,
+    deployment: "",
     force: false,
   };
   for (let i = 0; i < args.length; i++) {
@@ -77,6 +79,12 @@ export function parsePullArgs(args: string[]): PullOptions | { error: string } |
           return { error: `--deployment must be one of ${DEPLOYMENTS.join(", ")}` };
         }
         options.deployment = deployment;
+        break;
+      }
+      case "--org": {
+        const organization = value();
+        if (!organization) return { error: "--org requires an organization or environment id" };
+        options.organization = organization;
         break;
       }
       case "-t":
@@ -106,6 +114,13 @@ export function parsePullArgs(args: string[]): PullOptions | { error: string } |
         return { help: true };
       default:
         return { error: `Unknown option: ${arg}` };
+    }
+  }
+  if (!options.deployment) {
+    try {
+      options.deployment = defaultDeployment();
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : String(error) };
     }
   }
   return options;
@@ -265,7 +280,7 @@ export async function runPullCommand(args: string[]): Promise<number> {
   try {
     return await executePull(
       parsed,
-      () => createApiClient(parsed.deployment, parsed.token),
+      () => createApiClient(parsed.deployment, parsed.token, parsed.organization),
       diskFiles
     );
   } catch (error) {
@@ -296,7 +311,9 @@ Options:
       --code <code>          The manifest's code (default: the existing file's code)
       --program <code>       Pull one program and everything it uses, not the whole organization
       --force                Overwrite an existing file; its comments are not kept
-      --deployment <name>    ${DEPLOYMENTS.join(" | ")} (default: ${DEFAULT_DEPLOYMENT})
+      --deployment <name>    ${DEPLOYMENTS.join(" | ")} (default: .treadlerc's, else production)
+      --org <id>             Sign in to this organization or environment, not the picked one;
+                             .treadlerc's organization: does the same (see treadle use)
   -t, --token <token>        Skip browser login: a WorkOS session token or an llk_ API key (CI);
                              LOOM_API_TOKEN sets it without putting it on the command line
   -h, --help                 Show this help

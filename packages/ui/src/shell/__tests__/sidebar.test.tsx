@@ -267,3 +267,46 @@ describe("Sidebar active section", () => {
     expect(activeLabelWith(() => [], "/unknown/page")).toBe("Home");
   });
 });
+
+describe("Sidebar rail captions", () => {
+  const railSections: PrimaryNavSection[] = [
+    { id: "home", icon: Home, label: "Home", href: "/" },
+    { id: "org", icon: Settings, label: "Organization", railLabel: "Org", href: "/organization" },
+  ];
+
+  it("shows a one-word caption under each section icon, defaulting to the label", () => {
+    render(<Sidebar sections={railSections} getSecondaryNav={getSecondaryNav} pathname="/" />);
+
+    const rail = screen.getByRole("complementary", { name: "Primary navigation" });
+    const captions = Array.from(rail.querySelectorAll("nav span[aria-hidden='true']")).map(
+      (el) => el.textContent
+    );
+    expect(captions).toEqual(["Home", "Org"]);
+  });
+
+  it("keeps the full label as the section link's accessible name", () => {
+    render(<Sidebar sections={railSections} getSecondaryNav={getSecondaryNav} pathname="/" />);
+
+    expect(screen.getByRole("link", { name: "Organization" })).toHaveAttribute(
+      "href",
+      "/organization"
+    );
+  });
+
+  it("captions quick actions with railLabel and keeps the full label as the name", () => {
+    const quickActions: QuickAction[] = [
+      { icon: HelpCircle, label: "AI Assistant", railLabel: "AI", onClick: vi.fn() },
+    ];
+    render(
+      <Sidebar
+        sections={railSections}
+        getSecondaryNav={getSecondaryNav}
+        pathname="/"
+        quickActions={quickActions}
+      />
+    );
+
+    const button = screen.getByRole("button", { name: "AI Assistant" });
+    expect(button.querySelector("span[aria-hidden='true']")?.textContent).toBe("AI");
+  });
+});

@@ -19,7 +19,7 @@ import type {
 } from "../api/types.js";
 import { loadManifest } from "../manifest/load.js";
 import { DEFAULT_MANIFEST_FILE, type TenantManifest } from "../manifest/schema.js";
-import { createApiClient, DEFAULT_DEPLOYMENT, DEPLOYMENTS } from "../utils/deployment.js";
+import { createApiClient, defaultDeployment, DEPLOYMENTS } from "../utils/deployment.js";
 import { colors } from "../utils/output.js";
 
 export const EXIT_OK = 0;
@@ -35,6 +35,8 @@ export interface ManifestOptions {
   deployment: string;
   /** A WorkOS session token or an llk_ M2M API key; without one, a browser login */
   token?: string;
+  /** The organization or environment id a browser login signs in to; else .treadlerc's, else picked */
+  organization?: string;
   /** apply: skip the confirmation */
   yes: boolean;
 }
@@ -62,7 +64,7 @@ export function parseManifestArgs(
 ): ManifestOptions | { error: string } | { help: true } {
   const options: ManifestOptions = {
     file: DEFAULT_MANIFEST_FILE,
-    deployment: DEFAULT_DEPLOYMENT,
+    deployment: "",
     yes: false,
   };
   for (let i = 0; i < args.length; i++) {
@@ -95,6 +97,12 @@ export function parseManifestArgs(
         options.deployment = deployment;
         break;
       }
+      case "--org": {
+        const organization = value();
+        if (!organization) return { error: "--org requires an organization or environment id" };
+        options.organization = organization;
+        break;
+      }
       case "-t":
       case "--token": {
         const token = value();
@@ -111,6 +119,13 @@ export function parseManifestArgs(
         return { help: true };
       default:
         return { error: `Unknown option: ${arg}` };
+    }
+  }
+  if (!options.deployment) {
+    try {
+      options.deployment = defaultDeployment();
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : String(error) };
     }
   }
   return options;
@@ -175,7 +190,12 @@ export function renderPromotions(promotions: PackagePromotion[]): string {
       const color = failed ? colors.red : colors.green;
       const request = promotion.workflowRequestId ? ` request ${promotion.workflowRequestId}` : "";
       const message = promotion.message ? `: ${promotion.message}` : "";
-      return `  ${color}${promotion.status ?? "?"}${colors.reset} ${promotion.entityType} x${promotion.entityCount}${request}${message}`;
+      // The Platform reports an opened request as COMPLETED: the opening completed, not the
+      // approval. Say what it means, so nobody takes it for approved.
+      const opened = !failed && promotion.workflowRequestId;
+      const label = opened ? "OPENED" : (promotion.status ?? "?");
+      const waits = opened ? " (waits for approval; treadle status lists it)" : "";
+      return `  ${color}${label}${colors.reset} ${promotion.entityType} x${promotion.entityCount}${request}${message}${waits}`;
     })
     .join("\n");
 }
@@ -207,6 +227,11 @@ export async function executePlan(
     log(
       `\n${colors.red}Conflicted or blocked records stop the install; nothing would be written.${colors.reset}`
     );
+    if (records(result).some((record) => (record.missing ?? []).length > 0)) {
+      log(
+        `${colors.dim}Records name lookup values or records that neither the file nor the organization has; treadle doctor lists them, and doctor --fix declares the lookup values.${colors.reset}`
+      );
+    }
   } else if (options.env) {
     log(
       `\n${colors.dim}apply --env ${options.env} opens workflow requests for records not yet in ${options.env}.${colors.reset}`
@@ -369,7 +394,7 @@ export async function runManifestCommand(
   }
 
   try {
-    const client = await createApiClient(parsed.deployment, parsed.token);
+    const client = await createApiClient(parsed.deployment, parsed.token, parsed.organization);
     switch (command) {
       case "plan":
         return await executePlan(parsed, loaded.manifest, client);
@@ -405,7 +430,9 @@ Usage:
 
 Options:
   -f, --file <path>          Manifest (default: ${DEFAULT_MANIFEST_FILE})
-${command === "status" ? "" : "      --env <code>           Organization environment to promote into, such as prod\n"}      --deployment <name>    ${DEPLOYMENTS.join(" | ")} (default: ${DEFAULT_DEPLOYMENT})
+${command === "status" ? "" : "      --env <code>           Organization environment to promote into, such as prod\n"}      --deployment <name>    ${DEPLOYMENTS.join(" | ")} (default: .treadlerc's, else production)
+      --org <id>             Sign in to this organization or environment, not the picked one;
+                             .treadlerc's organization: does the same (see treadle use)
   -t, --token <token>        Skip browser login: a WorkOS session token or an llk_ API key (CI);
                              LOOM_API_TOKEN sets it without putting it on the command line
 ${command === "apply" ? "  -y, --yes                  Apply without asking\n" : ""}  -h, --help                 Show this help

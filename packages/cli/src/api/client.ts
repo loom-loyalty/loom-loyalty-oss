@@ -11,6 +11,7 @@ import type {
   ApiDataModel,
   ApiResponse,
   CreateDataModelInput,
+  EnablePolicy,
   ExportManifestInput,
   InstallManifestInput,
   PackageInstallation,
@@ -42,7 +43,9 @@ export class ApiError extends Error {
   constructor(
     message: string,
     public status: number,
-    public errors?: Array<{ code: number; message: string }>
+    public errors?: Array<{ code: number; message: string; description?: string | null }>,
+    /** The envelope's `data` when the Platform sent one with the error, such as a conflicted plan */
+    public data?: unknown
   ) {
     super(message);
     this.name = "ApiError";
@@ -50,7 +53,11 @@ export class ApiError extends Error {
 
   /** The Platform's own error messages when it sent any, else the HTTP status line. */
   describe(): string {
-    const messages = (this.errors ?? []).map((error) => error.message).filter(Boolean);
+    const messages = (this.errors ?? [])
+      .map((error) =>
+        error.description ? `${error.message} (${error.description})` : error.message
+      )
+      .filter(Boolean);
     return messages.length > 0 ? messages.join("; ") : this.message;
   }
 }
@@ -108,17 +115,20 @@ export class ApiClient {
     const text = await response.text();
 
     if (!response.ok) {
-      let errors: Array<{ code: number; message: string }> | undefined;
+      let errors: Array<{ code: number; message: string; description?: string | null }> | undefined;
+      let data: unknown;
       try {
         const json = JSON.parse(text);
         errors = json.errors;
+        data = json.data;
       } catch {
         // Not JSON, use text as error message
       }
       throw new ApiError(
         `API request failed: ${response.status} ${response.statusText}`,
         response.status,
-        errors
+        errors,
+        data
       );
     }
 
@@ -317,19 +327,27 @@ export class ApiClient {
    * A conflicted plan is not an error; it comes back with `conflicted` set.
    */
   async installManifest(input: InstallManifestInput): Promise<PackageInstallationResult> {
-    const response = await this.request<PackageInstallationResult>(
-      "POST",
-      "/package-installations",
-      {
-        code: input.code,
-        dryRun: input.dryRun,
-        manifest: input.manifest,
-        ...(input.targetEnvironmentCode
-          ? { targetEnvironmentCode: input.targetEnvironmentCode }
-          : {}),
+    try {
+      const response = await this.request<PackageInstallationResult>(
+        "POST",
+        "/package-installations",
+        {
+          code: input.code,
+          dryRun: input.dryRun,
+          manifest: input.manifest,
+          ...(input.targetEnvironmentCode
+            ? { targetEnvironmentCode: input.targetEnvironmentCode }
+            : {}),
+        }
+      );
+      return response.data;
+    } catch (error) {
+      // The Platform answers a conflicted plan with 409, the plan in `data` and one error per conflict.
+      if (error instanceof ApiError && error.status === 409 && isConflictedPlan(error.data)) {
+        return error.data;
       }
-    );
-    return response.data;
+      throw error;
+    }
   }
 
   /**
@@ -360,6 +378,12 @@ export class ApiClient {
     return installations.find((installation) => installation.packageCode === code) ?? null;
   }
 
+  /** The organization's active enable-in-environment policies. */
+  async listActiveEnablePolicies(): Promise<EnablePolicy[]> {
+    const response = await this.request<EnablePolicy[]>("GET", "/enable-policies/active");
+    return Array.isArray(response.data) ? response.data : [];
+  }
+
   /** Every workflow request the caller can see, page by page (at most `maxPages` of 100). */
   async listWorkflowRequests(maxPages = 20): Promise<WorkflowRequest[]> {
     const requests: WorkflowRequest[] = [];
@@ -375,4 +399,13 @@ export class ApiClient {
     }
     return requests;
   }
+}
+
+function isConflictedPlan(data: unknown): data is PackageInstallationResult {
+  return (
+    typeof data === "object" &&
+    data !== null &&
+    (data as PackageInstallationResult).conflicted === true &&
+    Array.isArray((data as PackageInstallationResult).packages)
+  );
 }

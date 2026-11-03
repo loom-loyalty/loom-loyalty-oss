@@ -16,6 +16,7 @@ import {
   openRequestsFor,
   parseManifestArgs,
   planExitCode,
+  renderPromotions,
   type ManifestOptions,
 } from "../../src/commands/manifest.js";
 import type { TenantManifest } from "../../src/manifest/schema.js";
@@ -387,5 +388,29 @@ describe("status", () => {
 
     expect(await executeStatus(MANIFEST, client, (line) => lines.push(line))).toBe(EXIT_OK);
     expect(lines[0]).toContain("has not been applied");
+  });
+});
+
+describe("renderPromotions", () => {
+  it("says an opened request waits for approval, whatever the Platform calls it", () => {
+    const text = renderPromotions([
+      {
+        entityType: "EVENT_RULE",
+        entityCount: 9,
+        workflowRequestId: "wkrq_1",
+        status: "COMPLETED",
+      },
+    ]);
+    expect(text).toContain("OPENED");
+    expect(text).not.toContain("COMPLETED");
+    expect(text).toContain("waits for approval");
+  });
+
+  it("keeps a failure as FAILED", () => {
+    const text = renderPromotions([
+      { entityType: "FLOW", entityCount: 1, status: "FAILED", message: "no workflow" },
+    ]);
+    expect(text).toContain("FAILED");
+    expect(text).not.toContain("waits for approval");
   });
 });

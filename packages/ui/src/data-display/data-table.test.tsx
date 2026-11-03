@@ -816,24 +816,31 @@ describe("DataTable virtualized mode", () => {
       count: i,
     }));
 
-  let offsetHeightDescriptor: PropertyDescriptor | undefined;
+  // react-virtual reads the scroll container's clientHeight and each row's
+  // offsetHeight, so both need a stand-in.
+  const MEASURED = ["offsetHeight", "clientHeight"] as const;
+  const descriptors = new Map<string, PropertyDescriptor | undefined>();
 
   beforeAll(() => {
-    // jsdom runs no layout, so every element reports offsetHeight 0 — and a
+    // jsdom runs no layout, so every element reports a height of 0 — and a
     // virtualizer whose scroll container measures 0 renders nothing at all.
     // Report the inline height or max-height a real browser would honour instead.
-    offsetHeightDescriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "offsetHeight");
-    Object.defineProperty(HTMLElement.prototype, "offsetHeight", {
-      configurable: true,
-      get(this: HTMLElement) {
-        return Number.parseInt(this.style.height || this.style.maxHeight, 10) || 0;
-      },
-    });
+    for (const prop of MEASURED) {
+      descriptors.set(prop, Object.getOwnPropertyDescriptor(HTMLElement.prototype, prop));
+      Object.defineProperty(HTMLElement.prototype, prop, {
+        configurable: true,
+        get(this: HTMLElement) {
+          return Number.parseInt(this.style.height || this.style.maxHeight, 10) || 0;
+        },
+      });
+    }
   });
 
   afterAll(() => {
-    if (offsetHeightDescriptor) {
-      Object.defineProperty(HTMLElement.prototype, "offsetHeight", offsetHeightDescriptor);
+    for (const prop of MEASURED) {
+      const descriptor = descriptors.get(prop);
+      if (descriptor) Object.defineProperty(HTMLElement.prototype, prop, descriptor);
+      else Reflect.deleteProperty(HTMLElement.prototype, prop);
     }
   });
 

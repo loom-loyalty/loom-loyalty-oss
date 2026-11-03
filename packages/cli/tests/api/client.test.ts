@@ -198,6 +198,69 @@ describe("ApiClient tenant manifests", () => {
     ]);
   });
 
+  it("returns a conflicted plan the Platform answers with 409", async () => {
+    const plan = {
+      packageCode: "warp-up",
+      dryRun: true,
+      applied: false,
+      conflicted: true,
+      packages: [
+        {
+          packageCode: "warp-up",
+          records: [
+            { kind: "EVENT_TYPE", code: "step", action: "CONFLICT", reason: "data model differs" },
+            { kind: "TARGET", code: "weaver", action: "UPDATE" },
+          ],
+        },
+      ],
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            success: false,
+            data: plan,
+            errors: [
+              {
+                code: 409,
+                message: "EVENT_TYPE step conflicts with the package",
+                description: "data model differs",
+              },
+            ],
+          }),
+          { status: 409, statusText: "Conflict" }
+        )
+      )
+    );
+
+    expect(await client.installManifest({ code: "warp-up", manifest: {}, dryRun: true })).toEqual(
+      plan
+    );
+  });
+
+  it("adds each error's description to the Platform's messages", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            errors: [
+              { code: 409, message: "An industry package", description: "cannot uninstall" },
+            ],
+          }),
+          { status: 409, statusText: "Conflict" }
+        )
+      )
+    );
+
+    const error = await client
+      .installManifest({ code: "x", manifest: {}, dryRun: true })
+      .catch((e) => e);
+
+    expect((error as ApiError).describe()).toBe("An industry package (cannot uninstall)");
+  });
+
   it("describes a failure with the Platform's own messages", async () => {
     vi.stubGlobal(
       "fetch",

@@ -1,6 +1,6 @@
 {
   "name": "@loom-loyalty/schema",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "private": false,
   "license": "Apache-2.0",
   "description": "Schema parsing and UI generation for Loom Loyalty Hub",

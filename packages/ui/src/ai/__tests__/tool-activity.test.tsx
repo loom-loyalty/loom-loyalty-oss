@@ -65,6 +65,8 @@ describe("LoomToolActivity", () => {
     expect(header).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByText("Working with your program")).toBeInTheDocument();
     expect(screen.getByTestId("loom-tool-activity")).toHaveAttribute("data-state", "working");
+    // The thread animates while the turn works.
+    expect(screen.getByRole("list")).toHaveClass("loom-thread-live");
   });
 
   it("treats a call with no result as done once the turn is over", () => {
@@ -80,6 +82,22 @@ describe("LoomToolActivity", () => {
     const header = screen.getByRole("button", { name: /2 steps/i });
     expect(header).toHaveAttribute("aria-expanded", "false");
     expect(screen.getByTestId("loom-tool-activity")).toHaveAttribute("data-state", "done");
+  });
+
+  it("lights only the latest running step's dot", () => {
+    render(
+      <LoomToolActivity
+        activities={[activity("a", "weave"), activity("b", "analytics")]}
+        steps={[]}
+        isLast
+        awaitingResponse={false}
+      />
+    );
+    const dots = screen
+      .getAllByRole("listitem")
+      .map((li) => li.querySelector(":scope > span[aria-hidden]"));
+    expect(dots[0]).not.toHaveClass("loom-dot-live");
+    expect(dots[1]).toHaveClass("loom-dot-live");
   });
 
   it("stays open between the last tool and the first answer token", () => {

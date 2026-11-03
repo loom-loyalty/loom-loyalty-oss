@@ -10,7 +10,7 @@ import { defineOpenUIComponent } from "../../types";
 
 const extractionSchema = z.object({
   expectedField: z.string(),
-  value: z.unknown(),
+  value: z.unknown().optional(),
   confidence: z.number().min(0).max(1),
   sourceLocation: z.object({ line: z.number(), col: z.number() }).optional(),
 });
