@@ -11,6 +11,7 @@
   "documentationUrl": "https://docs.loomloyalty.com/docs/guide/connect-ai-assistants/",
   "privacyPolicyUrl": "https://www.loomloyalty.com/privacy",
   "termsOfServiceUrl": "https://www.loomloyalty.com/terms",
+  "supportUrl": "https://docs.loomloyalty.com/docs/guide/connect-ai-assistants/#need-help",
   "repository": "https://github.com/loom-loyalty/loom-loyalty-oss",
   "license": "Apache-2.0",
   "keywords": ["loyalty", "campaigns", "offers", "analytics", "mcp"]
