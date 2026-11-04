@@ -58,6 +58,8 @@ export { FormSheet, type FormSheetError, type FormSheetProps } from "./form-shee
 
 export { MaskedField, type MaskedFieldProps } from "./masked-field";
 
+export { OneTimeCodeInput, type OneTimeCodeInputProps } from "./one-time-code-input";
+
 export {
   LocalizedStringInput,
   type LocalizedString,

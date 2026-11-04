@@ -141,3 +141,53 @@ describe("addMetadataValues", () => {
     expect(loaded.ok && loaded.manifest.metadata?.length).toBe(2);
   });
 });
+
+describe("data type lookups", () => {
+  const plan: PackageInstallationResult = {
+    packageCode: "directory-review",
+    dryRun: true,
+    applied: false,
+    conflicted: true,
+    packages: [
+      {
+        packageCode: "directory-review",
+        records: [
+          {
+            kind: "BADGE",
+            code: "first-visit",
+            action: "CONFLICT",
+            missing: [
+              { kind: "METADATA", type: "BADGE_TYPE", code: "ACHIEVEMENT", field: "typeCode" },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+
+  it("declares a badge type with its standard data model", () => {
+    const values = missingDependencies(plan).values;
+    expect(values[0]).toMatchObject({
+      type: "BADGE_TYPE",
+      code: "ACHIEVEMENT",
+      dataModel: "badge",
+    });
+
+    const fixed = addMetadataValues(
+      "schema: loom-loyalty-config.v1\ncode: directory-review\n",
+      values
+    );
+    const loaded = parseManifest(fixed);
+    expect(loaded.ok).toBe(true);
+    if (!loaded.ok) return;
+    expect(loaded.manifest.metadata).toEqual([
+      { type: "BADGE_TYPE", code: "ACHIEVEMENT", name: "Achievement", dataModel: "badge" },
+    ]);
+  });
+
+  it("gives a plain metadata value no data model", () => {
+    expect(missingDependencies(PLAN).values.every((value) => value.dataModel === undefined)).toBe(
+      true
+    );
+  });
+});
