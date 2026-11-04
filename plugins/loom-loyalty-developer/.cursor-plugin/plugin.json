@@ -1,0 +1,15 @@
+{
+  "name": "loom-loyalty-developer",
+  "displayName": "Loom Loyalty Developer",
+  "version": "0.1.0",
+  "description": "Set up and maintain a Loom Loyalty tenant with treadle, the API, the SDK and the Loom Loyalty connector.",
+  "author": {
+    "name": "Loom Loyalty",
+    "email": "support@loomloyalty.com"
+  },
+  "homepage": "https://docs.loomloyalty.com",
+  "repository": "https://github.com/loom-loyalty/loom-loyalty-oss",
+  "license": "Apache-2.0",
+  "keywords": ["loyalty", "treadle", "cli", "api", "sdk", "mcp"],
+  "logo": ".claude-plugin/icon.png"
+}

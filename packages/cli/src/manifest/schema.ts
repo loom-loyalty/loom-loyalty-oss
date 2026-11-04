@@ -49,6 +49,8 @@ const metadata = z.strictObject({
   code: z.string().min(1),
   name: z.string().optional(),
   description: localized.optional(),
+  /** The data model a value of a DATA_TYPE type (BADGE_TYPE, COUPON_TYPE ...) links to. */
+  dataModel: z.string().optional(),
   properties: z.record(z.string(), z.unknown()).optional(),
 });
 

@@ -45,6 +45,8 @@ This repository is also a Claude plugin marketplace with two plugins:
 /plugin install loom-loyalty-marketing@loom-loyalty
 ```
 
+The same two plugins are also Cursor plugins (`.cursor-plugin/`). In Cursor, both include the Loom Loyalty connector.
+
 Claude plans without plugins can download each skill as a zip from [docs.loomloyalty.com](https://docs.loomloyalty.com/).
 
 ## Development

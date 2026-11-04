@@ -1,0 +1,15 @@
+{
+  "name": "loom-loyalty-marketing",
+  "displayName": "Loom Loyalty Marketing",
+  "version": "0.1.0",
+  "description": "Launch campaigns and offers and read results through the Loom Loyalty connector. Nothing goes live until you say yes.",
+  "author": {
+    "name": "Loom Loyalty",
+    "email": "support@loomloyalty.com"
+  },
+  "homepage": "https://docs.loomloyalty.com/docs/guide/connect-ai-assistants/",
+  "repository": "https://github.com/loom-loyalty/loom-loyalty-oss",
+  "license": "Apache-2.0",
+  "keywords": ["loyalty", "campaigns", "offers", "analytics", "mcp"],
+  "logo": ".claude-plugin/icon.png"
+}

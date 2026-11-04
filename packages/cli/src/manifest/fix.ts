@@ -11,6 +11,8 @@ export interface MissingValue {
   type: string;
   code: string;
   name: string;
+  /** The data model a value of a DATA_TYPE type links to, where the type has a standard one. */
+  dataModel?: string;
   /** Each record that names it, as `<kind> <code> (<field>)` */
   neededBy: string[];
 }
@@ -48,6 +50,20 @@ const STANDARD_NAMES: Record<string, Record<string, string>> = {
   },
 };
 
+/**
+ * The system data model each DATA_TYPE lookup type's values use. A value of one of these types is
+ * a data type, which the Platform links to a data model (declared as `dataModel`).
+ */
+const STANDARD_DATA_MODELS: Record<string, string> = {
+  BADGE_TYPE: "badge",
+  COUPON_TYPE: "coupon",
+};
+
+/** The data model `--fix` gives a new value of `type`, when the type is a standard DATA_TYPE type. */
+export function valueDataModel(type: string): string | undefined {
+  return STANDARD_DATA_MODELS[type];
+}
+
 /** The name `--fix` gives a new value: the standard one, else its code as words ("onboarding-step" → "Onboarding step"). */
 export function valueName(type: string, code: string): string {
   const standard = STANDARD_NAMES[type]?.[code];
@@ -70,6 +86,7 @@ export function missingDependencies(result: PackageInstallationResult): MissingD
             type: missing.type,
             code: missing.code,
             name: valueName(missing.type, missing.code),
+            ...(valueDataModel(missing.type) ? { dataModel: valueDataModel(missing.type) } : {}),
             neededBy: [],
           };
           entry.neededBy.push(by);
@@ -120,7 +137,14 @@ export function addMetadataValues(text: string, values: MissingValue[]): string 
   );
   for (const value of values) {
     if (declared.has(`${value.type}/${value.code}`)) continue;
-    seq.add(document.createNode({ type: value.type, code: value.code, name: value.name }));
+    seq.add(
+      document.createNode({
+        type: value.type,
+        code: value.code,
+        name: value.name,
+        ...(value.dataModel ? { dataModel: value.dataModel } : {}),
+      })
+    );
   }
   return document.toString();
 }
