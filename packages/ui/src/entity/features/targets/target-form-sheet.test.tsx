@@ -101,6 +101,8 @@ beforeEach(() => {
   };
 });
 
+import { axe } from "@loom-loyalty/test-utils/axe";
+import { activeWindowError, listTimeZones } from "./cycle-window-fields.js";
 import { TargetFormSheet } from "./target-form-sheet.js";
 import type { TargetFormSheetProps } from "./types.js";
 
@@ -832,5 +834,359 @@ describe("[audit] L3 — TARGET auto-create suggested metadata", () => {
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
     expect(metadataFieldMock.hookReturn.createMetadata).not.toHaveBeenCalled();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────
+// Cycle window (U14): counter targets carry `cycleDurationPeriod` so an
+// owner can build a once-per-local-day cap in Hub. Brief:
+// /mnt/project-files/briefs/staff-redemption-u14-target-reset-schedule.md
+// ─────────────────────────────────────────────────────────────────────────
+
+describe("Cycle window — counter cycleDurationPeriod", () => {
+  const chicagoDaily = {
+    durationPeriod: "DAYS",
+    durationPeriodValue: 1,
+    durationPeriodType: "CALENDAR",
+    timeZone: "America/Chicago",
+  };
+
+  const scheduledCounter = {
+    ...(counterInitial as unknown as Record<string, unknown>),
+    cappingTarget: true,
+    cycleDurationPeriod: chicagoDaily,
+  } as unknown as NonNullable<TargetFormSheetProps["initialData"]>;
+
+  function mockBrowserZone(timeZone: string) {
+    const real = Intl.DateTimeFormat.prototype.resolvedOptions;
+    return vi.spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions").mockImplementation(function (
+      this: Intl.DateTimeFormat
+    ) {
+      return { ...real.call(this), timeZone };
+    });
+  }
+
+  function fillNewCounter() {
+    fireEvent.change(screen.getByLabelText(/^Name/i, { selector: "input" }), {
+      target: { value: "One visit a day" },
+    });
+    addProgram();
+    selectType(/^Counter$/i);
+    fireEvent.change(document.querySelector("#target-counter-type-code") as HTMLInputElement, {
+      target: { value: "VISITS" },
+    });
+    fireEvent.change(document.querySelector("#counter-target-value") as HTMLInputElement, {
+      target: { value: "1" },
+    });
+    fireEvent.click(document.querySelector("#capping-target") as HTMLElement);
+  }
+
+  function openCycleConfiguration() {
+    fireEvent.click(screen.getByRole("button", { name: /^Cycle Configuration$/i }));
+  }
+
+  /** Expand the section and tick "Set cycle window" for a target that has none yet. */
+  function addCycleWindow() {
+    openCycleConfiguration();
+    fireEvent.click(screen.getByRole("checkbox", { name: /^Set cycle window$/i }));
+  }
+
+  function zoneTrigger() {
+    return screen.getByRole("combobox", { name: /^Time zone$/i });
+  }
+
+  function submit(label: RegExp) {
+    fireEvent.click(screen.getByRole("button", { name: label }));
+  }
+
+  it("case 1 + 4: a new daily calendar schedule defaults to the browser zone and is sent", async () => {
+    const spy = mockBrowserZone("America/Chicago");
+    try {
+      const { onSubmit } = renderSheet();
+      fillNewCounter();
+      addCycleWindow();
+
+      expect((document.querySelector("#cycle-window-every") as HTMLInputElement).value).toBe("1");
+      expect(zoneTrigger()).toHaveTextContent("America/Chicago");
+
+      submit(/^Create Target$/i);
+      await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+      const payload = onSubmit.mock.calls[0]?.[0] as Record<string, unknown>;
+      expect(payload.cycleDurationPeriod).toEqual(chicagoDaily);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("case 2: a saved schedule shows its values when the target is reopened", () => {
+    renderSheet({ mode: "edit", initialData: scheduledCounter });
+    expect(screen.getByRole("button", { name: /^Cycle Configuration$/i })).toHaveAttribute(
+      "aria-expanded",
+      "true"
+    );
+    expect((document.querySelector("#cycle-window-every") as HTMLInputElement).value).toBe("1");
+    expect(screen.getByRole("combobox", { name: /^Unit$/i })).toHaveTextContent(/Days/);
+    expect(screen.getByRole("combobox", { name: /^Alignment$/i })).toHaveTextContent(/Calendar/);
+    expect(zoneTrigger()).toHaveTextContent("America/Chicago");
+  });
+
+  it("case 3: the zone list never offers ORGANIZATION and every entry is a real IANA zone", () => {
+    const zones = listTimeZones();
+    expect(zones.length).toBeGreaterThan(50);
+    expect(zones).not.toContain("ORGANIZATION");
+    expect(zones).toContain("UTC");
+    for (const zone of zones) {
+      expect(() => new Intl.DateTimeFormat("en-US", { timeZone: zone })).not.toThrow();
+    }
+  });
+
+  it("case 3: searching the picker for ORGANIZATION finds nothing, and a picked zone is sent", async () => {
+    const spy = mockBrowserZone("America/Chicago");
+    try {
+      const { onSubmit } = renderSheet();
+      fillNewCounter();
+      addCycleWindow();
+
+      fireEvent.click(zoneTrigger());
+      const search = screen.getByPlaceholderText(/Search time zones/i);
+      fireEvent.change(search, { target: { value: "ORGANIZATION" } });
+      expect(screen.queryByRole("option", { name: /ORGANIZATION/i })).toBeNull();
+
+      fireEvent.change(search, { target: { value: "Europe/London" } });
+      fireEvent.click(screen.getByRole("option", { name: "Europe/London" }));
+      expect(zoneTrigger()).toHaveTextContent("Europe/London");
+
+      submit(/^Create Target$/i);
+      await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+      const payload = onSubmit.mock.calls[0]?.[0] as Record<string, unknown>;
+      expect(payload.cycleDurationPeriod).toEqual({ ...chicagoDaily, timeZone: "Europe/London" });
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("case 5: editing a target with no schedule leaves it unset", async () => {
+    const { onSubmit } = renderSheet({ mode: "edit", initialData: counterInitial });
+    fireEvent.change(screen.getByLabelText(/^Name/i, { selector: "input" }), {
+      target: { value: "Spend 100 renamed" },
+    });
+    submit(/^Save Changes$/i);
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    const payload = onSubmit.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect(payload.name).toBe("Spend 100 renamed");
+    expect(payload).not.toHaveProperty("cycleDurationPeriod");
+  });
+
+  it("case 6: editing only the name keeps an existing schedule unchanged", async () => {
+    const { onSubmit } = renderSheet({ mode: "edit", initialData: scheduledCounter });
+    fireEvent.change(screen.getByLabelText(/^Name/i, { selector: "input" }), {
+      target: { value: "Daily visit cap" },
+    });
+    submit(/^Save Changes$/i);
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    const payload = onSubmit.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect(payload.cycleDurationPeriod).toEqual(chicagoDaily);
+  });
+
+  it.each(["", "0", "1.5"])(
+    "case 7: 'Cycle length' of %j blocks the save with an inline error",
+    (value) => {
+      const { onSubmit } = renderSheet();
+      fillNewCounter();
+      addCycleWindow();
+      fireEvent.change(document.querySelector("#cycle-window-every") as HTMLInputElement, {
+        target: { value },
+      });
+      submit(/^Create Target$/i);
+      expect(onSubmit).not.toHaveBeenCalled();
+      expect(screen.getByText(/Cycle length must be at least 1/i)).toBeInTheDocument();
+    }
+  );
+
+  it("case 8: the open section has labelled controls and no axe violations", async () => {
+    const { container } = renderSheet({ mode: "edit", initialData: scheduledCounter });
+    expect(screen.getByLabelText(/^Cycle length$/i)).toBe(
+      document.querySelector("#cycle-window-every")
+    );
+    expect(zoneTrigger()).toHaveAttribute("aria-expanded", "false");
+    const section = container.ownerDocument.querySelector("[data-section='cycle-window']");
+    expect(section).not.toBeNull();
+    expect(await axe(section as HTMLElement)).toHaveNoViolations();
+  });
+
+  it("case 8: the whole 'Set cycle window' row is the hit area", () => {
+    renderSheet({ mode: "create" });
+    fillNewCounter();
+    openCycleConfiguration();
+    const checkbox = screen.getByRole("checkbox", { name: /^Set cycle window$/i });
+    expect(checkbox).not.toBeChecked();
+    fireEvent.click(screen.getByText(/How long each cycle lasts/i));
+    expect(checkbox).toBeChecked();
+    expect(checkbox.closest("label")).toHaveClass("min-h-11");
+  });
+
+  it("the cycle window sits inside Cycle Configuration", () => {
+    renderSheet({ mode: "edit", initialData: scheduledCounter });
+    const toggle = screen.getByRole("button", { name: /^Cycle Configuration$/i });
+    const region = document.getElementById(toggle.getAttribute("aria-controls") ?? "");
+    expect(region?.querySelector("[data-section='cycle-window']")).not.toBeNull();
+    expect(screen.queryByRole("button", { name: /^Reset schedule$/i })).toBeNull();
+  });
+
+  it("review: collapsing the section keeps an existing schedule", async () => {
+    const { onSubmit } = renderSheet({ mode: "edit", initialData: scheduledCounter });
+    openCycleConfiguration(); // starts open for a scheduled target, so this collapses it
+    const toggle = screen.getByRole("button", { name: /^Cycle Configuration$/i });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(document.getElementById(toggle.getAttribute("aria-controls") ?? "")).toHaveAttribute(
+      "inert"
+    );
+    submit(/^Save Changes$/i);
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    const payload = onSubmit.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect(payload.cycleDurationPeriod).toEqual(chicagoDaily);
+  });
+
+  it("review: unticking 'Set cycle window' removes the schedule", async () => {
+    const { onSubmit } = renderSheet({ mode: "edit", initialData: scheduledCounter });
+    fireEvent.click(screen.getByRole("checkbox", { name: /^Set cycle window$/i }));
+    submit(/^Save Changes$/i);
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    const payload = onSubmit.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect(payload).not.toHaveProperty("cycleDurationPeriod");
+  });
+
+  it("review: a schedule set outside Hub is shown read-only and saved back unchanged", async () => {
+    const infinite = { durationPeriod: "INFINITE", durationPeriodType: "FIXED", timeZone: "UTC" };
+    const { onSubmit } = renderSheet({
+      mode: "edit",
+      initialData: {
+        ...(scheduledCounter as unknown as Record<string, unknown>),
+        cycleDurationPeriod: infinite,
+      } as unknown as NonNullable<TargetFormSheetProps["initialData"]>,
+    });
+    expect(screen.getByTestId("cycle-window-readonly")).toBeInTheDocument();
+    expect(document.querySelector("#cycle-window-every")).toBeNull();
+    submit(/^Save Changes$/i);
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    const payload = onSubmit.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect(payload.cycleDurationPeriod).toEqual(infinite);
+  });
+
+  it("review: an old schedule without a period type is saved with the SLIDING default", async () => {
+    const legacy = { durationPeriod: "DAYS", durationPeriodValue: 7, timeZone: "UTC" };
+    const { onSubmit } = renderSheet({
+      mode: "edit",
+      initialData: {
+        ...(scheduledCounter as unknown as Record<string, unknown>),
+        cycleDurationPeriod: legacy,
+      } as unknown as NonNullable<TargetFormSheetProps["initialData"]>,
+    });
+    submit(/^Save Changes$/i);
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    const payload = onSubmit.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect(payload.cycleDurationPeriod).toEqual({ ...legacy, durationPeriodType: "SLIDING" });
+  });
+
+  it("review: a browser zone missing from the list, such as a legacy alias, is added to it", () => {
+    expect(listTimeZones("Asia/Calcutta")).toContain("Asia/Calcutta");
+    expect(listTimeZones("ORGANIZATION")).not.toContain("ORGANIZATION");
+    expect(listTimeZones("Not/AZone")).not.toContain("Not/AZone");
+  });
+
+  // Brief case 9 (added 11-5): a cap only resets inside an active window. With no window the
+  // engine gives the member one cycle that never ends (CounterTarget.getNumberOfCycles), so the
+  // form must be able to set the target's own durationPeriod too.
+  it("case 9: a 90-day sliding active window is sent with the daily reset", async () => {
+    const spy = mockBrowserZone("America/Chicago");
+    try {
+      const { onSubmit } = renderSheet();
+      fillNewCounter();
+      fireEvent.click(screen.getByRole("checkbox", { name: /^Set active window$/i }));
+      fireEvent.change(screen.getByLabelText(/^Duration Value$/i), { target: { value: "90" } });
+      addCycleWindow();
+
+      submit(/^Create Target$/i);
+      await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+      const payload = onSubmit.mock.calls[0]?.[0] as Record<string, unknown>;
+      expect(payload.durationPeriod).toEqual({
+        durationPeriodType: "SLIDING",
+        durationPeriod: "DAYS",
+        durationPeriodValue: 90,
+      });
+      expect(payload.cycleDurationPeriod).toEqual(chicagoDaily);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("review: a cleared active window length blocks the save with an inline error", async () => {
+    const { onSubmit } = renderSheet();
+    fillNewCounter();
+    fireEvent.click(screen.getByRole("checkbox", { name: /^Set active window$/i }));
+    fireEvent.change(screen.getByLabelText(/^Duration Value$/i), { target: { value: "" } });
+    submit(/^Create Target$/i);
+    expect(await screen.findByText(/Active window length must be at least 1/i)).toBeInTheDocument();
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("review: a fixed active window needs a start date", () => {
+    expect(activeWindowError({ durationPeriodType: "FIXED", durationPeriod: "FIXED" })).toMatch(
+      /start date/i
+    );
+    expect(
+      activeWindowError({
+        durationPeriodType: "FIXED",
+        durationPeriod: "FIXED",
+        fixedDurationDateTimePeriod: { startDateTime: "2026-11-06T00:00:00.000Z" },
+      } as Parameters<typeof activeWindowError>[0])
+    ).toBeUndefined();
+    expect(activeWindowError(undefined)).toBeUndefined();
+  });
+
+  it("review: an untouched calendar cycle window with no zone is saved back unchanged", async () => {
+    const noZone = {
+      durationPeriod: "DAYS",
+      durationPeriodValue: 1,
+      durationPeriodType: "CALENDAR",
+    };
+    const { onSubmit } = renderSheet({
+      mode: "edit",
+      initialData: {
+        ...(scheduledCounter as unknown as Record<string, unknown>),
+        cycleDurationPeriod: noZone,
+      } as unknown as NonNullable<TargetFormSheetProps["initialData"]>,
+    });
+    fireEvent.change(screen.getByLabelText(/^Name/i, { selector: "input" }), {
+      target: { value: "Renamed" },
+    });
+    submit(/^Save Changes$/i);
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    const payload = onSubmit.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect(payload.cycleDurationPeriod).toEqual(noZone);
+  });
+
+  it("case 9: editing a target keeps its saved active window", async () => {
+    const window90 = {
+      durationPeriodType: "SLIDING",
+      durationPeriod: "DAYS",
+      durationPeriodValue: 90,
+    };
+    const { onSubmit } = renderSheet({
+      mode: "edit",
+      initialData: {
+        ...(scheduledCounter as unknown as Record<string, unknown>),
+        durationPeriod: window90,
+      } as unknown as NonNullable<TargetFormSheetProps["initialData"]>,
+    });
+    submit(/^Save Changes$/i);
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    const payload = onSubmit.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect(payload.durationPeriod).toEqual(window90);
+  });
+
+  it("case 9: a reset schedule with no active window warns that it resets only once", () => {
+    renderSheet({ mode: "edit", initialData: scheduledCounter });
+    expect(screen.getByText(/Set an active window/i)).toBeInTheDocument();
   });
 });

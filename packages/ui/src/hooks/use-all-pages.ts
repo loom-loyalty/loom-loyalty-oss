@@ -44,8 +44,8 @@ export interface UseAllPagesOptions {
   fetchPage: (page: number, size: number) => Promise<AllPagesResponse>;
   enabled?: boolean;
   staleTime?: number;
-  /** Retries for a failed page; defaults to the QueryClient's setting. */
-  retry?: boolean | number;
+  /** Retries for a failed page, or a function that decides per error; defaults to the QueryClient's setting. */
+  retry?: boolean | number | ((failureCount: number, error: Error) => boolean);
   /** Names the list in dev warnings about malformed page metadata. */
   source: string;
 }

@@ -193,3 +193,77 @@ describe("isDashboardPath", () => {
     expect(isDashboardPath("/programs")).toBe(false);
   });
 });
+
+describe("useCommandPaletteController — scope search row, recents and quick actions", () => {
+  const customer = {
+    displayLabel: "Marisol Vega",
+    entityId: "cust_1",
+    entityType: "CUSTOMER",
+    matchRanges: [],
+    score: 1,
+    snippetText: "marisol@example.com",
+    sourceUrl: "/customers/cust_1",
+  };
+
+  function renderWith(
+    options: { recentItemsKey?: string | null; onSelect?: ReturnType<typeof vi.fn> } = {}
+  ) {
+    const onSelect = options.onSelect ?? vi.fn();
+    const quickActions = [{ id: "audit", label: "Audit log", sourceUrl: "/audit-log" }];
+    const hook = renderHook(
+      ({ recentItemsKey }) =>
+        useCommandPaletteController({
+          onSelect,
+          scopes: testScopes,
+          entityTypeLabels: testLabels,
+          entityTypeIcons: testIcons,
+          recentItemsKey,
+          quickActions,
+        }),
+      { initialProps: { recentItemsKey: options.recentItemsKey ?? null } }
+    );
+    return { ...hook, onSelect, quickActions };
+  }
+
+  afterEach(() => window.localStorage.clear());
+
+  it("A3: activating the customer scope rewrites the query to customer:<body> and keeps it open", () => {
+    const { result } = renderWith();
+    act(() => result.current.setOpen(true));
+    act(() => result.current.setQuery("Marisol"));
+    act(() => result.current.onActiveScopeChange("CUSTOMER"));
+    expect(result.current.query).toBe("customer:Marisol");
+    expect(result.current.activeScope).toBe("CUSTOMER");
+    expect(result.current.open).toBe(true);
+  });
+
+  it("D1/D2: remembers an opened result for this key and still calls the consumer", () => {
+    const { result, onSelect } = renderWith({ recentItemsKey: "k1" });
+    act(() => result.current.onSelect(customer));
+    expect(onSelect).toHaveBeenCalledWith(customer);
+    expect(result.current.recentItems.map((r) => r.entityId)).toEqual(["cust_1"]);
+  });
+
+  it("D2: switching key (another org environment) shows that key's list", () => {
+    const { result, rerender } = renderWith({ recentItemsKey: "env_a" });
+    act(() => result.current.onSelect(customer));
+    rerender({ recentItemsKey: "env_b" });
+    expect(result.current.recentItems).toEqual([]);
+    rerender({ recentItemsKey: "env_a" });
+    expect(result.current.recentItems.map((r) => r.entityId)).toEqual(["cust_1"]);
+  });
+
+  it("D2: with no key, nothing is remembered", () => {
+    const { result } = renderWith({ recentItemsKey: null });
+    act(() => result.current.onSelect(customer));
+    expect(result.current.recentItems).toEqual([]);
+  });
+
+  it("D1: quick actions route through the consumer's onSelect and are not remembered", () => {
+    const { result, onSelect, quickActions } = renderWith({ recentItemsKey: "k1" });
+    expect(result.current.quickActions).toEqual(quickActions);
+    act(() => result.current.onQuickActionSelect(quickActions[0]!));
+    expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ sourceUrl: "/audit-log" }));
+    expect(result.current.recentItems).toEqual([]);
+  });
+});

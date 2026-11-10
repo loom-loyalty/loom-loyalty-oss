@@ -12,14 +12,21 @@ interface AiChatContextValue {
   openWithMessage: (message: string) => void;
   /** Clear the initial message (after it's been sent) */
   clearInitialMessage: () => void;
+  /** An existing thread to select when the panel opens (from the home page's recent list) */
+  aiInitialThreadId: string | undefined;
+  /** Open the chat panel on an existing thread */
+  openThread: (threadId: string) => void;
+  /** Clear the initial thread (after the panel has selected it) */
+  clearInitialThread: () => void;
 }
 
 const AiChatContext = createContext<AiChatContextValue | null>(null);
 
 /**
  * Provider for AI chat panel state.
- * Any descendant can open the chat panel and pre-populate the composer with a message
- * via useAiChat().openWithMessage(...).
+ * Any descendant can open the chat panel with a message already sent via
+ * useAiChat().openWithMessage(...), or on an existing conversation via
+ * useAiChat().openThread(id).
  *
  * Wrap the app root with this provider, then render <AiChatPanel /> bound to the
  * context values. Consumers throughout the app call useAiChat() to drive it.
@@ -27,14 +34,28 @@ const AiChatContext = createContext<AiChatContextValue | null>(null);
 export function AiChatProvider({ children }: { children: ReactNode }): ReactNode {
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
   const [aiInitialMessage, setAiInitialMessage] = useState<string | undefined>(undefined);
+  const [aiInitialThreadId, setAiInitialThreadId] = useState<string | undefined>(undefined);
 
+  // A message and a thread are two ways to open the panel; the later call
+  // wins, so the panel never both selects a thread and starts a new one.
   const openWithMessage = useCallback((message: string) => {
+    setAiInitialThreadId(undefined);
     setAiInitialMessage(message);
     setAiPanelOpen(true);
   }, []);
 
   const clearInitialMessage = useCallback(() => {
     setAiInitialMessage(undefined);
+  }, []);
+
+  const openThread = useCallback((threadId: string) => {
+    setAiInitialMessage(undefined);
+    setAiInitialThreadId(threadId);
+    setAiPanelOpen(true);
+  }, []);
+
+  const clearInitialThread = useCallback(() => {
+    setAiInitialThreadId(undefined);
   }, []);
 
   // Memoize the context value so descendants re-render only when the actual state changes.
@@ -47,8 +68,19 @@ export function AiChatProvider({ children }: { children: ReactNode }): ReactNode
       aiInitialMessage,
       openWithMessage,
       clearInitialMessage,
+      aiInitialThreadId,
+      openThread,
+      clearInitialThread,
     }),
-    [aiPanelOpen, aiInitialMessage, openWithMessage, clearInitialMessage]
+    [
+      aiPanelOpen,
+      aiInitialMessage,
+      openWithMessage,
+      clearInitialMessage,
+      aiInitialThreadId,
+      openThread,
+      clearInitialThread,
+    ]
   );
 
   return <AiChatContext.Provider value={value}>{children}</AiChatContext.Provider>;

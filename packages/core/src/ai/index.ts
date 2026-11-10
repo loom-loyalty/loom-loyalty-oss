@@ -18,6 +18,9 @@ export type {
   AiThreadUpdateRequest,
 } from "./types";
 
+// Thread title from the first message (also exported as `@loom-loyalty/core/ai/thread-title`)
+export { THREAD_TITLE_MAX_CODE_POINTS, threadTitleFrom } from "./thread-title";
+
 // AI daily-limit refusals
 export { AI_LIMIT_MESSAGE, parseAiLimit, readAiLimit } from "./ai-limit";
 export type { ReadAiLimitResult } from "./ai-limit";

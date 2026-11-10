@@ -9,4 +9,13 @@ export {
   parseScope,
   type ParsedQuery,
 } from "./command-palette-utils";
-export type { CommandPaletteErrorState, CommandPaletteScope } from "./types";
+export {
+  MAX_RECENT_ITEMS,
+  buildRecentItemsKey,
+  type CommandPaletteRecentItem,
+} from "./recent-items";
+export type {
+  CommandPaletteErrorState,
+  CommandPaletteQuickAction,
+  CommandPaletteScope,
+} from "./types";
