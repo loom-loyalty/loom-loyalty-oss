@@ -3,7 +3,11 @@
 import { AlertTriangle, Loader2, Lock, Search } from "lucide-react";
 import * as React from "react";
 
-import type { CommandPaletteErrorState, CommandPaletteScope } from "@loom-loyalty/core";
+import type {
+  CommandPaletteErrorState,
+  CommandPaletteQuickAction,
+  CommandPaletteScope,
+} from "@loom-loyalty/core";
 
 import { cn } from "../lib/utils";
 import {
@@ -30,7 +34,11 @@ export interface CommandPaletteResult {
   sourceUrl?: string;
 }
 
-export type { CommandPaletteErrorState, CommandPaletteScope } from "@loom-loyalty/core";
+export type {
+  CommandPaletteErrorState,
+  CommandPaletteQuickAction,
+  CommandPaletteScope,
+} from "@loom-loyalty/core";
 
 export interface CommandPaletteProps {
   open: boolean;
@@ -67,6 +75,11 @@ export interface CommandPaletteProps {
    * copy still reflects the user's actual intent.
    */
   effectiveQueryLength?: number;
+  /** Shown under "Recent" when the query is empty. Selecting one calls `onSelect`. */
+  recentItems?: CommandPaletteResult[];
+  /** Shown under "Quick actions" when the query is empty. */
+  quickActions?: CommandPaletteQuickAction[];
+  onQuickActionSelect?: (action: CommandPaletteQuickAction) => void;
 }
 
 const DEFAULT_MIN_QUERY_LENGTH = 3;
@@ -90,6 +103,9 @@ export function CommandPalette({
   activeScope = null,
   onActiveScopeChange,
   effectiveQueryLength,
+  recentItems,
+  quickActions,
+  onQuickActionSelect,
 }: CommandPaletteProps) {
   const trimmedQuery = query.trim();
   // When the consumer passes `effectiveQueryLength` (e.g. just the unprefixed
@@ -113,6 +129,25 @@ export function CommandPalette({
     () => suggestScope(trimmedQuery, scopes, activeScope, minQueryLength),
     [trimmedQuery, scopes, activeScope, minQueryLength]
   );
+
+  // Scopes the Platform only searches when asked (customers, on large tenants). Offer them as an
+  // explicit "Search customers for …" row instead of searching them on every keystroke.
+  const prefixOnlyScopes = React.useMemo(() => {
+    if (activeScope || errorState || gateLength < minQueryLength) return [];
+    if (isLoading && filteredResults.length === 0) return [];
+    return (scopes ?? []).filter(
+      (scope) => scope.requiresPrefix && scope.key !== suggestedScope?.key
+    );
+  }, [
+    activeScope,
+    errorState,
+    gateLength,
+    minQueryLength,
+    isLoading,
+    filteredResults.length,
+    scopes,
+    suggestedScope,
+  ]);
 
   return (
     <CommandDialog
@@ -143,6 +178,12 @@ export function CommandPalette({
         suggestedScope={suggestedScope}
         onActiveScopeChange={onActiveScopeChange}
         onOpenChange={onOpenChange}
+        prefixOnlyScopes={prefixOnlyScopes}
+        searchTerm={trimmedQuery}
+        isEmptyQuery={trimmedQuery.length === 0}
+        recentItems={recentItems}
+        quickActions={quickActions}
+        onQuickActionSelect={onQuickActionSelect}
       />
     </CommandDialog>
   );
@@ -157,6 +198,9 @@ interface PaletteBodyProps
   hasResults: boolean;
   grouped: Array<[string, CommandPaletteResult[]]>;
   suggestedScope: CommandPaletteScope | null;
+  prefixOnlyScopes: CommandPaletteScope[];
+  searchTerm: string;
+  isEmptyQuery: boolean;
 }
 
 function PaletteBody({
@@ -180,8 +224,43 @@ function PaletteBody({
   suggestedScope,
   onActiveScopeChange,
   onOpenChange,
+  prefixOnlyScopes,
+  searchTerm,
+  isEmptyQuery,
+  recentItems,
+  quickActions,
+  onQuickActionSelect,
 }: PaletteBodyProps) {
+  const highlightTerms = React.useMemo(
+    () => queryHighlightTerms(searchTerm, scopes),
+    [searchTerm, scopes]
+  );
   const showSuggestedScope = !!suggestedScope && !activeScope;
+  const showScopeSearchRows = prefixOnlyScopes.length > 0;
+  const showRecent = isEmptyQuery && !!recentItems && recentItems.length > 0;
+  const showQuickActions = isEmptyQuery && !!quickActions && quickActions.length > 0;
+  const scopeSearchGroup = showScopeSearchRows ? (
+    <CommandGroup heading="Search in">
+      {prefixOnlyScopes.map((scope) => (
+        <CommandItem
+          key={`scope-search-${scope.key}`}
+          value={`scope-search-${scope.key}`}
+          onSelect={() => onActiveScopeChange?.(scope.key)}
+          className="flex min-h-11 items-center gap-3"
+        >
+          {scope.icon ? (
+            <scope.icon className="size-4 shrink-0" aria-hidden="true" />
+          ) : (
+            <Search className="size-4 shrink-0 opacity-60" aria-hidden="true" />
+          )}
+          <span className="min-w-0 flex-1 truncate text-sm">
+            Search {scope.label.toLowerCase()} for{" "}
+            <span className="font-medium">&ldquo;{searchTerm}&rdquo;</span>
+          </span>
+        </CommandItem>
+      ))}
+    </CommandGroup>
+  ) : null;
   return (
     <>
       <CommandInput
@@ -250,45 +329,123 @@ function PaletteBody({
           </CommandGroup>
         )}
 
+        {showRecent && (
+          <CommandGroup heading="Recent">
+            {recentItems!.map((item) => (
+              <ResultRow
+                key={`recent-${item.entityId}`}
+                value={`recent-${item.entityId}`}
+                result={item}
+                Icon={entityTypeIcons?.[item.entityType]}
+                onSelect={() => {
+                  onSelect(item);
+                  onOpenChange(false);
+                }}
+              />
+            ))}
+          </CommandGroup>
+        )}
+
+        {showQuickActions && (
+          <CommandGroup heading="Quick actions">
+            {quickActions!.map((action) => (
+              <CommandItem
+                key={`quick-${action.id}`}
+                value={`quick-${action.id}`}
+                onSelect={() => {
+                  onQuickActionSelect?.(action);
+                  onOpenChange(false);
+                }}
+                className="flex min-h-11 items-center gap-3"
+              >
+                {action.icon ? (
+                  <action.icon className="size-4 shrink-0" aria-hidden="true" />
+                ) : (
+                  <Search className="size-4 shrink-0 opacity-60" aria-hidden="true" />
+                )}
+                <span className="flex min-w-0 flex-1 items-baseline gap-2 text-sm">
+                  <span className="font-medium">{action.label}</span>
+                  {action.description && (
+                    <span className="text-muted-foreground truncate text-xs">
+                      {action.description}
+                    </span>
+                  )}
+                </span>
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        )}
+
+        {!hasResults && scopeSearchGroup}
+        {!hasResults && showScopeSearchRows && (
+          <div className="border-border border-t">
+            {renderNoMatches(didYouMean ?? null, onDidYouMeanClick)}
+          </div>
+        )}
+
         {hasResults &&
           grouped.map(([entityType, rows]) => (
             <CommandGroup
               key={entityType}
               heading={entityTypeLabels?.[entityType] ?? humanizeEntityType(entityType)}
             >
-              {rows.map((result) => {
-                const Icon = entityTypeIcons?.[result.entityType];
-                return (
-                  <CommandItem
-                    key={result.entityId}
-                    value={result.entityId}
-                    onSelect={() => {
-                      onSelect(result);
-                      onOpenChange(false);
-                    }}
-                    className="flex items-start gap-3"
-                  >
-                    {Icon ? (
-                      <Icon className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-                    ) : (
-                      <Search className="mt-0.5 size-4 shrink-0 opacity-60" aria-hidden="true" />
-                    )}
-                    <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                      <span className="truncate text-sm font-medium">{result.displayLabel}</span>
-                      {result.snippetText && (
-                        <span className="text-muted-foreground line-clamp-2 text-xs">
-                          {renderHighlightedSnippet(result.snippetText, result.matchRanges)}
-                        </span>
-                      )}
-                    </div>
-                  </CommandItem>
-                );
-              })}
+              {rows.map((result) => (
+                <ResultRow
+                  key={result.entityId}
+                  value={result.entityId}
+                  result={result}
+                  highlightTerms={highlightTerms}
+                  Icon={entityTypeIcons?.[result.entityType]}
+                  onSelect={() => {
+                    onSelect(result);
+                    onOpenChange(false);
+                  }}
+                />
+              ))}
             </CommandGroup>
           ))}
+
+        {hasResults && scopeSearchGroup}
       </CommandList>
       <PaletteFooter />
     </>
+  );
+}
+
+interface ResultRowProps {
+  value: string;
+  result: CommandPaletteResult;
+  /** Lower-cased query words to highlight in the name; omitted for recent items. */
+  highlightTerms?: string[];
+  Icon?: React.ComponentType<{ className?: string }>;
+  onSelect: () => void;
+}
+
+function ResultRow({ value, result, highlightTerms, Icon, onSelect }: ResultRowProps) {
+  // The API highlights matches in the second line only. When that line is not the name (customer
+  // rows show "email · external ID"), highlight the name here too so a name match stays visible.
+  const labelRanges =
+    highlightTerms && result.snippetText !== result.displayLabel
+      ? termRanges(result.displayLabel, highlightTerms)
+      : [];
+  return (
+    <CommandItem value={value} onSelect={onSelect} className="flex min-h-11 items-start gap-3">
+      {Icon ? (
+        <Icon className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+      ) : (
+        <Search className="mt-0.5 size-4 shrink-0 opacity-60" aria-hidden="true" />
+      )}
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span className="truncate text-sm font-medium">
+          {renderHighlightedSnippet(result.displayLabel, labelRanges)}
+        </span>
+        {result.snippetText && (
+          <span className="text-muted-foreground group-data-[selected=true]:text-primary-foreground line-clamp-2 text-xs">
+            {renderHighlightedSnippet(result.snippetText, result.matchRanges)}
+          </span>
+        )}
+      </div>
+    </CommandItem>
   );
 }
 
@@ -362,6 +519,13 @@ function renderEmptyState({
     );
   }
 
+  return renderNoMatches(didYouMean, onDidYouMeanClick);
+}
+
+function renderNoMatches(
+  didYouMean: string | null,
+  onDidYouMeanClick?: (suggestion: string) => void
+) {
   return (
     <div className="flex flex-col items-center gap-1 px-6 py-4 text-xs">
       <p className="text-foreground font-medium">No matches</p>
@@ -538,6 +702,76 @@ function humanizeEntityType(entityType: string): string {
 }
 
 /**
+ * The words of a search query worth highlighting, matching the API's rules: a leading scope
+ * prefix (`customer:`) is dropped, words split on whitespace, and words under 2 characters skipped.
+ */
+function queryHighlightTerms(query: string, scopes?: CommandPaletteScope[]): string[] {
+  let body = query.trim();
+  const colon = body.indexOf(":");
+  if (colon > 0) {
+    const prefix = body.slice(0, colon).toLowerCase();
+    if ((scopes ?? []).some((scope) => scope.prefix?.toLowerCase() === prefix)) {
+      body = body.slice(colon + 1);
+    }
+  }
+  return (
+    body
+      .split(/\s+/)
+      .filter((word) => word.length >= 2)
+      .map((word) => Array.from(word, foldChar).join(""))
+      // A word made only of combining marks folds to nothing; an empty term would match everywhere.
+      .filter((word) => word.length > 0)
+  );
+}
+
+/**
+ * Folds one code point for matching: lower-case, then decompose and drop combining marks, with
+ * final sigma ("ς") read as sigma ("σ"). The query and the name are folded the same way, one code
+ * point at a time, so "Ipek" finds "İpek", "jose" finds "José", and "ΝΙΚΟΣ" finds itself.
+ */
+function foldChar(char: string): string {
+  return char.toLowerCase().normalize("NFD").replace(/\p{M}/gu, "").replace(/ς/g, "σ");
+}
+
+/**
+ * Every case-insensitive occurrence of any term in `text`, as half-open ranges into `text`.
+ * Lower-casing can change a character's length ("İ" becomes two code units), so matches are
+ * found in the folded string and mapped back to offsets in the original.
+ */
+function termRanges(text: string, terms: string[]): Array<{ start: number; end: number }> {
+  let folded = "";
+  // origin[i] is the offset in `text` of the character that produced folded[i].
+  const origin: number[] = [];
+  for (let i = 0; i < text.length; ) {
+    const char = String.fromCodePoint(text.codePointAt(i)!);
+    const lower = foldChar(char);
+    folded += lower;
+    for (let k = 0; k < lower.length; k += 1) origin.push(i);
+    i += char.length;
+  }
+  origin.push(text.length);
+
+  const ranges: Array<{ start: number; end: number }> = [];
+  for (const term of terms) {
+    let from = folded.indexOf(term);
+    while (from !== -1) {
+      const last = origin[from + term.length - 1]!;
+      const lastLength = String.fromCodePoint(text.codePointAt(last)!).length;
+      let end = last + lastLength;
+      // Keep trailing combining marks (which fold to nothing) inside the highlight.
+      while (end < text.length) {
+        const next = String.fromCodePoint(text.codePointAt(end)!);
+        if (foldChar(next) !== "") break;
+        end += next.length;
+      }
+      ranges.push({ start: origin[from]!, end });
+      from = folded.indexOf(term, from + 1);
+    }
+  }
+  return ranges;
+}
+
+/**
  * Renders snippetText with `<mark>` spans wrapping each match range. Ranges
  * arrive as `{start, end}` half-open offsets from the API; we clamp + skip
  * any that fall outside the snippet length.
@@ -565,7 +799,7 @@ function renderHighlightedSnippet(
       out.push(
         <mark
           key={`m-${start}-${end}-${i}`}
-          className="text-foreground bg-primary/15 rounded-sm px-0.5"
+          className="text-foreground bg-primary/15 group-data-[selected=true]:text-primary-foreground rounded-sm px-0.5 group-data-[selected=true]:bg-transparent group-data-[selected=true]:underline group-data-[selected=true]:decoration-2 group-data-[selected=true]:underline-offset-2"
         >
           {text.slice(start, end)}
         </mark>

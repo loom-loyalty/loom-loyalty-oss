@@ -2,6 +2,7 @@ import "@testing-library/jest-dom/vitest";
 
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { StrictMode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Capture the props passed to ChatProvider so tests can invoke the llm
@@ -9,7 +10,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // the provider renders its children and we exercise send() as a unit).
 const chatProps: { current: Record<string, unknown> } = { current: {} };
 // Mutable thread error so tests can drive the composer's error banner.
-const threadState = vi.hoisted(() => ({ threadError: null as Error | null }));
+const threadState = vi.hoisted(() => ({
+  threadError: null as Error | null,
+  selectThread: vi.fn(),
+  switchToNewThread: vi.fn(),
+  processMessage: vi.fn(() => Promise.resolve()),
+}));
 
 vi.mock("@openuidev/react-headless", () => {
   const store = {
@@ -19,9 +25,11 @@ vi.mock("@openuidev/react-headless", () => {
     get threadError() {
       return threadState.threadError;
     },
-    processMessage: () => Promise.resolve(),
+    processMessage: threadState.processMessage,
     cancelMessage: () => {},
-    switchToNewThread: () => {},
+    switchToNewThread: threadState.switchToNewThread,
+    selectThread: threadState.selectThread,
+    selectedThreadId: null,
   };
   const select = (selector?: (s: typeof store) => unknown) => (selector ? selector(store) : store);
   return {
@@ -71,6 +79,9 @@ const makeUserMessage = (content: unknown) => ({
 beforeEach(() => {
   chatProps.current = {};
   threadState.threadError = null;
+  threadState.selectThread.mockClear();
+  threadState.switchToNewThread.mockClear();
+  threadState.processMessage.mockClear();
 });
 
 afterEach(() => {
@@ -836,5 +847,145 @@ describe("AiChatPanel daily AI limit", () => {
     expect(fetchSpy.mock.calls.some(([u]) => String(u).endsWith("/api/ai/chat"))).toBe(false);
     expect(await screen.findByTestId("ai-limit-notice")).toBeVisible();
     expect(screen.queryByRole("link", { name: "See plans" })).not.toBeInTheDocument();
+  });
+});
+
+describe("AiChatPanel instant thread title (brief 2, PR A)", () => {
+  type Threads = {
+    createThread: (first: { id: string; role: "user"; content: unknown }) => Promise<{
+      id: string;
+      title: string;
+    }>;
+    listThreads: (cursor?: string) => Promise<{ threads: { title: string }[] }>;
+  };
+  const threads = () => (chatProps.current.storage as { thread: Threads }).thread;
+
+  it("titles a new thread from its first message on the same render, no request needed", async () => {
+    const fetchSpy = vi.spyOn(global, "fetch");
+    render(<AiChatPanel {...defaultProps} onOpenChange={vi.fn()} />);
+
+    const thread = await threads().createThread(
+      makeUserMessage("  What loyalty programs\ndo we have? ")
+    );
+
+    expect(thread.title).toBe("What loyalty programs do we have?");
+    expect(thread.id).toMatch(/^[0-9a-f-]{36}$/);
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("cuts a long first message on a word boundary with an ellipsis", async () => {
+    render(<AiChatPanel {...defaultProps} onOpenChange={vi.fn()} />);
+    const thread = await threads().createThread(
+      makeUserMessage(
+        "Pull up the customer with the most points and show their tier, balance and badges please"
+      )
+    );
+    expect(thread.title).toBe("Pull up the customer with the most points and show their…");
+  });
+
+  it("uses the text part of a message with an attachment", async () => {
+    render(<AiChatPanel {...defaultProps} onOpenChange={vi.fn()} />);
+    const thread = await threads().createThread(
+      makeUserMessage([
+        { type: "text", text: "Import this template" },
+        { type: "binary", mimeType: "application/pdf", data: "AAAA", filename: "coffee-club.pdf" },
+      ])
+    );
+    expect(thread.title).toBe("Import this template");
+  });
+
+  it("titles an attachment-only message the way the sent message reads", async () => {
+    render(<AiChatPanel {...defaultProps} onOpenChange={vi.fn()} />);
+    const thread = await threads().createThread(
+      makeUserMessage([
+        { type: "binary", mimeType: "application/pdf", data: "AAAA", filename: "coffee-club.pdf" },
+      ])
+    );
+    expect(thread.title).toBe("I uploaded a program template (coffee-club.pdf).");
+  });
+
+  it("still shows Untitled for a legacy thread the server stored without a title", async () => {
+    vi.spyOn(global, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          threads: [{ thread_id: "t-1", title: null, created_at: "2026-11-06T15:00:00Z" }],
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      )
+    );
+    render(<AiChatPanel {...defaultProps} onOpenChange={vi.fn()} />);
+    const page = await threads().listThreads();
+    expect(page.threads[0]?.title).toBe("Untitled");
+  });
+});
+
+describe("AiChatPanel initial thread handoff (home recent conversations)", () => {
+  it("selects the handed-off thread once on mount, then reports it opened", () => {
+    const onInitialThreadOpened = vi.fn();
+    render(
+      <StrictMode>
+        <AiChatPanel
+          {...defaultProps}
+          onOpenChange={vi.fn()}
+          initialThreadId="t-42"
+          onInitialThreadOpened={onInitialThreadOpened}
+        />
+      </StrictMode>
+    );
+
+    expect(threadState.selectThread).toHaveBeenCalledTimes(1);
+    expect(threadState.selectThread).toHaveBeenCalledWith("t-42");
+    expect(onInitialThreadOpened).toHaveBeenCalledTimes(1);
+    // Opening an existing thread is not a send.
+    expect(threadState.switchToNewThread).not.toHaveBeenCalled();
+    expect(threadState.processMessage).not.toHaveBeenCalled();
+  });
+
+  it("does not select again when the handoff is cleared", () => {
+    const { rerender } = render(
+      <AiChatPanel {...defaultProps} onOpenChange={vi.fn()} initialThreadId="t-42" />
+    );
+    rerender(<AiChatPanel {...defaultProps} onOpenChange={vi.fn()} initialThreadId={undefined} />);
+    rerender(<AiChatPanel {...defaultProps} onOpenChange={vi.fn()} initialThreadId={undefined} />);
+
+    expect(threadState.selectThread).toHaveBeenCalledTimes(1);
+  });
+
+  it("selects nothing without a handoff", () => {
+    render(<AiChatPanel {...defaultProps} onOpenChange={vi.fn()} />);
+    expect(threadState.selectThread).not.toHaveBeenCalled();
+  });
+});
+
+describe("AiChatPanel handoffs survive a close and reopen", () => {
+  it("does not send the initial message again when the sheet reopens before the host clears it", () => {
+    const props = { ...defaultProps, onOpenChange: vi.fn(), initialMessage: "Find a customer" };
+    const { rerender } = render(<AiChatPanel {...props} open />);
+    expect(threadState.processMessage).toHaveBeenCalledTimes(1);
+
+    rerender(<AiChatPanel {...props} open={false} />);
+    rerender(<AiChatPanel {...props} open />);
+
+    expect(threadState.processMessage).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not select the initial thread again when the sheet reopens", () => {
+    const props = { ...defaultProps, onOpenChange: vi.fn(), initialThreadId: "t-7" };
+    const { rerender } = render(<AiChatPanel {...props} open />);
+    expect(threadState.selectThread).toHaveBeenCalledTimes(1);
+
+    rerender(<AiChatPanel {...props} open={false} />);
+    rerender(<AiChatPanel {...props} open />);
+
+    expect(threadState.selectThread).toHaveBeenCalledTimes(1);
+  });
+
+  it("sends a new handoff after the old one was cleared", () => {
+    const props = { ...defaultProps, onOpenChange: vi.fn() };
+    const { rerender } = render(<AiChatPanel {...props} open initialMessage="one" />);
+    rerender(<AiChatPanel {...props} open initialMessage={undefined} />);
+    rerender(<AiChatPanel {...props} open initialMessage="one" />);
+
+    expect(threadState.processMessage).toHaveBeenCalledTimes(2);
   });
 });

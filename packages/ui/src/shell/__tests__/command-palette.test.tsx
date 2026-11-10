@@ -73,8 +73,8 @@ describe("CommandPalette", () => {
     );
     expect(screen.getByText("Programs")).toBeInTheDocument();
     expect(screen.getByText("Offers")).toBeInTheDocument();
-    expect(screen.getByText("Coffee Plus")).toBeInTheDocument();
-    expect(screen.getByText("Coffee 2-for-1")).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /coffee plus/i })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /coffee 2-for-1/i })).toBeInTheDocument();
   });
 
   it("highlights every match range with <mark>", () => {
@@ -115,7 +115,7 @@ describe("CommandPalette", () => {
         onSelect={onSelect}
       />
     );
-    fireEvent.click(screen.getByText("Coffee Rewards"));
+    fireEvent.click(screen.getByRole("option", { name: /coffee rewards/i }));
     expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ entityId: "prog_abc" }));
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });

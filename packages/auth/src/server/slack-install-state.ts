@@ -63,10 +63,41 @@ export async function generateSlackInstallState(
   secret: string,
   opts?: { ttlSeconds?: number }
 ): Promise<string> {
+  return signInstallState(claims, secret, opts);
+}
+
+/** The `aud` the ai-server's Teams consent callback requires (`TEAMS_INSTALL_AUDIENCE`). */
+export const TEAMS_INSTALL_STATE_AUDIENCE = "teams";
+/** Microsoft's admin consent can mean switching to a Global Administrator, MFA and
+ *  reading the permissions, so the Teams state outlives Slack's 5 minutes. */
+const TEAMS_DEFAULT_TTL_SECONDS = 900;
+
+/**
+ * Sign a single-use Microsoft Teams install state. The claims, key derivation
+ * and TTL are the Slack state's; it also carries `aud: "teams"`, so the
+ * ai-server's Teams callback (`/teams/oauth/callback`) accepts it and a state
+ * minted for another transport is refused there. It lasts 15 minutes by default.
+ */
+export async function generateTeamsInstallState(
+  claims: SlackInstallStateClaims,
+  secret: string,
+  opts?: { ttlSeconds?: number }
+): Promise<string> {
+  return signInstallState(claims, secret, {
+    ttlSeconds: opts?.ttlSeconds ?? TEAMS_DEFAULT_TTL_SECONDS,
+    audience: TEAMS_INSTALL_STATE_AUDIENCE,
+  });
+}
+
+async function signInstallState(
+  claims: SlackInstallStateClaims,
+  secret: string,
+  opts?: { ttlSeconds?: number; audience?: string }
+): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
   const ttl = opts?.ttlSeconds ?? DEFAULT_TTL_SECONDS;
   const key = await deriveKey(secret);
-  return new SignJWT({
+  const jwt = new SignJWT({
     loomOrgId: claims.loomOrgId,
     loomEnvId: claims.loomEnvId,
     workosUserId: claims.workosUserId,
@@ -76,6 +107,7 @@ export async function generateSlackInstallState(
     .setProtectedHeader({ alg: "HS256" })
     .setJti(generateJti())
     .setIssuedAt(now)
-    .setExpirationTime(now + ttl)
-    .sign(key);
+    .setExpirationTime(now + ttl);
+  if (opts?.audience) jwt.setAudience(opts.audience);
+  return jwt.sign(key);
 }
