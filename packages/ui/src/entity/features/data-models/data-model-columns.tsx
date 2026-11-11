@@ -7,6 +7,7 @@
 import { formatShortDate } from "@loom-loyalty/core";
 import type { DataModel } from "@loom-loyalty/sdk";
 import type { ReactNode } from "react";
+
 import type { Column } from "../../../data-display/data-table.js";
 import { getEnvironmentColumn } from "../../environment-workflow/environment-status-column.js";
 import { ClassificationBadge, getTypeClassification } from "./classification.js";

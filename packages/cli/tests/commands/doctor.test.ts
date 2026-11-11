@@ -1,7 +1,9 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
 import { ApiError, type ApiClient } from "../../src/api/client.js";
 import type { PackageInstallationResult, PackageInstallPlanRecord } from "../../src/api/types.js";
 import {

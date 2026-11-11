@@ -10,6 +10,7 @@
  */
 
 import { createHash, randomBytes } from "node:crypto";
+
 import { authenticateViaBrowser } from "./browser-auth.js";
 
 const SERVICE = "treadle";

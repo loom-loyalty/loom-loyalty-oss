@@ -4,13 +4,12 @@
  * loads up front and search filters the full list client-side.
  */
 
-import { useCallback, useMemo, useState } from "react";
-
 import {
   customerStatusManagementListBadges,
   getCustomerStatusManagementListBadgesQueryKey,
   type Badge,
 } from "@loom-loyalty/sdk";
+import { useCallback, useMemo, useState } from "react";
 
 import { useDebouncedValue } from "../../hooks/use-debounced-value";
 import {

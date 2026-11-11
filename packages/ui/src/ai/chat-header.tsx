@@ -6,6 +6,7 @@ import { SquarePen, X } from "lucide-react";
 import { cn } from "../lib/utils";
 import { SheetDescription, SheetTitle } from "../primitives/sheet";
 import { useAssistantName } from "./assistant-name";
+import { focusComposerNear } from "./focus-composer";
 import { WeaveMark } from "./weave-mark";
 
 const ICON_BUTTON = cn(
@@ -42,10 +43,7 @@ export function ChatHeader({ onClose }: ChatHeaderProps) {
           switchToNewThread();
           // This button disables itself once the thread is empty; hand focus
           // to the composer so keyboard users aren't dropped to <body>.
-          e.currentTarget
-            .closest('[role="dialog"]')
-            ?.querySelector<HTMLTextAreaElement>("[data-loom-composer-input]")
-            ?.focus();
+          focusComposerNear(e.currentTarget);
         }}
         disabled={!hasMessages || isRunning}
         aria-label="New chat"

@@ -150,11 +150,15 @@ export { createApiClientAdapter, type ApiClientAdapterConfig } from "./adapters"
 
 export {
   DASHBOARD_PATH_PREFIXES,
+  MAX_RECENT_ITEMS,
+  buildRecentItemsKey,
   isDashboardPath,
   parseScope,
   useCommandPaletteController,
   type CommandPaletteController,
   type CommandPaletteErrorState,
+  type CommandPaletteQuickAction,
+  type CommandPaletteRecentItem,
   type CommandPaletteScope,
   type ParsedQuery,
   type UseCommandPaletteControllerOptions,

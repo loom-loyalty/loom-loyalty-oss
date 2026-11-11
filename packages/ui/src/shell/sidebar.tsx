@@ -1,10 +1,9 @@
 "use client";
 
 import { ExternalLink, X } from "lucide-react";
-
 import * as React from "react";
-import { LoomIcon } from "../assets";
 
+import { LoomIcon } from "../assets";
 import { useIsMobile } from "../hooks/use-mobile";
 import { cn } from "../lib/utils";
 import { Sheet, SheetContent } from "../primitives/sheet";

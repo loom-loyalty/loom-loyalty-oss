@@ -1,7 +1,7 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
-import type { ReactNode } from "react";
 import type { DataModelLike } from "../expression-context";
 import { ExpressionContextProvider } from "../expression-context";
 import { useJsonPathSchema } from "./use-json-path-schema";

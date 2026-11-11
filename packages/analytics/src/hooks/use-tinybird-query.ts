@@ -1,4 +1,5 @@
 import { useQuery, type UseQueryResult } from "@tanstack/react-query";
+
 import { DEFAULT_STALE_TIMES } from "../constants";
 import type { PipeName, PipeParams } from "../pipes";
 import { useTinybird } from "../provider";

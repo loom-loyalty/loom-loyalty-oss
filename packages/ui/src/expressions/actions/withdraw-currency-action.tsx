@@ -5,13 +5,13 @@
  */
 
 import { memo, useCallback, useId, useMemo, type ReactNode } from "react";
+
 import { ProgramCurrencyField } from "../../forms/program-currency-field/index.js";
 import { ProgramField } from "../../forms/program-field/index.js";
 import { useProgramField } from "../../forms/program-field/use-program-field.js";
 import { Input } from "../../primitives/input.js";
 import { Label } from "../../primitives/label.js";
 import { Switch } from "../../primitives/switch.js";
-
 import { FieldsetLegend } from "../components/fieldset-legend.js";
 import { JsonPathInput } from "../inputs/json-path-input";
 import { PreOperationSelector } from "../inputs/pre-operation-selector";

@@ -4,6 +4,7 @@
  */
 
 import * as React from "react";
+
 import type { AuthProvider } from "../types/auth-provider";
 import type { ResolvedHubConfig } from "../types/config";
 import type { DataProvider } from "../types/data-provider";

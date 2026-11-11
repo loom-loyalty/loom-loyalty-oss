@@ -7,6 +7,7 @@
  */
 
 import { describe, expect, it } from "vitest";
+
 import { SHAPE_FIELDS, computeEntityShapeDiff, hasFatalDiff } from "./shape-diff";
 
 describe("computeEntityShapeDiff", () => {

@@ -6,15 +6,14 @@
  * match beyond the first page is still findable, not silently invisible.
  */
 
-import { useInfiniteQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
-
 import {
   getMetadataManagementListLocationsQueryKey,
   metadataManagementListLocations,
   type Location,
   type PagedLocationData,
 } from "@loom-loyalty/sdk";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
 
 import { getInfiniteNextPageParam } from "../../hooks/infinite-query-helpers";
 import { useDebouncedValue } from "../../hooks/use-debounced-value";

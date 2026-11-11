@@ -4,6 +4,7 @@
 
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+
 import type { WebhookEndpoint } from "./types.js";
 import { WebhookDetail } from "./webhook-detail.js";
 

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { generateUISchema } from "../../src/generator/ui-schema.js";
 import type { ParsedEntitySchema } from "../../src/types/schema.js";
 

@@ -7,6 +7,7 @@
 import type { Customer } from "@loom-loyalty/sdk";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+
 import { getCustomerColumnsExtended } from "../customer-columns.js";
 
 // Mock formatShortDate to avoid locale-dependent output in tests

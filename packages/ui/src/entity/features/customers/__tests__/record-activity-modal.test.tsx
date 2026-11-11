@@ -78,6 +78,35 @@ describe("RecordActivityModal", () => {
     expect(onRetryActivities).toHaveBeenCalledTimes(1);
   });
 
+  it("says why the list could not be read when the cause is known", () => {
+    renderModal({
+      activities: [],
+      activitiesError: true,
+      activitiesErrorMessage: "Your role can't read event type settings.",
+    });
+
+    expect(screen.getByText("Your role can't read event type settings.")).toBeInTheDocument();
+    expect(
+      screen.queryByText(/This is not the same as nothing being set up/)
+    ).not.toBeInTheDocument();
+  });
+
+  it("uses a caller's empty-state wording, for a role allowed none of the activities", () => {
+    renderModal({
+      activities: [],
+      emptyMessage: "None of these activities are available to your role.",
+      administratorHint: "Ask an administrator to list your role.",
+    });
+
+    expect(
+      screen.getByText("None of these activities are available to your role.")
+    ).toBeInTheDocument();
+    expect(screen.getByText("Ask an administrator to list your role.")).toBeInTheDocument();
+    expect(
+      screen.queryByText("No activities are set up for recording yet.")
+    ).not.toBeInTheDocument();
+  });
+
   it("prefers the empty state when the read succeeded and returned nothing", () => {
     renderModal({ activities: [], activitiesError: false });
 

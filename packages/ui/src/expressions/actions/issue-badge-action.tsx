@@ -5,12 +5,12 @@
  */
 
 import { memo, useCallback, useId, useMemo, type ReactNode } from "react";
+
 import { BadgeField } from "../../forms/badge-field/index.js";
 import { useBadgeField } from "../../forms/badge-field/use-badge-field.js";
 import { DateTimeInput } from "../../forms/date-time-input.js";
 import { Label } from "../../primitives/label.js";
 import { Switch } from "../../primitives/switch.js";
-
 import { FieldsetLegend } from "../components/fieldset-legend.js";
 import type { ActionComponentProps, IssueCustomerBadgeAction } from "../types";
 

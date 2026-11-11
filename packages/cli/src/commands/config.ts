@@ -11,9 +11,11 @@
  * The backend is responsible for syncing configurations to Cloudflare KV.
  */
 
-import type { HubLocalConfig } from "@loom-loyalty/core";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
+
+import type { HubLocalConfig } from "@loom-loyalty/core";
+
 import type { ApiClient } from "../api/client.js";
 import { DEFAULT_MANIFEST_FILE, HUB_KEYS } from "../manifest/schema.js";
 import { createApiClient, DEFAULT_DEPLOYMENT, getApiUrl } from "../utils/deployment.js";

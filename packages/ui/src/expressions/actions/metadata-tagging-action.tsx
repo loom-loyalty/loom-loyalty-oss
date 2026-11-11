@@ -6,11 +6,11 @@
  */
 
 import { memo, useCallback, useId, type ReactNode } from "react";
+
 import { MetadataField } from "../../forms/metadata-field/index.js";
 import { MetadataTypeField } from "../../forms/metadata-type-field/index.js";
 import { Input } from "../../primitives/input.js";
 import { Label } from "../../primitives/label.js";
-
 import type { ActionComponentProps, MetadataTaggingAction } from "../types";
 
 type MetadataTaggingData = MetadataTaggingAction["metadataTagging"];

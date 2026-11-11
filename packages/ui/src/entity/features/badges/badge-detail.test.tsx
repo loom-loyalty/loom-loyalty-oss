@@ -5,6 +5,7 @@
 import type { Badge as BadgeEntity } from "@loom-loyalty/sdk";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+
 import { BadgeDetail } from "./badge-detail.js";
 
 const MINIMAL_BADGE: BadgeEntity = {

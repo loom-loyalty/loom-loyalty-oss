@@ -7,6 +7,7 @@
 
 import { extractLocalizedString } from "@loom-loyalty/core";
 import { useMemo, type ReactNode } from "react";
+
 import { DataTable, type Column, type PaginationConfig } from "../../../data-display/data-table.js";
 import { FilterBar } from "../../../data-display/filter-bar.js";
 import { FormErrorBanner } from "../../../forms/form-error-banner.js";

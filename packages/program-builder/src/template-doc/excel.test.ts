@@ -1,8 +1,8 @@
-import ExcelJS from "exceljs";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import ExcelJS from "exceljs";
 import { describe, expect, it } from "vitest";
 
 import type { ProgramSpec } from "../spec";

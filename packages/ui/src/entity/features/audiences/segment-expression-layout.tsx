@@ -11,6 +11,7 @@
 import { formatShortDate } from "@loom-loyalty/core";
 import { ChevronDown, ChevronRight, Copy, RefreshCw, Users } from "lucide-react";
 import { useCallback, useId, useState, type ReactNode } from "react";
+
 import { cn } from "../../../lib/utils.js";
 import { Badge } from "../../../primitives/badge.js";
 import { Button } from "../../../primitives/button.js";

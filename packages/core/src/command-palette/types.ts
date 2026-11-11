@@ -13,3 +13,13 @@ export interface CommandPaletteScope {
   /** Whether the Platform only returns this entity type when explicitly scoped. */
   requiresPrefix?: boolean;
 }
+
+/** A fixed shortcut shown when the palette opens with an empty query. */
+export interface CommandPaletteQuickAction {
+  id: string;
+  label: string;
+  description?: string;
+  icon?: ComponentType<{ className?: string }>;
+  /** Routed through the consumer's `onSelect`, exactly like a search result's `sourceUrl`. */
+  sourceUrl: string;
+}

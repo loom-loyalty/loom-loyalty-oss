@@ -10,6 +10,7 @@ import type {
   DurationPeriodValueDurationPeriodType,
 } from "@loom-loyalty/sdk";
 import { useId, type ReactNode } from "react";
+
 import type { DurationPeriodValue } from "../entity/format-duration-period.js";
 import { Checkbox } from "../primitives/checkbox.js";
 import { Input } from "../primitives/input.js";

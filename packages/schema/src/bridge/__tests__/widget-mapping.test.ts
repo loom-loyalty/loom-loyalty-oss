@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import type { WidgetType } from "../../types/ui-schema.js";
 import { getOpenUIMapping, WIDGET_TO_OPENUI } from "../widget-mapping.js";
 

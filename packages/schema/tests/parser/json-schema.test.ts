@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { parseJSONSchema, parseJSONSchemaProperty } from "../../src/parser/json-schema.js";
 
 describe("parseJSONSchemaProperty", () => {

@@ -5,9 +5,6 @@
  * BE occasionally returning a bare `Program[]` instead of a paged envelope.
  */
 
-import { useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
-
 import {
   getProgramManagementListProgramsQueryKey,
   programManagementListPrograms,
@@ -15,6 +12,8 @@ import {
   type CreateProgram,
   type Program,
 } from "@loom-loyalty/sdk";
+import { useQueryClient } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 
 import { resetInfiniteQueryToFirstPage } from "../../hooks/infinite-query-helpers";
 import { useDebouncedValue } from "../../hooks/use-debounced-value";

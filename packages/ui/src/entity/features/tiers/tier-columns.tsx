@@ -7,6 +7,7 @@
 
 import { formatShortDate } from "@loom-loyalty/core";
 import type { Tier } from "@loom-loyalty/sdk";
+
 import type { Column } from "../../../data-display/data-table.js";
 import { getEnvironmentColumn } from "../../environment-workflow/environment-status-column.js";
 import { TierRankBadge } from "../tier-rank-badge.js";

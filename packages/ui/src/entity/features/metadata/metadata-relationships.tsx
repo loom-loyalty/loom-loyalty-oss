@@ -16,6 +16,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { useId, useRef, useState, type ReactNode } from "react";
+
 import { MetadataField } from "../../../forms/metadata-field/index.js";
 import {
   metadataTypeChildrenQueryOptions,

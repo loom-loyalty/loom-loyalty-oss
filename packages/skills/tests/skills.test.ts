@@ -1,6 +1,8 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
+
 import { describe, expect, it } from "vitest";
+
 import { listSkills, readFrontmatter, SKILLS_DIR } from "../src/index.js";
 
 /** Agent Skills caps `description` at 1024 characters. */

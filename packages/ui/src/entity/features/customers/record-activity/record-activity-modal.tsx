@@ -58,6 +58,12 @@ export interface RecordActivityModalProps {
    * administrator who has nothing to fix.
    */
   activitiesError?: boolean;
+  /**
+   * Says why the offered list could not be read, when the cause is known (for
+   * example, the user's role can't read event type settings). Replaces the
+   * generic "try again" explanation.
+   */
+  activitiesErrorMessage?: string;
   /** Retry the offered-list read. */
   onRetryActivities?: () => void;
   selectedActivityCode: string | null;
@@ -110,6 +116,8 @@ export interface RecordActivityModalProps {
   resultPending?: boolean;
   /** Who to contact when nothing is configured. */
   administratorHint?: string;
+  /** Headline of the empty state; defaults to "No activities are set up for recording yet." */
+  emptyMessage?: string;
 }
 
 const DEFAULT_ADMINISTRATOR_HINT =
@@ -122,6 +130,7 @@ export function RecordActivityModal({
   activities,
   activitiesLoading = false,
   activitiesError = false,
+  activitiesErrorMessage,
   onRetryActivities,
   selectedActivityCode,
   onSelectActivity,
@@ -142,6 +151,7 @@ export function RecordActivityModal({
   applied = false,
   resultPending = false,
   administratorHint = DEFAULT_ADMINISTRATOR_HINT,
+  emptyMessage = "No activities are set up for recording yet.",
 }: RecordActivityModalProps): ReactNode {
   const selectedActivity = activities.find((a) => a.code === selectedActivityCode);
   const hasActivities = activities.length > 0;
@@ -180,8 +190,8 @@ export function RecordActivityModal({
               The list of activities could not be loaded.
             </p>
             <p className="text-muted-foreground mt-2 text-sm">
-              This is not the same as nothing being set up. Try again, and tell an administrator if
-              it keeps happening.
+              {activitiesErrorMessage ??
+                "This is not the same as nothing being set up. Try again, and tell an administrator if it keeps happening."}
             </p>
             {onRetryActivities && (
               <Button
@@ -198,9 +208,7 @@ export function RecordActivityModal({
           // Not an error and not an empty control, but an explanation. "Nothing
           // configured" and "broken" look identical otherwise.
           <div className="border-border bg-muted/40 rounded-lg border p-6 text-center">
-            <p className="text-foreground text-sm font-medium">
-              No activities are set up for recording yet.
-            </p>
+            <p className="text-foreground text-sm font-medium">{emptyMessage}</p>
             <p className="text-muted-foreground mt-2 text-sm">{administratorHint}</p>
           </div>
         ) : (

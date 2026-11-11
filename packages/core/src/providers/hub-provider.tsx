@@ -4,6 +4,7 @@
  */
 
 import * as React from "react";
+
 import { resolveConfig } from "../config/merge-config";
 import { PluginRegistry } from "../plugins/registry";
 import type { AuthProvider } from "../types/auth-provider";

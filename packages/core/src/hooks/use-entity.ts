@@ -4,6 +4,7 @@
  */
 
 import { useQuery, type UseQueryOptions, type UseQueryResult } from "@tanstack/react-query";
+
 import type { QueryOptions } from "../types/entity";
 import { useDataProvider } from "./use-data-provider";
 import { useHub } from "./use-hub";

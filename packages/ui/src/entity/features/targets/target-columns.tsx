@@ -14,10 +14,10 @@ import type {
   ResponseTargetData,
   XOfYTarget,
 } from "@loom-loyalty/sdk";
+
 import type { Column } from "../../../data-display/data-table.js";
 import { Badge } from "../../../primitives/badge.js";
 import { getEnvironmentColumn } from "../../environment-workflow/environment-status-column.js";
-
 import { TARGET_SCOPE_LABELS, TARGET_TYPE_LABELS } from "./types.js";
 
 /**

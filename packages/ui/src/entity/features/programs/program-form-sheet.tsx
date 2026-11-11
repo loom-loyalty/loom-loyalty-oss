@@ -13,6 +13,7 @@
 import { parseLocalizedDescription } from "@loom-loyalty/core";
 import type { CodeGenInformation, CreatePartner, CreateProgram } from "@loom-loyalty/sdk";
 import { useState, type FormEvent, type ReactNode } from "react";
+
 import { CodeGenInformationInput } from "../../../forms/code-gen-information-input.js";
 import { CodeInput, useCodeInput } from "../../../forms/code-input.js";
 import { WithFieldError } from "../../../forms/field-errors.js";

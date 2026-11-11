@@ -1,4 +1,5 @@
 import { format, startOfQuarter, subDays, subMonths } from "date-fns";
+
 import type { DatePreset, DateRange, Granularity } from "./types";
 
 export const SESSIONSTORE_TOKEN_KEY = "loom_analytics_token";

@@ -7,6 +7,7 @@
 
 import { extractLocalizedString, formatShortDate } from "@loom-loyalty/core";
 import type { MetadataGroup } from "@loom-loyalty/sdk";
+
 import type { Column } from "../../../data-display/data-table.js";
 import { Badge } from "../../../primitives/badge.js";
 

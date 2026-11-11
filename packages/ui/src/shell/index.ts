@@ -4,6 +4,7 @@ export {
   CommandPalette,
   type CommandPaletteErrorState,
   type CommandPaletteProps,
+  type CommandPaletteQuickAction,
   type CommandPaletteResult,
   type CommandPaletteScope,
 } from "./command-palette";

@@ -10,6 +10,7 @@
 
 import type { CreateBadge, DataType } from "@loom-loyalty/sdk";
 import { useState, type FormEvent, type ReactNode } from "react";
+
 import { CodeInput, useCodeInput } from "../../../forms/code-input.js";
 import { DurationPeriodBuilder } from "../../../forms/duration-period-builder.js";
 import { WithFieldError } from "../../../forms/field-errors.js";

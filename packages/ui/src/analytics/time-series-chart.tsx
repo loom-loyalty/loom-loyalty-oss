@@ -8,6 +8,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+
 import type { LinkComponentProps } from "../shell/sidebar";
 import { ChartContainer } from "./chart-container";
 

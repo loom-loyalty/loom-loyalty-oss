@@ -7,8 +7,10 @@
 
 import type { UIEntitySchema } from "@loom-loyalty/schema";
 import type { CreateTarget, ResponseTargetData } from "@loom-loyalty/sdk";
+
 import type { FormFieldError } from "../../../forms/field-errors.js";
 import type { FormSheetError } from "../../../forms/form-sheet.js";
+import type { DurationPeriodValue } from "../../format-duration-period.js";
 
 /**
  * Localized string type - a map of language codes to string values.
@@ -188,3 +190,18 @@ export const GROWTH_OPERATOR_OPTIONS = [
 export const GROWTH_ALGORITHM_OPTIONS = [
   { value: "MIN_LAST_CYCLE", label: "Minimum of Last Cycle" },
 ] as const;
+
+/**
+ * A counter target's cycle window (`cycleDurationPeriod`). Same runtime shape as
+ * the shared DurationPeriodValue, where `durationPeriodType` may be missing on old records.
+ */
+export type CycleWindow = DurationPeriodValue;
+
+export interface CycleWindowFieldsProps {
+  /** The cycle window being sent, or undefined when the target has none. */
+  value?: CycleWindow;
+  onChange: (value: CycleWindow | undefined) => void;
+  /** Whether the target has an active window. Without one the engine runs a single, endless cycle. */
+  hasActiveWindow?: boolean;
+  disabled?: boolean;
+}

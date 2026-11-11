@@ -4,6 +4,7 @@
  */
 
 import type * as React from "react";
+
 import type { AuthOrganization, AuthUser } from "./auth-provider";
 import type { HubConfig, ResolvedHubConfig } from "./config";
 

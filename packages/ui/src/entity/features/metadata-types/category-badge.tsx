@@ -6,6 +6,7 @@
 
 import { Database, MapPin, Package, Tag } from "lucide-react";
 import type { ReactNode } from "react";
+
 import { cn } from "../../../lib/utils.js";
 import { METADATA_TYPE_CATEGORY_LABELS } from "./types.js";
 

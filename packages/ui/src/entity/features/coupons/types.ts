@@ -6,6 +6,7 @@
  */
 
 import type { UIEntitySchema } from "@loom-loyalty/schema";
+
 import type { FormFieldError } from "../../../forms/field-errors.js";
 import type { FormSheetError } from "../../../forms/form-sheet.js";
 

@@ -4,6 +4,7 @@
  */
 
 import { isMap, isSeq, parseDocument, YAMLSeq } from "yaml";
+
 import type { PackageInstallationResult, PackageMissingReference } from "../api/types.js";
 
 /** A metadata value to declare, and the records that need it. */

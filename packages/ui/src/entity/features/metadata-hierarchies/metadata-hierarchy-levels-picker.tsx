@@ -14,6 +14,7 @@ import type { CreateMetadataType, UpdateMetadataType } from "@loom-loyalty/sdk";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link2, Minus, Plus, X } from "lucide-react";
 import { useState, type ReactNode } from "react";
+
 import {
   MetadataTypeField,
   metadataTypeChildrenQueryKey,

@@ -1,4 +1,5 @@
 import { useRef, type KeyboardEvent } from "react";
+
 import { cn } from "../../lib/utils.js";
 
 export interface SegmentedSwitchOption<T extends string> {

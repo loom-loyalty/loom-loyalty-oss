@@ -1,5 +1,6 @@
 import { ChevronDown, ChevronRight, Copy } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
+
 import { Button } from "../../../../primitives/button.js";
 import { copyToClipboard, formatJson } from "../schema-utils.js";
 import { Section } from "./section.js";

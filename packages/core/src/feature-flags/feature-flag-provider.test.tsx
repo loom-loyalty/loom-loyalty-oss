@@ -2,6 +2,7 @@ import { OpenFeature } from "@openfeature/react-sdk";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import { StrictMode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
 import { FeatureFlagProvider } from "./feature-flag-provider";
 import { useFeatureFlag } from "./hooks";
 

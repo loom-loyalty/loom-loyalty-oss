@@ -8,6 +8,7 @@
  */
 
 import type { ReactNode } from "react";
+
 import { LiveRegion } from "../../a11y/live-region.js";
 import { Checkbox } from "../../primitives/checkbox.js";
 import { Label } from "../../primitives/label.js";

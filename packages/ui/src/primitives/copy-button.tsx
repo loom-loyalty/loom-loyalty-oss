@@ -9,6 +9,7 @@
 
 import { Check, Copy } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+
 import { Button } from "./button.js";
 
 export interface CopyButtonProps {

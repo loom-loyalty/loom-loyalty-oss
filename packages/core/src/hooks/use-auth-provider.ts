@@ -4,6 +4,7 @@
  */
 
 import * as React from "react";
+
 import { AuthProviderContext } from "../providers/auth-context";
 import type { AuthProvider } from "../types/auth-provider";
 

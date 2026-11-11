@@ -10,6 +10,7 @@
  */
 
 import { createInterface } from "node:readline/promises";
+
 import { ApiError, type ApiClient } from "../api/client.js";
 import type {
   PackageInstallationResult,

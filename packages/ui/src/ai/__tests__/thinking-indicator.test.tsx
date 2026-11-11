@@ -1,5 +1,4 @@
 import "@testing-library/jest-dom/vitest";
-
 import type { Message } from "@openuidev/react-headless";
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";

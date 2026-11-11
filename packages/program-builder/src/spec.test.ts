@@ -7,6 +7,7 @@
  */
 
 import { describe, expect, it } from "vitest";
+
 import {
   MAX_BADGES_PER_PROGRAM,
   MAX_METADATA_RECORDS_PER_PROGRAM,

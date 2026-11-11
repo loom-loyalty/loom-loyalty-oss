@@ -3,7 +3,6 @@
 import { Check, SkipForward } from "lucide-react";
 
 import { cn } from "../lib/utils";
-
 import type { WizardProgressProps } from "./types";
 import { useWizard } from "./use-wizard";
 

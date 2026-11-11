@@ -4,6 +4,7 @@
 
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
+
 import { classifyToken } from "../auth/token.js";
 
 interface DownloadOptions {

@@ -7,6 +7,7 @@
 
 import { formatShortDate } from "@loom-loyalty/core";
 import type { Badge as BadgeEntity, DataType } from "@loom-loyalty/sdk";
+
 import type { Column } from "../../../data-display/data-table.js";
 import { Badge } from "../../../primitives/badge.js";
 import { getEnvironmentColumn } from "../../environment-workflow/environment-status-column.js";

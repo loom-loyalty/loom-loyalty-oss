@@ -11,6 +11,7 @@
 import { formatDate, formatDateTime, parseISODateTime } from "@loom-loyalty/core";
 import { AlertCircle, CheckCircle, Clock } from "lucide-react";
 import type { ReactNode } from "react";
+
 import type { Column } from "../../data-display/data-table.js";
 import { cn } from "../../lib/utils.js";
 import { Badge } from "../../primitives/badge.js";

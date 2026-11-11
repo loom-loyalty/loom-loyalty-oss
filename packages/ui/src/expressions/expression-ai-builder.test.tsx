@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+
 import { ExpressionAiBuilder } from "./expression-ai-builder.js";
 
 function setup(overrides: Partial<React.ComponentProps<typeof ExpressionAiBuilder>> = {}) {

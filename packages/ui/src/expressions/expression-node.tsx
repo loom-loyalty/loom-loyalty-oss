@@ -7,10 +7,10 @@
 
 import { ChevronDown, ChevronRight, Trash2 } from "lucide-react";
 import { memo, useCallback, useState, type ReactNode } from "react";
+
 import { Badge } from "../primitives/badge.js";
 import { Button } from "../primitives/button.js";
 import { Card, CardContent, CardHeader } from "../primitives/card.js";
-
 import { ActionList } from "./action-list";
 import { BetweenExpressionComponent } from "./components/between-expression";
 import { CollectionContainsExpressionComponent } from "./components/collection-contains-expression";

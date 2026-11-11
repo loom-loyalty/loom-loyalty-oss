@@ -10,6 +10,7 @@
 import type { EventRule } from "@loom-loyalty/sdk";
 import { AlertTriangle, GitBranch, Zap } from "lucide-react";
 import type { ReactNode } from "react";
+
 import { Badge } from "../../../primitives/badge.js";
 import { Button } from "../../../primitives/button.js";
 

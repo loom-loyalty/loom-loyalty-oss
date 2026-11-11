@@ -1,4 +1,5 @@
 import { Sparkles } from "lucide-react";
+
 import { cn } from "../../../../lib/utils.js";
 
 export interface ConfidenceScoreGaugeProps {

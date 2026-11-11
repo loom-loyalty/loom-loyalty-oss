@@ -6,10 +6,10 @@
  */
 
 import { memo, useCallback, useId, type ReactNode } from "react";
+
 import { Input } from "../../primitives/input.js";
 import { Label } from "../../primitives/label.js";
 import { Switch } from "../../primitives/switch.js";
-
 import { JsonPathInput } from "../inputs/json-path-input";
 import { PreOperationSelector } from "../inputs/pre-operation-selector";
 import type { BetweenExpression, ExpressionComponentProps, PreOperation } from "../types";

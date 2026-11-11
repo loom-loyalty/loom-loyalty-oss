@@ -1,12 +1,18 @@
 import { createLibrary } from "@openuidev/react-lang";
 
-// Layout components
-import { Card } from "./components/layout/card";
-import { Section } from "./components/layout/section";
-import { Stack } from "./components/layout/stack";
-import { Tabs } from "./components/layout/tabs";
-import { Text } from "./components/layout/text";
-
+// Data display components
+import { BadgeGroup } from "./components/data-display/badge-group";
+import { DataTable } from "./components/data-display/data-table";
+import { ListBlock } from "./components/data-display/list-block";
+import { StatCard } from "./components/data-display/stat-card";
+// Feedback components
+import { Alert } from "./components/feedback/alert";
+import { Confirmation } from "./components/feedback/confirmation";
+import { Download } from "./components/feedback/download";
+import { FollowUp } from "./components/feedback/follow-up";
+import { Progress } from "./components/feedback/progress";
+import { RuleOrFlowDraft } from "./components/feedback/rule-or-flow-draft";
+import { ValidationReport } from "./components/feedback/validation-report";
 // Form components
 import { CurrencyInput } from "./components/forms/currency-input";
 import { DatePicker } from "./components/forms/date-picker";
@@ -23,28 +29,18 @@ import { Select } from "./components/forms/select";
 import { TagsInput } from "./components/forms/tags-input";
 import { TextInput } from "./components/forms/text-input";
 import { Toggle } from "./components/forms/toggle";
-
-// Data display components
-import { BadgeGroup } from "./components/data-display/badge-group";
-import { DataTable } from "./components/data-display/data-table";
-import { ListBlock } from "./components/data-display/list-block";
-import { StatCard } from "./components/data-display/stat-card";
-
+// Layout components
+import { Card } from "./components/layout/card";
+import { Section } from "./components/layout/section";
+import { Stack } from "./components/layout/stack";
+import { Tabs } from "./components/layout/tabs";
+import { Text } from "./components/layout/text";
 // Onboarding components
 import { FeatureCard } from "./components/onboarding/feature-card";
 import { IndustrySelect } from "./components/onboarding/industry-select";
 import { RuleTemplate } from "./components/onboarding/rule-template";
 import { SetupSummary } from "./components/onboarding/setup-summary";
 import { TierConfig } from "./components/onboarding/tier-config";
-
-// Feedback components
-import { Alert } from "./components/feedback/alert";
-import { Confirmation } from "./components/feedback/confirmation";
-import { Download } from "./components/feedback/download";
-import { FollowUp } from "./components/feedback/follow-up";
-import { Progress } from "./components/feedback/progress";
-import { RuleOrFlowDraft } from "./components/feedback/rule-or-flow-draft";
-import { ValidationReport } from "./components/feedback/validation-report";
 
 /**
  * Creates the Loom Loyalty OpenUI component library.

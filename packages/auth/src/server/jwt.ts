@@ -4,6 +4,7 @@
  */
 
 import { createRemoteJWKSet, jwtVerify, type JWTPayload } from "jose";
+
 import { WORKOS_JWKS_URL } from "../shared/constants";
 import type { AuthUser, WorkOSJWTClaims } from "../types/session";
 

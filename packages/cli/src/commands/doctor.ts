@@ -10,6 +10,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+
 import { ApiError, type ApiClient } from "../api/client.js";
 import type { PackageInstallationResult, PackageInstallPlanRecord } from "../api/types.js";
 import { classifyToken } from "../auth/token.js";

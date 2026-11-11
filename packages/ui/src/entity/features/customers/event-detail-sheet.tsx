@@ -7,11 +7,11 @@
 
 "use client";
 
+import { formatDateTime } from "@loom-loyalty/core";
+import type { UIFieldConfig } from "@loom-loyalty/schema";
 import { Check, ChevronDown, ChevronRight, Copy, Tag } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
-import { formatDateTime } from "@loom-loyalty/core";
-import type { UIFieldConfig } from "@loom-loyalty/schema";
 import { GradientTabs, type TabItem } from "../../../data-display/gradient-tabs";
 import { StatusBadge } from "../../../data-display/status-badge";
 import { pathToBreadcrumbs } from "../../../expressions/inputs/json-path-input";

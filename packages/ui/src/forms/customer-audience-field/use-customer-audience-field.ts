@@ -1,12 +1,11 @@
 // Server-paginated wrapper for customer-audiences; the 250ms-debounced search goes to the API.
 
-import { useCallback, useMemo, useState } from "react";
-
 import {
   customerAudienceManagementListCustomerAudiences,
   getCustomerAudienceManagementListCustomerAudiencesQueryKey,
   type CustomerAudience,
 } from "@loom-loyalty/sdk";
+import { useCallback, useMemo, useState } from "react";
 
 import { useDebouncedValue } from "../../hooks/use-debounced-value";
 import {

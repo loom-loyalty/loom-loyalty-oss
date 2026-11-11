@@ -5,9 +5,6 @@
  * `PagedTargetDataContentItem` flows through.
  */
 
-import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useMemo, useState } from "react";
-
 import {
   eventEngineManagementListTargets,
   getEventEngineManagementListTargetsQueryKey,
@@ -16,6 +13,8 @@ import {
   type PagedTargetDataContentItem,
   type ResponseTargetData,
 } from "@loom-loyalty/sdk";
+import { useQueryClient } from "@tanstack/react-query";
+import { useCallback, useMemo, useState } from "react";
 
 import { resetInfiniteQueryToFirstPage } from "../../hooks/infinite-query-helpers";
 import { useDebouncedValue } from "../../hooks/use-debounced-value";

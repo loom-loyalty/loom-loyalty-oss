@@ -49,6 +49,10 @@
       "types": "./dist/ai/index.d.ts",
       "import": "./dist/ai/index.js"
     },
+    "./ai/thread-title": {
+      "types": "./dist/ai/thread-title.d.ts",
+      "import": "./dist/ai/thread-title.js"
+    },
     "./feature-flags": {
       "types": "./dist/feature-flags/index.d.ts",
       "import": "./dist/feature-flags/index.js"
@@ -80,6 +84,7 @@
     "@testing-library/react": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
+    "fast-check": "4.5.3",
     "jsdom": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",

@@ -11,6 +11,7 @@ import type { MetadataType } from "@loom-loyalty/sdk";
 import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { useId, useRef, useState, type ReactNode } from "react";
+
 import {
   MetadataTypeField,
   metadataTypeChildrenQueryOptions,

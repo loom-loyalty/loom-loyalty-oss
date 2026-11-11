@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useSyncExternalStore } from "react";
+
 import type { SavedQuery } from "../types";
 
 const DEFAULT_STORAGE_KEY = "spindle:saved-queries";

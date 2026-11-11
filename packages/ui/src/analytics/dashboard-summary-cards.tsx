@@ -1,5 +1,6 @@
 import { Coins, Gift, Users, Zap, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
+
 import { StatCard } from "../data-display/stat-card";
 
 /**

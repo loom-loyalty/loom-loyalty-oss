@@ -1,0 +1,54 @@
+{
+  "name": "@loom-loyalty/ai-sdk",
+  "version": "0.0.0",
+  "private": false,
+  "license": "Apache-2.0",
+  "description": "Vercel AI SDK tools that let a storefront's shopper chat answer loyalty questions from Loom Loyalty",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc",
+    "type-check": "tsc --noEmit && tsc -p tsconfig.test.json",
+    "lint": "eslint src tests",
+    "clean": "rm -rf dist",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@loom-loyalty/sdk": "workspace:*"
+  },
+  "peerDependencies": {
+    "ai": ">=5.0.0 <8",
+    "zod": ">=3.25.0"
+  },
+  "devDependencies": {
+    "@loom-loyalty/config": "workspace:*",
+    "@types/node": "catalog:",
+    "ai": "7.0.161",
+    "ai-v5": "npm:ai@5.0.284",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:",
+    "zod": "catalog:"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/loom-loyalty/loom-loyalty-oss.git",
+    "directory": "packages/ai-sdk"
+  }
+}

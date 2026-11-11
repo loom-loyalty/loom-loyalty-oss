@@ -3,7 +3,9 @@
  */
 
 import { readFile } from "node:fs/promises";
+
 import { parseDocument } from "yaml";
+
 import { manifestSchema, RECORD_SECTIONS, type TenantManifest } from "./schema.js";
 
 export type LoadResult = { ok: true; manifest: TenantManifest } | { ok: false; problems: string[] };

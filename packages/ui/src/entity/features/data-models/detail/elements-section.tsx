@@ -1,5 +1,6 @@
 import type { DataModelElement } from "@loom-loyalty/sdk";
 import type { ReactNode } from "react";
+
 import { Badge } from "../../../../primitives/badge.js";
 import { SystemElementBadge } from "../system-element-badge.js";
 import { Section } from "./section.js";

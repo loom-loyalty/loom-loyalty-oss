@@ -1,10 +1,9 @@
-import { useCallback, useMemo, useState } from "react";
-
 import {
   customerAudienceManagementListCustomerAudiences,
   getCustomerAudienceManagementListCustomerAudiencesQueryKey,
   type CustomerAudience,
 } from "@loom-loyalty/sdk";
+import { useCallback, useMemo, useState } from "react";
 
 import { useDebouncedValue } from "../../hooks/use-debounced-value";
 import {

@@ -6,9 +6,9 @@
  */
 
 import { memo, useCallback, type ReactNode } from "react";
+
 import { Label } from "../../primitives/label.js";
 import { Switch } from "../../primitives/switch.js";
-
 import { JsonPathInput } from "../inputs/json-path-input";
 import { ValueInput } from "../inputs/value-input";
 import type {

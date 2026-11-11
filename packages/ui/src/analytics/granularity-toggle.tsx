@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+
 import { ToggleGroup, ToggleGroupItem } from "../primitives/toggle-group";
 
 interface GranularityOption {

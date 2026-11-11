@@ -1,6 +1,5 @@
-import { describe, expect, it } from "vitest";
-
 import { expressionSchema } from "@loom-loyalty/schema/expressions";
+import { describe, expect, it } from "vitest";
 
 import { detectCorruptedNodes, normalizeExpression } from "./migrate";
 
