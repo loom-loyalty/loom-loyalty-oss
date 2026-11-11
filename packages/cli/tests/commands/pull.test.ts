@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+
 import type { ApiClient } from "../../src/api/client.js";
 import type { PackageManifestExport } from "../../src/api/types.js";
 import { EXIT_ERROR, EXIT_OK } from "../../src/commands/manifest.js";

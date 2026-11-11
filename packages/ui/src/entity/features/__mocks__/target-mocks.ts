@@ -12,6 +12,7 @@ import type {
   ResponseTargetData,
   XOfYTarget,
 } from "@loom-loyalty/sdk";
+
 import type { TargetProgress } from "../target-cards/types";
 
 // ============================================================

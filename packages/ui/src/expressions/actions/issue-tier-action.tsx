@@ -5,11 +5,11 @@
  */
 
 import { memo, useCallback, useId, type ReactNode } from "react";
+
 import { DateTimeInput } from "../../forms/date-time-input.js";
 import { TierField } from "../../forms/tier-field/index.js";
 import { Label } from "../../primitives/label.js";
 import { Switch } from "../../primitives/switch.js";
-
 import { FieldsetLegend } from "../components/fieldset-legend.js";
 import type { ActionComponentProps, IssueCustomerTierAction } from "../types";
 

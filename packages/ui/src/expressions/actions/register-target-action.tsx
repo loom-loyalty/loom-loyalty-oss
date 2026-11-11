@@ -5,6 +5,7 @@
  */
 
 import { memo, useCallback, useId, type ReactNode } from "react";
+
 import { EventRuleField } from "../../forms/event-rule-field/index.js";
 import { useEventRuleField } from "../../forms/event-rule-field/use-event-rule-field.js";
 import { ProgramField } from "../../forms/program-field/index.js";
@@ -12,7 +13,6 @@ import { useProgramField } from "../../forms/program-field/use-program-field.js"
 import { TargetField } from "../../forms/target-field/index.js";
 import { useTargetField } from "../../forms/target-field/use-target-field.js";
 import { Label } from "../../primitives/label.js";
-
 import type { ActionComponentProps, RegisterTargetAction } from "../types";
 
 type RegisterTargetData = RegisterTargetAction["registerTarget"];

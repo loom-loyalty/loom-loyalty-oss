@@ -3,6 +3,7 @@
  */
 
 import type { ReactNode } from "react";
+
 import { Skeleton } from "../../../primitives/skeleton.js";
 
 export function MetadataHierarchySkeleton(): ReactNode {

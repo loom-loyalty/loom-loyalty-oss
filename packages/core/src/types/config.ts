@@ -4,6 +4,7 @@
  */
 
 import type * as React from "react";
+
 import type { PluginDefinition } from "./plugin";
 
 /**

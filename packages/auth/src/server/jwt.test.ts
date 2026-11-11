@@ -1,5 +1,6 @@
 import { exportJWK, generateKeyPair, SignJWT, type JWK, type KeyLike } from "jose";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
 import { WORKOS_JWKS_URL } from "../shared/constants";
 import { clearJWKSCache, verifyAccessToken } from "./jwt";
 

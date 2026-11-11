@@ -4,6 +4,7 @@
 
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+
 import { mockEmptyTiers, mockManyTiers, mockTiers } from "./__mocks__/tier-mocks.js";
 import { TierList } from "./tier-list.js";
 

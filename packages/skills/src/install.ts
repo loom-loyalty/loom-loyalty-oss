@@ -1,5 +1,6 @@
 import { cpSync, existsSync, mkdirSync, rmSync } from "node:fs";
 import { join, resolve } from "node:path";
+
 import { listSkills, SKILLS_DIR } from "./skills.js";
 
 export interface InstallOptions {

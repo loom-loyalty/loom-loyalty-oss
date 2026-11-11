@@ -1,4 +1,5 @@
 import { createContext, useContext, type ReactNode } from "react";
+
 import { useTinybirdToken } from "./hooks/use-tinybird-token";
 import type { AnalyticsTokenResponse, TinybirdTokenState } from "./types";
 

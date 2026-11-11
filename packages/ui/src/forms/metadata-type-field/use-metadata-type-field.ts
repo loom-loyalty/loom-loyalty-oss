@@ -5,15 +5,14 @@
  * reference types by code, so option.id is the type code.
  */
 
-import { useQuery } from "@tanstack/react-query";
-import { useCallback, useMemo, useState } from "react";
-
 import {
   getMetadataManagementListMetadataTypesQueryKey,
   metadataManagementListMetadataTypes,
   type MetadataType,
   type MetadataTypeCategory,
 } from "@loom-loyalty/sdk";
+import { useQuery } from "@tanstack/react-query";
+import { useCallback, useMemo, useState } from "react";
 
 import { useDebouncedValue } from "../../hooks/use-debounced-value";
 import { useSearchableInfiniteList } from "../../hooks/use-searchable-infinite-list";

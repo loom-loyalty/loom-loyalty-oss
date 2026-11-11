@@ -6,13 +6,12 @@
  * needed.
  */
 
-import { useCallback, useMemo, useState } from "react";
-
 import {
   eventEngineManagementListEventRules,
   getEventEngineManagementListEventRulesQueryKey,
   type EventRule,
 } from "@loom-loyalty/sdk";
+import { useCallback, useMemo, useState } from "react";
 
 import { useDebouncedValue } from "../../hooks/use-debounced-value";
 import {

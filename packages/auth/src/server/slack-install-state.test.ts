@@ -1,6 +1,7 @@
 import { jwtVerify } from "jose";
 import { describe, expect, it } from "vitest";
-import { generateSlackInstallState } from "./slack-install-state";
+
+import { generateSlackInstallState, generateTeamsInstallState } from "./slack-install-state";
 
 const SECRET = "test-install-state-secret-please-rotate";
 const CLAIMS = {
@@ -64,6 +65,28 @@ describe("generateSlackInstallState", () => {
     const state = await generateSlackInstallState(CLAIMS, SECRET, { ttlSeconds: -10 });
     await expect(
       jwtVerify(state, await deriveKey(SECRET), { algorithms: ["HS256"] })
+    ).rejects.toThrow();
+  });
+});
+
+describe("generateTeamsInstallState", () => {
+  it('signs the same claims with aud "teams", which the Teams callback requires', async () => {
+    const state = await generateTeamsInstallState(CLAIMS, SECRET);
+    const { payload } = await jwtVerify(state, await deriveKey(SECRET), {
+      algorithms: ["HS256"],
+      audience: "teams",
+    });
+    expect(payload.loomEnvId).toBe("env_1");
+    expect(payload.idpOrganizationId).toBe("idporg_1");
+    expect(payload.dashboardUrl).toBe("https://dashboard.example.com/organization/integrations");
+    // Long enough for an admin to switch accounts and finish Microsoft's consent.
+    expect((payload.exp as number) - (payload.iat as number)).toBe(900);
+  });
+
+  it("leaves the Slack state without an audience", async () => {
+    const state = await generateSlackInstallState(CLAIMS, SECRET);
+    await expect(
+      jwtVerify(state, await deriveKey(SECRET), { algorithms: ["HS256"], audience: "teams" })
     ).rejects.toThrow();
   });
 });

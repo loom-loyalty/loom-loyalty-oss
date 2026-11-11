@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import type { UIEntitySchema } from "../../types/ui-schema.js";
 import { entitySchemaToPromptFragment } from "../schema-to-prompt.js";
 

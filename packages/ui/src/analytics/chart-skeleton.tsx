@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+
 import { Skeleton } from "../primitives/skeleton";
 
 interface ChartSkeletonProps {

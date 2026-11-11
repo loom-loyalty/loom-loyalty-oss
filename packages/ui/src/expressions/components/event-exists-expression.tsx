@@ -6,10 +6,10 @@
  */
 
 import { memo, useId, type ReactNode } from "react";
+
 import { EventTypeField } from "../../forms/event-type-field/index.js";
 import { Input } from "../../primitives/input.js";
 import { Label } from "../../primitives/label.js";
-
 import type { EventExistsExpression, ExpressionComponentProps } from "../types";
 
 type EventExistsData = EventExistsExpression["eventExists"];

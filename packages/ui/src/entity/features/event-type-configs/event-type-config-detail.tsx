@@ -11,6 +11,7 @@
 
 import { Globe, Plus } from "lucide-react";
 import type { ReactNode } from "react";
+
 import { Badge } from "../../../primitives/badge.js";
 import { Button } from "../../../primitives/button.js";
 import type { EventTypeVariant } from "./types.js";

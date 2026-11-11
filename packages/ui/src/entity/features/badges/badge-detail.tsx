@@ -10,6 +10,7 @@ import type { UIEntitySchema } from "@loom-loyalty/schema";
 import type { Badge as BadgeEntity } from "@loom-loyalty/sdk";
 import { Edit, Trash2 } from "lucide-react";
 import type { ReactNode } from "react";
+
 import { Badge } from "../../../primitives/badge.js";
 import { Button } from "../../../primitives/button.js";
 import { EnvironmentEnablementList } from "../../environment-workflow/environment-status-column.js";

@@ -49,6 +49,12 @@ The same two plugins are also Cursor plugins (`.cursor-plugin/`). In Cursor, bot
 
 Claude plans without plugins can download each skill as a zip from [docs.loomloyalty.com](https://docs.loomloyalty.com/).
 
+## Specs
+
+| Spec                                              | What it is                                                                                                      |
+| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| [Feedback for APIs, v0.1](specs/feedback/v0.1.md) | A small resource any API can offer so users and agents can report where it fell short, and follow what happened |
+
 ## Development
 
 ```bash

@@ -16,6 +16,7 @@ import type {
   UpdateCustomer as SDKUpdateCustomer,
 } from "@loom-loyalty/sdk";
 import { useState, type FormEvent, type ReactNode } from "react";
+
 import { CodeInput, useCodeInput } from "../../../forms/code-input.js";
 import { WithFieldError } from "../../../forms/field-errors.js";
 import { FormSheet } from "../../../forms/form-sheet.js";

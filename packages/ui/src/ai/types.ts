@@ -8,17 +8,14 @@ import type { AiLimit } from "@loom-loyalty/core";
 import type { ReactNode } from "react";
 
 import type { AiChatCustomActionHandler } from "./chat-action-context";
+import type { InitialHandoffs } from "./initial-handoffs";
 
 // =============================================================================
 // Panel Props
 // =============================================================================
 
-/** Props for the main AiChatPanel container */
-export interface AiChatPanelProps {
-  /** Whether the panel is open */
-  open: boolean;
-  /** Callback when open state changes */
-  onOpenChange: (open: boolean) => void;
+/** Connection and behavior shared by every chat surface (`AiChatProviders`). */
+export interface AiChatConnectionProps {
   /** AI API base URL */
   baseUrl: string;
   /** Token provider for direct JWT auth (omit for BFF cookie auth) */
@@ -29,6 +26,10 @@ export interface AiChatPanelProps {
   initialMessage?: string;
   /** Called after the initial message has been consumed */
   onInitialMessageSent?: () => void;
+  /** An existing thread to select as soon as the chat mounts (the home page's recent list) */
+  initialThreadId?: string;
+  /** Called once the initial thread has been selected */
+  onInitialThreadOpened?: () => void;
   /**
    * Handles card actions the chat doesn't handle itself, such as opening a drafted
    * rule in an editor. Return true when handled. Params come from the model: validate them.
@@ -44,6 +45,24 @@ export interface AiChatPanelProps {
    * assistant "<brand> AI" instead of Weave. Omit on Loom Loyalty's own hosts.
    */
   brandName?: string;
+}
+
+/** Props for {@link AiChatProviders}: the connection plus the surface it wraps. */
+export interface AiChatProvidersProps extends AiChatConnectionProps {
+  children: ReactNode;
+  /**
+   * Claim-once handoffs built by a component that outlives the providers
+   * (`useInitialHandoffs` in `AiChatPanel`). Omit to build them here.
+   */
+  handoffs?: InitialHandoffs;
+}
+
+/** Props for the AiChatPanel Sheet. */
+export interface AiChatPanelProps extends AiChatConnectionProps {
+  /** Whether the panel is open */
+  open: boolean;
+  /** Callback when open state changes */
+  onOpenChange: (open: boolean) => void;
 }
 
 // =============================================================================

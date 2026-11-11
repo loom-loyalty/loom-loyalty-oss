@@ -1,6 +1,7 @@
 import { OFREPWebProvider } from "@openfeature/ofrep-web-provider";
 import { type EvaluationContext, OpenFeature, OpenFeatureProvider } from "@openfeature/react-sdk";
 import { useEffect, useRef } from "react";
+
 import type { FeatureFlagProviderProps } from "./types";
 
 export const DEFAULT_FEATURE_FLAG_DOMAIN = "loom";

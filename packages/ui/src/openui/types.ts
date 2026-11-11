@@ -1,8 +1,5 @@
 import type { ComponentRenderProps, DefinedComponent } from "@openuidev/react-lang";
 import { defineComponent as _defineComponent } from "@openuidev/react-lang";
-import type { ComponentType } from "react";
-import { z } from "zod";
-
 import {
   Award,
   BarChart3,
@@ -27,6 +24,8 @@ import {
   UtensilsCrossed,
   Zap,
 } from "lucide-react";
+import type { ComponentType } from "react";
+import { z } from "zod";
 
 const iconMap: Record<string, ComponentType<{ className?: string }>> = {
   users: Users,

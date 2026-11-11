@@ -7,10 +7,10 @@
  */
 
 import { memo, useId, type ReactNode } from "react";
+
 import { Input } from "../../primitives/input.js";
 import { Label } from "../../primitives/label.js";
 import { Switch } from "../../primitives/switch.js";
-
 import type { ExpressionComponentProps, HasProgramCurrencyExpression } from "../types";
 
 type HasProgramCurrencyData = HasProgramCurrencyExpression["hasProgramCurrency"];

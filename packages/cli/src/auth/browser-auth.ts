@@ -10,6 +10,7 @@
 
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { URL } from "node:url";
+
 import open from "open";
 
 interface AuthResult {

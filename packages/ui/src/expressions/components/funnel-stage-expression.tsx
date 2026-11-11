@@ -6,6 +6,7 @@
 
 import { FUNNEL_STAGES } from "@loom-loyalty/schema/expressions";
 import { memo, useId, type ReactNode } from "react";
+
 import { Label } from "../../primitives/label.js";
 import {
   Select,
@@ -14,7 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../primitives/select.js";
-
 import type { ExpressionComponentProps, FunnelStage, FunnelStageExpression } from "../types";
 
 type FunnelStageData = FunnelStageExpression["funnelStage"];

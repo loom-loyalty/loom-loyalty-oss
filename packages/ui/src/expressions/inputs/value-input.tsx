@@ -7,11 +7,11 @@
 
 import { Plus, X } from "lucide-react";
 import { useCallback, useId, type ReactNode } from "react";
+
 import { Button } from "../../primitives/button.js";
 import { Input } from "../../primitives/input.js";
 import { Label } from "../../primitives/label.js";
 import { Switch } from "../../primitives/switch.js";
-
 import { JsonPathInput } from "./json-path-input";
 
 export interface ValueInputProps {

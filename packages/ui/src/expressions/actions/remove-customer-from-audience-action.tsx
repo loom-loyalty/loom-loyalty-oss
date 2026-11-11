@@ -5,11 +5,11 @@
  */
 
 import { memo, useCallback, useId, type ReactNode } from "react";
+
 import { CustomerAudienceField } from "../../forms/customer-audience-field/index.js";
 import { useCustomerAudienceField } from "../../forms/customer-audience-field/use-customer-audience-field.js";
 import { Label } from "../../primitives/label.js";
 import { Switch } from "../../primitives/switch.js";
-
 import type { ActionComponentProps, RemoveCustomerFromAudienceAction } from "../types";
 
 type RemoveCustomerFromAudienceData =

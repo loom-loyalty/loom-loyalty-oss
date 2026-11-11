@@ -10,6 +10,7 @@
 import { extractLocalizedString, formatDateTime } from "@loom-loyalty/core";
 import { Edit, ExternalLink, Plus, Trash2 } from "lucide-react";
 import type { ReactNode } from "react";
+
 import { DataTable } from "../../../data-display/data-table.js";
 import { Badge } from "../../../primitives/badge.js";
 import { Button } from "../../../primitives/button.js";

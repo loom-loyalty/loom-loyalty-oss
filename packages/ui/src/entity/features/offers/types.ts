@@ -8,6 +8,7 @@
 import type { UIEntitySchema } from "@loom-loyalty/schema";
 import type { CreateOffer, Offer, UpdateOffer } from "@loom-loyalty/sdk";
 import type { ReactNode } from "react";
+
 import type { PaginationConfig } from "../../../data-display/data-table.js";
 import type { FormFieldError } from "../../../forms/field-errors.js";
 import type { FormSheetError } from "../../../forms/form-sheet.js";

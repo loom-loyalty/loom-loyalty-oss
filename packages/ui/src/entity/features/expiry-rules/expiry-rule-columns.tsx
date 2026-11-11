@@ -7,10 +7,10 @@
 
 import { formatShortDate } from "@loom-loyalty/core";
 import type { ExpiryRule } from "@loom-loyalty/sdk";
+
 import type { Column } from "../../../data-display/data-table.js";
 import { Badge } from "../../../primitives/badge.js";
 import { getEnvironmentColumn } from "../../environment-workflow/environment-status-column.js";
-
 import { EXPIRY_PERIOD_LABELS, EXPIRY_TYPE_LABELS } from "./types.js";
 
 /**

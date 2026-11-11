@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
+
 import { describe, expect, it, vi } from "vitest";
+
 import { accountFor, forgetSignIn, signIn, type KeyStore } from "../../src/auth/saved-sign-in.js";
 
 const DASHBOARD = "https://dashboard.staging.example.com";

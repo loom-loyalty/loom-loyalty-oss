@@ -4,6 +4,7 @@
  */
 
 import { SignJWT, jwtVerify } from "jose";
+
 import { HANDOFF_TOKEN_EXPIRY_SECONDS } from "../shared/constants";
 import type {
   GenerateHandoffRequest,

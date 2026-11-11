@@ -1,5 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
+
 import { afterEach, describe, expect, it, vi } from "vitest";
+
 import { downloadOpenApiSpec } from "../../src/api/download-spec.js";
 
 vi.mock("node:fs/promises", () => ({

@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+
 import { authenticateViaBrowser } from "../../src/auth/browser-auth.js";
 
 describe("authenticateViaBrowser", () => {

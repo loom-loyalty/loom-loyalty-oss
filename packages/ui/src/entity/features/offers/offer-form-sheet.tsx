@@ -20,6 +20,7 @@ import type {
   CreateOffer,
 } from "@loom-loyalty/sdk";
 import { useState, type FormEvent, type ReactNode } from "react";
+
 import { CodeGenInformationInput } from "../../../forms/code-gen-information-input.js";
 import { CodeInput, useCodeInput } from "../../../forms/code-input.js";
 import { CustomerAudienceField } from "../../../forms/customer-audience-field/index.js";

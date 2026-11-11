@@ -5,13 +5,13 @@
  */
 
 import { memo, useCallback, useId, useState, type ReactNode } from "react";
+
 import { DateTimeInput } from "../../forms/date-time-input.js";
 import { OfferField } from "../../forms/offer-field/index.js";
 import { useOfferField } from "../../forms/offer-field/use-offer-field.js";
 import { Input } from "../../primitives/input.js";
 import { Label } from "../../primitives/label.js";
 import { Switch } from "../../primitives/switch.js";
-
 import { FieldsetLegend } from "../components/fieldset-legend.js";
 import { SegmentedSwitch } from "../components/segmented-switch.js";
 import type { ActionComponentProps, IssueCustomerCouponAction } from "../types";

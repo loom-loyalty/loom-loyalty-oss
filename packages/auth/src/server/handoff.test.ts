@@ -1,5 +1,6 @@
 import { SignJWT } from "jose";
 import { describe, expect, it } from "vitest";
+
 import type { SessionData } from "../types/session";
 import { generateHandoffToken, validateHandoffToken, type HandoffTokenStore } from "./handoff";
 

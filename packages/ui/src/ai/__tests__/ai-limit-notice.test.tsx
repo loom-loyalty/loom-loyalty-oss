@@ -1,5 +1,4 @@
 import "@testing-library/jest-dom/vitest";
-
 import { formatUpcomingTime } from "@loom-loyalty/core";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";

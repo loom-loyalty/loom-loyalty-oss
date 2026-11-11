@@ -5,13 +5,13 @@
  */
 
 import { memo, useCallback, useId, type ReactNode } from "react";
+
 import { MetadataField } from "../../forms/metadata-field/index.js";
 import { MetadataTypeField } from "../../forms/metadata-type-field/index.js";
 import { TargetField } from "../../forms/target-field/index.js";
 import { useTargetField } from "../../forms/target-field/use-target-field.js";
 import { Label } from "../../primitives/label.js";
 import { Switch } from "../../primitives/switch.js";
-
 import { FieldsetLegend } from "../components/fieldset-legend.js";
 import { PathOrValueField } from "../inputs/path-or-value-field.js";
 import type { ActionComponentProps, CompleteTargetDataAction } from "../types";

@@ -10,13 +10,12 @@
  * existing trigger panel storage semantics.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-
 import {
   eventEngineManagementListEventTypeConfigurations,
   getEventEngineManagementListEventTypeConfigurationsQueryKey,
   type EventTypeConfiguration,
 } from "@loom-loyalty/sdk";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useDebouncedValue } from "../../hooks/use-debounced-value";
 import {

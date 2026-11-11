@@ -7,6 +7,7 @@
 
 import { formatShortDate } from "@loom-loyalty/core";
 import type { Offer } from "@loom-loyalty/sdk";
+
 import type { Column } from "../../../data-display/data-table.js";
 import {
   getEnvironmentColumn,

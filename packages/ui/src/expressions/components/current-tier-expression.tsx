@@ -5,12 +5,12 @@
  */
 
 import { memo, useCallback, useEffect, useId, type ReactNode } from "react";
+
 import { TierField } from "../../forms/tier-field/index.js";
 import { useTierField } from "../../forms/tier-field/use-tier-field.js";
 import { Input } from "../../primitives/input.js";
 import { Label } from "../../primitives/label.js";
 import { Switch } from "../../primitives/switch.js";
-
 import { useExpressionContext } from "../expression-context.js";
 import type { CurrentTierExpression, ExpressionComponentProps } from "../types";
 

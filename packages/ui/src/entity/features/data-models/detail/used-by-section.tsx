@@ -1,5 +1,6 @@
 import { GitBranch } from "lucide-react";
 import type { ReactNode } from "react";
+
 import type { CrossEntityImpactEntry } from "../types.js";
 import { Section } from "./section.js";
 

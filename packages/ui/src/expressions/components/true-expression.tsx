@@ -5,8 +5,8 @@
  */
 
 import { memo, type ReactNode } from "react";
-import { Badge } from "../../primitives/badge.js";
 
+import { Badge } from "../../primitives/badge.js";
 import type { ExpressionComponentProps, TrueExpression } from "../types";
 
 type TrueData = TrueExpression["true"];

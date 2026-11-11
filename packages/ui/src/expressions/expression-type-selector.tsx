@@ -13,6 +13,7 @@
 
 import { isOperatorAllowed, type OperatorSurface } from "@loom-loyalty/schema/expressions";
 import { useMemo, type ReactNode } from "react";
+
 import { cn } from "../lib/utils.js";
 import {
   Select,
@@ -24,7 +25,6 @@ import {
   SelectValue,
 } from "../primitives/select.js";
 import { ToggleGroup, ToggleGroupItem } from "../primitives/toggle-group.js";
-
 import { useExpressionContext } from "./expression-context.js";
 import { EXPRESSION_CATEGORIES, EXPRESSION_TYPE_NAMES } from "./utils";
 

@@ -1,8 +1,8 @@
 "use client";
 
 import { ChevronDown, ChevronUp, type LucideIcon } from "lucide-react";
-import { useEffect, useState } from "react";
 
+import { usePersistedCollapse } from "../hooks/use-persisted-collapse";
 import { cn } from "../lib/utils";
 import { Button } from "../primitives/button";
 
@@ -38,30 +38,7 @@ export function MetricsBar({
   defaultCollapsed = false,
   className,
 }: MetricsBarProps) {
-  const [isCollapsed, setIsCollapsed] = useState(() => {
-    if (storageKey && typeof window !== "undefined") {
-      try {
-        const stored = localStorage.getItem(storageKey);
-        return stored !== null ? stored === "true" : defaultCollapsed;
-      } catch {
-        // localStorage may be unavailable in private browsing or quota exceeded
-        return defaultCollapsed;
-      }
-    }
-    return defaultCollapsed;
-  });
-
-  useEffect(() => {
-    if (storageKey && typeof window !== "undefined") {
-      try {
-        localStorage.setItem(storageKey, String(isCollapsed));
-      } catch {
-        // localStorage may be unavailable in private browsing or quota exceeded
-      }
-    }
-  }, [isCollapsed, storageKey]);
-
-  const toggleCollapsed = () => setIsCollapsed((prev) => !prev);
+  const [isCollapsed, toggleCollapsed] = usePersistedCollapse(storageKey, defaultCollapsed);
 
   return (
     <div

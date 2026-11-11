@@ -7,10 +7,10 @@
 
 "use client";
 
+import { formatShortDate } from "@loom-loyalty/core";
 import { Globe, Lock, Mail, Pencil, Plus, Settings, Shield, Trash2 } from "lucide-react";
 import { useMemo, type ReactNode } from "react";
 
-import { formatShortDate } from "@loom-loyalty/core";
 import { EmptyState } from "../../../data-display/empty-state.js";
 import { StatusBadge } from "../../../data-display/status-badge.js";
 import { Button } from "../../../primitives/button.js";

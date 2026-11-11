@@ -6,6 +6,7 @@
  */
 
 import { formatDate } from "@loom-loyalty/core";
+
 import type { Column } from "../../../data-display/data-table";
 import { StatusBadge } from "../../../data-display/status-badge";
 import { cn } from "../../../lib/utils";

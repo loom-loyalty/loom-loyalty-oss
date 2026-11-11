@@ -6,13 +6,12 @@
  * shared list hook keeps paging until a match appears or the list ends.
  */
 
-import { useCallback, useMemo, useState } from "react";
-
 import {
   getProgramBankManagementListProgramCurrenciesQueryKey,
   programBankManagementListProgramCurrencies,
   type ProgramCurrency,
 } from "@loom-loyalty/sdk";
+import { useCallback, useMemo, useState } from "react";
 
 import { useDebouncedValue } from "../../hooks/use-debounced-value";
 import {

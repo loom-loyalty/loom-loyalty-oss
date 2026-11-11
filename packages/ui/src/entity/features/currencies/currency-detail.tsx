@@ -10,6 +10,7 @@ import type { UIEntitySchema } from "@loom-loyalty/schema";
 import type { ProgramCurrency } from "@loom-loyalty/sdk";
 import { Edit, Trash2 } from "lucide-react";
 import type { ReactNode } from "react";
+
 import { ProgramBadgeList } from "../../../data-display/program-badge-list.js";
 import { Badge } from "../../../primitives/badge.js";
 import { Button } from "../../../primitives/button.js";

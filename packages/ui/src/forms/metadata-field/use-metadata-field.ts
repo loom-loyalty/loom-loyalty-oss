@@ -11,9 +11,6 @@
  * scroll-to-load-more without a follow-up wrapper change.
  */
 
-import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
-
 import {
   getMetadataManagementListDataTypesByTypeQueryKey,
   getMetadataManagementListItemsByTypeQueryKey,
@@ -38,6 +35,8 @@ import {
   type Metadata,
   type MetadataTypeCategory,
 } from "@loom-loyalty/sdk";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   resetInfiniteQueryToFirstPage,

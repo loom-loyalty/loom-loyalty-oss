@@ -1,5 +1,4 @@
 import "@testing-library/jest-dom/vitest";
-
 import type { AssistantMessage, Message } from "@openuidev/react-headless";
 import type * as ReactLang from "@openuidev/react-lang";
 import type { ParseResult } from "@openuidev/react-lang";

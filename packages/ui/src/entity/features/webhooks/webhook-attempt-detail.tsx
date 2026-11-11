@@ -7,6 +7,7 @@
  */
 
 import type { ReactNode } from "react";
+
 import { StatusBadge } from "../../../data-display/status-badge.js";
 import { CopyButton } from "../../../primitives/copy-button.js";
 import { DetailRow } from "./detail-row.js";

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+
 import { Card, CardContent, CardHeader, CardTitle } from "../primitives/card";
 import type { LinkComponentProps } from "../shell/sidebar";
 import { ChartEmpty } from "./chart-empty";

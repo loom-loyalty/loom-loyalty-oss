@@ -21,6 +21,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+
 import { toNumber, type VizPlan } from "./infer-visualization";
 
 /**

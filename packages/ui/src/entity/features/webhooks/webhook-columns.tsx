@@ -6,6 +6,7 @@
  */
 
 import { formatShortDate } from "@loom-loyalty/core";
+
 import type { Column } from "../../../data-display/data-table.js";
 import { StatusBadge } from "../../../data-display/status-badge.js";
 import { Badge } from "../../../primitives/badge.js";

@@ -17,6 +17,7 @@ import type {
 } from "@loom-loyalty/sdk";
 import { Edit, Trash2 } from "lucide-react";
 import { useMemo, type ReactNode } from "react";
+
 import { useProgramField } from "../../../forms/program-field/index.js";
 import { Badge } from "../../../primitives/badge.js";
 import { Button } from "../../../primitives/button.js";

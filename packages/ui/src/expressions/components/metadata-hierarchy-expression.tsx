@@ -12,12 +12,12 @@
  */
 
 import { memo, useCallback, useId, type ReactNode } from "react";
+
 import { MetadataField } from "../../forms/metadata-field/index.js";
 import { MetadataTypeField } from "../../forms/metadata-type-field/index.js";
 import { Input } from "../../primitives/input.js";
 import { Label } from "../../primitives/label.js";
 import { Switch } from "../../primitives/switch.js";
-
 import { JsonPathInput } from "../inputs/json-path-input";
 import type {
   ExpressionComponentProps,

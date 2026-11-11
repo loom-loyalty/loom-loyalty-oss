@@ -5,6 +5,7 @@
 import type { Program } from "@loom-loyalty/sdk";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+
 import { ProgramDetail } from "./program-detail.js";
 
 const MINIMAL_PROGRAM: Program = {

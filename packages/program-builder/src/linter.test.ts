@@ -11,6 +11,7 @@
  */
 
 import { describe, expect, it } from "vitest";
+
 import { LINTER_RULE_CODES, validateProgramSpec, validateProgramSpecPartial } from "./linter";
 import type { ProgramSpec, SelectedFeatures, WizardBadge, WizardTier } from "./spec";
 

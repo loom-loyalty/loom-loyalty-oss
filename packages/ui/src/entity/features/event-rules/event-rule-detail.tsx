@@ -7,18 +7,18 @@
 import { extractLocalizedString, formatDateTime } from "@loom-loyalty/core";
 import { Edit, PauseCircle, PlayCircle, Plus, RotateCw, Trash2 } from "lucide-react";
 import { useMemo, type ReactNode } from "react";
-import { Badge } from "../../../primitives/badge.js";
-import { Button } from "../../../primitives/button.js";
-import type { EntityRecord } from "../../entity-list.js";
-import { StatusIndicatorBadge } from "../../status-indicator-badge.js";
 
 import { ExpressionSummary } from "../../../expressions/expression-summary.js";
 import { normalizeExpression } from "../../../expressions/migrate.js";
 import { useProgramField } from "../../../forms/program-field/index.js";
+import { Badge } from "../../../primitives/badge.js";
+import { Button } from "../../../primitives/button.js";
+import type { EntityRecord } from "../../entity-list.js";
 import {
   EnvironmentEnablementList,
   type EnabledInEnvironment,
 } from "../../environment-workflow/environment-status-column.js";
+import { StatusIndicatorBadge } from "../../status-indicator-badge.js";
 import { EventRuleCategoryBadge } from "./event-rule-category-badge.js";
 import {
   CATEGORY_INFO,

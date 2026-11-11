@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { ALL_PIPES, PIPES, PREMIUM_PIPES, STANDARD_PIPES } from "../pipes";
 
 describe("Pipe Registry", () => {

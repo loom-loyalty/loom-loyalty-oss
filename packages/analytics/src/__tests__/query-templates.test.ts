@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { QUERY_TEMPLATES } from "../query-templates";
 
 describe("Query Templates", () => {

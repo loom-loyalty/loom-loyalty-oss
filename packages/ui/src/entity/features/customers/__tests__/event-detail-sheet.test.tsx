@@ -9,11 +9,12 @@
  *    the "No effect recorded" badge
  *  - populated: the existing actions list, unchanged
  */
+
+import type { UIFieldConfig } from "@loom-loyalty/schema";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-import type { UIFieldConfig } from "@loom-loyalty/schema";
 import { EventDetailSheet } from "../event-detail-sheet";
 import type { CustomerEvent, LedgerEntry } from "../types";
 

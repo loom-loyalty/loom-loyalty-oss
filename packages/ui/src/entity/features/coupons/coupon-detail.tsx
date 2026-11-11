@@ -8,6 +8,7 @@
 import { formatDateTime } from "@loom-loyalty/core";
 import { Edit, Trash2 } from "lucide-react";
 import type { ReactNode } from "react";
+
 import { Button } from "../../../primitives/button.js";
 import { ExtendedFieldsSection } from "../../extended-fields-section.js";
 import { CouponStatusBadge } from "./coupon-status-badge.js";

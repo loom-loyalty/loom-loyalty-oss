@@ -6,6 +6,7 @@
 
 import type { Customer as SDKCustomer } from "@loom-loyalty/sdk";
 import { describe, expect, it } from "vitest";
+
 import {
   CUSTOMER_STANDARD_FIELDS,
   detectActionType,

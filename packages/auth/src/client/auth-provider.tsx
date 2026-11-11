@@ -4,6 +4,7 @@
  */
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+
 import type { AuthOrganization, AuthState, AuthUser } from "../types/session";
 
 /**

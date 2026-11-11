@@ -5,11 +5,11 @@
  */
 
 import { memo, useCallback, useId, type ReactNode } from "react";
+
 import { TargetField } from "../../forms/target-field/index.js";
 import { useTargetField } from "../../forms/target-field/use-target-field.js";
 import { Label } from "../../primitives/label.js";
 import { Switch } from "../../primitives/switch.js";
-
 import type { ExpressionComponentProps, TargetCompletedExpression } from "../types";
 
 type TargetCompletedData = TargetCompletedExpression["targetCompleted"];

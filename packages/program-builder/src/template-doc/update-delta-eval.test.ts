@@ -27,6 +27,7 @@
 
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 import type { ProgramSpec } from "../spec.js";

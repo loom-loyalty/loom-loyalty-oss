@@ -8,6 +8,7 @@
 import { extractLocalizedString, formatShortDate } from "@loom-loyalty/core";
 import type { Program } from "@loom-loyalty/sdk";
 import { Building2 } from "lucide-react";
+
 import type { Column } from "../../../data-display/data-table.js";
 import { getEnvironmentColumn } from "../../environment-workflow/environment-status-column.js";
 

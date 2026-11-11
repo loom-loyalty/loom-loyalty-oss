@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import type { PackageInstallationResult } from "../../src/api/types.js";
 import { addMetadataValues, missingDependencies, valueName } from "../../src/manifest/fix.js";
 import { parseManifest } from "../../src/manifest/load.js";

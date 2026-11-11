@@ -13,6 +13,7 @@
 import { readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+
 import { runConfigCommand } from "./commands/config.js";
 import { runDoctorCommand } from "./commands/doctor.js";
 import { generate, parseArgs } from "./commands/generate.js";

@@ -30,7 +30,6 @@ import { Skeleton } from "../primitives/skeleton.js";
 import { Switch } from "../primitives/switch.js";
 import { Textarea } from "../primitives/textarea.js";
 import { useReadOnly } from "../shell/read-only.js";
-
 import type { EntityFieldChangeMeta } from "./entity-field.js";
 
 const warnedMetadataMultiFields = new Set<string>();

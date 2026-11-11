@@ -2,7 +2,9 @@ import { cpSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync }
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { inflateRawSync } from "node:zlib";
+
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+
 import { createZip, listSkills, packSkills, SKILLS_DIR } from "../src/index.js";
 
 /** Reads a zip's entries back from its local file headers. */
@@ -87,5 +89,21 @@ describe("packSkills", () => {
       })
     ).toThrow(/loom-loyalty-offer\/references\/leak\.md:1 \[non-production host\]/);
     expect(() => readdirSync(join(out, "skills"))).toThrow();
+  });
+
+  it("writes nothing when a block rule match is split across a line wrap", () => {
+    const source = join(out, "source");
+    cpSync(SKILLS_DIR, source, { recursive: true });
+    writeFileSync(
+      join(source, "loom-loyalty-offer", "references", "leak.md"),
+      "Thanks to Jordan\nRivera for this.\n"
+    );
+    expect(() =>
+      packSkills({
+        outDir: join(out, "skills"),
+        source,
+        blockRules: [{ pattern: "jordan\\s+rivera", reason: "personal name" }],
+      })
+    ).toThrow(/loom-loyalty-offer\/references\/leak\.md:1 \[personal name\]/);
   });
 });

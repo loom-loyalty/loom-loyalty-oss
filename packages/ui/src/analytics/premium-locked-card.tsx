@@ -1,5 +1,6 @@
 import { Lock, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
+
 import { Card, CardContent } from "../primitives/card";
 
 export interface PremiumLockedCardProps {

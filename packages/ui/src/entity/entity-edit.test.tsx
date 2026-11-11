@@ -5,6 +5,7 @@
 import type { UIEntitySchema } from "@loom-loyalty/schema";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+
 import { ReadOnlyProvider } from "../shell/read-only.js";
 import { EntityEdit } from "./entity-edit.js";
 

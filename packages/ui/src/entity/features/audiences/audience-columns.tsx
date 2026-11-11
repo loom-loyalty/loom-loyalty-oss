@@ -7,6 +7,7 @@
 
 import { formatShortDate } from "@loom-loyalty/core";
 import type { ReactNode } from "react";
+
 import type { Column } from "../../../data-display/data-table.js";
 import { getEnvironmentColumn } from "../../environment-workflow/environment-status-column.js";
 import { AudienceStatusIndicator } from "./audience-status-indicator.js";

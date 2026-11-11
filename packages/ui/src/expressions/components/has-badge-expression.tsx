@@ -5,11 +5,11 @@
  */
 
 import { memo, useCallback, useId, type ReactNode } from "react";
+
 import { BadgeField } from "../../forms/badge-field/index.js";
 import { useBadgeField } from "../../forms/badge-field/use-badge-field.js";
 import { Label } from "../../primitives/label.js";
 import { Switch } from "../../primitives/switch.js";
-
 import type { ExpressionComponentProps, HasBadgeExpression } from "../types";
 
 type HasBadgeData = HasBadgeExpression["hasBadge"];

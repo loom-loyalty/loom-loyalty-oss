@@ -25,6 +25,7 @@ import type {
 } from "@loom-loyalty/sdk";
 import { ChevronDown, ChevronRight, Copy } from "lucide-react";
 import { useMemo, useState, type FormEvent, type ReactNode } from "react";
+
 import { EntitySelectBox, type EntityOption } from "../../../forms/entity-select-box.js";
 import { WithFieldError } from "../../../forms/field-errors.js";
 import { FormSheet } from "../../../forms/form-sheet.js";

@@ -24,9 +24,11 @@ import type {
   XOfYTarget,
 } from "@loom-loyalty/sdk";
 import { ArrowDown, ArrowUp, ChevronDown, Plus, X } from "lucide-react";
-import { useCallback, useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { useCallback, useId, useMemo, useState, type FormEvent, type ReactNode } from "react";
+
 import { CodeInput, useCodeInput } from "../../../forms/code-input.js";
 import { DiscriminatorRadioGroup } from "../../../forms/discriminator-radio-group.js";
+import { DurationPeriodBuilder } from "../../../forms/duration-period-builder.js";
 import { WithFieldError } from "../../../forms/field-errors.js";
 import { FormSheet } from "../../../forms/form-sheet.js";
 import {
@@ -60,11 +62,17 @@ import {
 import { extractExtendedFields } from "../../entity-field-utils.js";
 import { ExtendedFieldsSection } from "../../extended-fields-section.js";
 import {
+  toStrictDurationPeriodValue,
+  type DurationPeriodValue,
+} from "../../format-duration-period.js";
+import { activeWindowError, cycleWindowError, CycleWindowFields } from "./cycle-window-fields.js";
+import {
   GROWTH_ALGORITHM_OPTIONS,
   GROWTH_OPERATOR_OPTIONS,
   TARGET_SCOPE_OPTIONS,
   TARGET_TYPE_LABELS,
   TARGET_TYPE_OPTIONS,
+  type CycleWindow,
   type TargetFormSheetProps,
 } from "./types.js";
 
@@ -153,6 +161,9 @@ export function TargetFormSheet({
   const [scope, setScope] = useState(
     (initialData as unknown as { scope: string } | undefined)?.scope ?? "GLOBAL"
   );
+  const [durationPeriod, setDurationPeriod] = useState<DurationPeriodValue | undefined>(
+    initialData?.durationPeriod as DurationPeriodValue | undefined
+  );
 
   // Completion state
   const [completionTypeCode, setCompletionTypeCode] = useState(
@@ -180,6 +191,9 @@ export function TargetFormSheet({
   );
   const [carryOverToNextCycle, setCarryOverToNextCycle] = useState(
     initCounter?.carryOverToNextCycle ?? false
+  );
+  const [cycleWindow, setCycleWindow] = useState<CycleWindow | undefined>(
+    initCounter?.cycleDurationPeriod as CycleWindow | undefined
   );
   const [growthOperator, setGrowthOperator] = useState(initCounter?.growthTargetOperator ?? "");
   const [growthOperand, setGrowthOperand] = useState<number | undefined>(
@@ -222,7 +236,9 @@ export function TargetFormSheet({
   });
 
   // Collapsible state for advanced sections
-  const [cyclesOpen, setCyclesOpen] = useState(() => (initCounter?.numberOfCycles ?? 0) > 0);
+  const [cyclesOpen, setCyclesOpen] = useState(
+    () => (initCounter?.numberOfCycles ?? 0) > 0 || !!initCounter?.cycleDurationPeriod
+  );
   const [growthOpen, setGrowthOpen] = useState(() => !!initCounter?.growthTargetOperator);
 
   // Extended fields state
@@ -265,6 +281,7 @@ export function TargetFormSheet({
     setNumberOfCyclesToAchieve(counter?.numberOfCyclesToAchieve);
     setCyclesMustBeConsecutive(counter?.cyclesMustBeConsecutive ?? false);
     setCarryOverToNextCycle(counter?.carryOverToNextCycle ?? false);
+    setCycleWindow(counter?.cycleDurationPeriod as CycleWindow | undefined);
     setGrowthOperator(counter?.growthTargetOperator ?? "");
     setGrowthOperand(counter?.growthTargetOperand);
     setGrowthAlgorithm(counter?.growthTargetAlgorithm ?? "");
@@ -283,7 +300,7 @@ export function TargetFormSheet({
       data && dataType === "X_OF_Y" ? (data as XOfYTarget).targetValue : undefined
     );
     setXofYItemTargetIds(data && dataType === "X_OF_Y" ? ((data as XOfYTarget).items ?? []) : []);
-    setCyclesOpen((counter?.numberOfCycles ?? 0) > 0);
+    setCyclesOpen((counter?.numberOfCycles ?? 0) > 0 || !!counter?.cycleDurationPeriod);
     setGrowthOpen(!!counter?.growthTargetOperator);
   };
 
@@ -304,6 +321,7 @@ export function TargetFormSheet({
     setDescription(getLocalizedDescription(initialData?.description) ?? {});
     setTargetType(initialType);
     setScope((initialData as unknown as { scope: string } | undefined)?.scope ?? "GLOBAL");
+    setDurationPeriod(initialData?.durationPeriod as DurationPeriodValue | undefined);
     resetVariantFields(initialData, initialType);
     codeInput.reset();
     setExtendedFieldValues(extractExtendedFields(initialData, extendedFields));
@@ -419,6 +437,24 @@ export function TargetFormSheet({
         }
       }
 
+      // Active window validation. A loaded value the owner never touched is saved back as is.
+      if (durationPeriod !== initialData?.durationPeriod) {
+        const activeError = activeWindowError(durationPeriod);
+        if (activeError) {
+          setFormError(activeError);
+          return;
+        }
+      }
+
+      // Cycle window validation, again skipping a loaded value the owner never touched.
+      if (targetType === "COUNTER" && cycleWindow !== initCounter?.cycleDurationPeriod) {
+        const windowError = cycleWindowError(cycleWindow);
+        if (windowError) {
+          setFormError(windowError);
+          return;
+        }
+      }
+
       // Auto-create suggested metadata if needed
       const typeIsSuggested =
         (targetType === "COMPLETION" && completionTypeIsSuggested) ||
@@ -467,6 +503,8 @@ export function TargetFormSheet({
         code: codeInput.value,
         name,
         scope: scope as "GLOBAL" | "PROGRAM" | "RULE" | "EVENT",
+        // Sent back as loaded on edit, so a full-PUT update never drops the window.
+        ...(durationPeriod ? { durationPeriod: toStrictDurationPeriodValue(durationPeriod) } : {}),
         description: hasDescription ? description : undefined,
         ...extendedFieldValues,
       };
@@ -502,6 +540,11 @@ export function TargetFormSheet({
             if (carryOverToNextCycle) {
               counterPayload.carryOverToNextCycle = true;
             }
+          }
+          // The cycle window is sent whenever one is set, collapsed or not, so a full-PUT edit
+          // never drops it. An old record without a period type gets the SLIDING default.
+          if (cycleWindow) {
+            counterPayload.cycleDurationPeriod = toStrictDurationPeriodValue(cycleWindow);
           }
           if (growthOpen && growthOperator) {
             counterPayload.growthTargetOperator =
@@ -552,6 +595,9 @@ export function TargetFormSheet({
       programIds,
       targetType,
       scope,
+      durationPeriod,
+      initialData?.durationPeriod,
+      initCounter?.cycleDurationPeriod,
       description,
       codeInput.value,
       completionTypeCode,
@@ -561,6 +607,7 @@ export function TargetFormSheet({
       targetValue,
       cappingTarget,
       cyclesOpen,
+      cycleWindow,
       numberOfCycles,
       numberOfCyclesToAchieve,
       cyclesMustBeConsecutive,
@@ -738,6 +785,15 @@ export function TargetFormSheet({
           </WithFieldError>
         </div>
 
+        {/* Active window */}
+        <DurationPeriodBuilder
+          value={durationPeriod}
+          onChange={setDurationPeriod}
+          label="Set active window"
+          description="How long a member's progress runs before it starts again. The cycle window splits it into cycles."
+          disabled={isSubmitting}
+        />
+
         {/* ============================================================ */}
         {/* Type-Specific Configuration */}
         {/* ============================================================ */}
@@ -774,6 +830,9 @@ export function TargetFormSheet({
             onCyclesMustBeConsecutiveChange={setCyclesMustBeConsecutive}
             carryOverToNextCycle={carryOverToNextCycle}
             onCarryOverToNextCycleChange={setCarryOverToNextCycle}
+            cycleWindow={cycleWindow}
+            onCycleWindowChange={setCycleWindow}
+            hasActiveWindow={!!durationPeriod}
             growthOpen={growthOpen}
             onGrowthOpenChange={setGrowthOpen}
             growthOperator={growthOperator}
@@ -900,6 +959,9 @@ interface CounterFieldsProps {
   onCyclesMustBeConsecutiveChange: (v: boolean) => void;
   carryOverToNextCycle: boolean;
   onCarryOverToNextCycleChange: (v: boolean) => void;
+  cycleWindow?: CycleWindow;
+  onCycleWindowChange: (v: CycleWindow | undefined) => void;
+  hasActiveWindow: boolean;
   growthOpen: boolean;
   onGrowthOpenChange: (v: boolean) => void;
   growthOperator: string;
@@ -928,6 +990,9 @@ function CounterFields({
   onCyclesMustBeConsecutiveChange,
   carryOverToNextCycle,
   onCarryOverToNextCycleChange,
+  cycleWindow,
+  onCycleWindowChange,
+  hasActiveWindow,
   growthOpen,
   onGrowthOpenChange,
   growthOperator,
@@ -1076,6 +1141,12 @@ function CounterFields({
               </Label>
             </div>
           </div>
+          <CycleWindowFields
+            value={cycleWindow}
+            onChange={onCycleWindowChange}
+            hasActiveWindow={hasActiveWindow}
+            disabled={disabled}
+          />
         </div>
       </CollapsibleSection>
 
@@ -1579,11 +1650,14 @@ function CollapsibleSection({
   onOpenChange: (open: boolean) => void;
   children: ReactNode;
 }): ReactNode {
+  const regionId = useId();
   return (
     <div className="border-border/50 rounded-lg border">
       <button
         type="button"
-        className="hover:bg-muted/30 flex w-full items-center justify-between rounded-lg p-3 text-left"
+        className="hover:bg-muted/30 flex min-h-11 w-full items-center justify-between rounded-lg p-3 text-left"
+        aria-expanded={open}
+        aria-controls={regionId}
         onClick={() => onOpenChange(!open)}
       >
         <span className="text-foreground text-sm font-medium">{title}</span>
@@ -1595,6 +1669,10 @@ function CollapsibleSection({
         />
       </button>
       <div
+        id={regionId}
+        // Collapsed content stays mounted for the height transition, so `inert` keeps it out
+        // of the tab order and the accessibility tree.
+        inert={!open}
         className={cn(
           "overflow-hidden transition-all duration-200",
           open ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0"

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { classifyToken, isTokenExpired } from "../../src/auth/token.js";
 
 function createMockJwt(payload: Record<string, unknown>): string {

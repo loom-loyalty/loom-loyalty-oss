@@ -1,5 +1,6 @@
 import { differenceInDays, format, subDays } from "date-fns";
 import { useMemo } from "react";
+
 import type { PipeName, PipeParams } from "../pipes";
 import type { TinybirdResponse } from "../types";
 import { useTinybirdQuery } from "./use-tinybird-query";

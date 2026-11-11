@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+
 import { BadgeShelf, type BadgeShelfItem } from "./badge-shelf.js";
 
 const BADGES: BadgeShelfItem[] = [

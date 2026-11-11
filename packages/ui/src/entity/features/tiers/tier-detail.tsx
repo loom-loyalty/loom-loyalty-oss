@@ -10,6 +10,7 @@ import type { UIEntitySchema } from "@loom-loyalty/schema";
 import type { Tier } from "@loom-loyalty/sdk";
 import { Edit, Trash2 } from "lucide-react";
 import type { ReactNode } from "react";
+
 import { Button } from "../../../primitives/button.js";
 import { ExtendedFieldsSection } from "../../extended-fields-section.js";
 import { formatDurationPeriod } from "../../format-duration-period.js";

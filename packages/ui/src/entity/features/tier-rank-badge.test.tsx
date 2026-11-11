@@ -4,6 +4,7 @@
 
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+
 import { TierRankBadge } from "./tier-rank-badge.js";
 
 describe("TierRankBadge", () => {

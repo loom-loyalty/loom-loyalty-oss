@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+
 import { ApiClient, ApiError, isTokenExpired } from "../../src/api/client.js";
 
 describe("isTokenExpired", () => {

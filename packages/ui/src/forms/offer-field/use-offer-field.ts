@@ -5,15 +5,14 @@
  * debounced 250ms before flowing into the query key + ?name= param.
  */
 
-import { useInfiniteQuery } from "@tanstack/react-query";
-import { useCallback, useMemo, useState } from "react";
-
 import {
   getOfferManagementListOffersQueryKey,
   offerManagementListOffers,
   type Offer,
   type PagedOfferData,
 } from "@loom-loyalty/sdk";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { useCallback, useMemo, useState } from "react";
 
 import { getInfiniteNextPageParam } from "../../hooks/infinite-query-helpers";
 import { useDebouncedValue } from "../../hooks/use-debounced-value";

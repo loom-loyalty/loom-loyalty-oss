@@ -8,6 +8,7 @@ import { formatDateTime } from "@loom-loyalty/core";
 import type { Metadata } from "@loom-loyalty/sdk";
 import { Edit, Trash2 } from "lucide-react";
 import type { ReactNode } from "react";
+
 import { Button } from "../../../primitives/button.js";
 import {
   MetadataRelationships,

@@ -9,6 +9,8 @@
 
 "use client";
 
+import { formatDate, formatShortDate } from "@loom-loyalty/core";
+import type { UIFieldConfig } from "@loom-loyalty/schema";
 import {
   AlertCircle,
   Award,
@@ -40,15 +42,6 @@ import {
 } from "lucide-react";
 import { useCallback, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 
-import { formatDate, formatShortDate } from "@loom-loyalty/core";
-import type { UIFieldConfig } from "@loom-loyalty/schema";
-import { cn } from "../../../lib/utils";
-// Primitives
-import { Badge } from "../../../primitives/badge";
-import { Button } from "../../../primitives/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../../../primitives/card";
-import { Separator } from "../../../primitives/separator";
-import { Skeleton } from "../../../primitives/skeleton";
 // Data display
 import { DataTable } from "../../../data-display/data-table";
 import { EmptyState } from "../../../data-display/empty-state";
@@ -57,6 +50,13 @@ import { GradientTabs } from "../../../data-display/gradient-tabs";
 import { StatCard } from "../../../data-display/stat-card";
 import { StatusBadge } from "../../../data-display/status-badge";
 import { TierBadge } from "../../../data-display/tier-badge";
+import { cn } from "../../../lib/utils";
+// Primitives
+import { Badge } from "../../../primitives/badge";
+import { Button } from "../../../primitives/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../../../primitives/card";
+import { Separator } from "../../../primitives/separator";
+import { Skeleton } from "../../../primitives/skeleton";
 // Local
 import { AudienceMembershipList } from "./audience-membership-list";
 import { ContactAddressList } from "./contact-address-list";

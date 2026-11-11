@@ -4,8 +4,6 @@
  * need.
  */
 
-import { useMemo } from "react";
-
 import {
   getMetadataManagementListMetadataByTypeQueryKey,
   metadataManagementListMetadataByType,
@@ -14,6 +12,7 @@ import {
   type Metadata,
   type MetadataTypeCategory,
 } from "@loom-loyalty/sdk";
+import { useMemo } from "react";
 
 import { dataModelCodeKey } from "../../entity/features/data-models/code-key.js";
 import { useAllPages } from "../../hooks/use-all-pages";

@@ -5,11 +5,11 @@
  */
 
 import { formatShortDate } from "@loom-loyalty/core";
+
 import type { Column } from "../../../data-display/data-table.js";
 import { Badge } from "../../../primitives/badge.js";
 import type { EntityRecord } from "../../entity-list.js";
 import { getEnvironmentColumn } from "../../environment-workflow/environment-status-column.js";
-
 import { EventRuleCategoryBadge } from "./event-rule-category-badge.js";
 import { CATEGORY_INFO, type EventRuleCategory } from "./types.js";
 

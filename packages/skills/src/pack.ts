@@ -1,5 +1,6 @@
 import { mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
+
 import { listSkills, SKILLS_DIR } from "./skills.js";
 import { createZip, type ZipEntry } from "./zip.js";
 
@@ -41,9 +42,16 @@ export function packSkills(options: PackOptions): string[] {
     filesIn(skill.dir).flatMap((file) =>
       readFileSync(file, "utf8")
         .split("\n")
-        .flatMap((line, index) =>
+        .flatMap((line, index, lines) =>
           rules
-            .filter((rule) => rule.regex.test(line))
+            // Also tests the line joined to the next, so a match a line wrap splits is still caught.
+            .filter(
+              (rule) =>
+                rule.regex.test(line) ||
+                (index + 1 < lines.length &&
+                  !rule.regex.test(lines[index + 1]!) &&
+                  rule.regex.test(`${line} ${lines[index + 1]}`))
+            )
             .map(
               (rule) => `${skill.name}/${relative(skill.dir, file)}:${index + 1} [${rule.reason}]`
             )

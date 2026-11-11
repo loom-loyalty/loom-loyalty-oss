@@ -1,6 +1,4 @@
 // Tier list+create hook. Defaults options to tierId (FK target) with code fallback; idField="code" opts into legacy tierCode binding.
-import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useMemo, useState } from "react";
 
 import {
   customerStatusManagementListTiers,
@@ -9,6 +7,8 @@ import {
   type CreateTier,
   type Tier,
 } from "@loom-loyalty/sdk";
+import { useQueryClient } from "@tanstack/react-query";
+import { useCallback, useMemo, useState } from "react";
 
 import { resetInfiniteQueryToFirstPage } from "../../hooks/infinite-query-helpers";
 import { useDebouncedValue } from "../../hooks/use-debounced-value";

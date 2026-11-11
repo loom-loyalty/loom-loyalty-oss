@@ -4,7 +4,6 @@ import { ArrowLeft, ArrowRight, Loader2, SkipForward } from "lucide-react";
 
 import { cn } from "../lib/utils";
 import { Button } from "../primitives/button";
-
 import type { WizardNavigationProps } from "./types";
 import { useWizard } from "./use-wizard";
 

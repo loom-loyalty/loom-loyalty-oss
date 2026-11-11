@@ -1,4 +1,5 @@
 import { createContext, useContext } from "react";
+
 import type { NotificationFeedProviderProps, NotificationFeedState } from "./types";
 
 const noop = () => undefined;

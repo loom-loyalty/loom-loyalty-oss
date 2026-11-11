@@ -3,9 +3,6 @@
  * search term goes to the list endpoint's `search` param (name/code).
  */
 
-import { useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
-
 import {
   getProgramManagementListPartnersQueryKey,
   programManagementListPartners,
@@ -13,6 +10,8 @@ import {
   type CreatePartner,
   type Partner,
 } from "@loom-loyalty/sdk";
+import { useQueryClient } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 
 import { resetInfiniteQueryToFirstPage } from "../../hooks/infinite-query-helpers";
 import { useDebouncedValue } from "../../hooks/use-debounced-value";

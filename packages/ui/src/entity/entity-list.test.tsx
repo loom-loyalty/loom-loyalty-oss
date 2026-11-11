@@ -5,6 +5,7 @@
 import type { UIEntitySchema } from "@loom-loyalty/schema";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+
 import { EntityList } from "./entity-list.js";
 
 const mockSchema: UIEntitySchema = {

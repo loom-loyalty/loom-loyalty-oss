@@ -32,4 +32,5 @@ export {
   type UseLoadAllPagesResult,
 } from "./use-load-all-pages";
 export { useIsMobile } from "./use-mobile";
+export { usePersistedCollapse } from "./use-persisted-collapse";
 export { useSavedViews, type UseSavedViewsArgs, type UseSavedViewsResult } from "./use-saved-views";

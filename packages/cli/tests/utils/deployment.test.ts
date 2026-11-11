@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+
 import { getApiUrl, getDashboardUrl, resolveToken } from "../../src/utils/deployment.js";
 
 describe("resolveToken", () => {

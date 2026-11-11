@@ -1,5 +1,6 @@
 import { Lock } from "lucide-react";
 import type { ReactNode } from "react";
+
 import { Card, CardContent } from "../primitives/card";
 
 interface AnalyticsUpgradeBannerProps {

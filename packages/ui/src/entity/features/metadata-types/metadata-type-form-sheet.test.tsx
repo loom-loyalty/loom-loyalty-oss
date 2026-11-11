@@ -1,6 +1,7 @@
 import type { DataModelType, MetadataType } from "@loom-loyalty/sdk";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import { MetadataTypeFormSheet } from "./metadata-type-form-sheet.js";
 
 let dataModelTypes: Partial<DataModelType>[] = [];
