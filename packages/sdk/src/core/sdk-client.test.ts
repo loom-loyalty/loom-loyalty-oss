@@ -214,6 +214,30 @@ describe("runWithSdkContext — per-request isolation", () => {
     expect(headers.get("Authorization")).toBe("Bearer scoped-token");
   });
 
+  it("sends the scope's extra headers, without overriding a header the call set (api#1907)", async () => {
+    fetchMock.mockResolvedValue(mockOk({ success: true, data: { ok: true } }));
+
+    await runWithSdkContext(
+      {
+        baseUrl: "https://scoped.example.com",
+        tokenProvider: () => "scoped-token",
+        headers: {
+          "X-Forwarded-For": "203.0.113.7",
+          "User-Agent": "Mozilla/5.0 Browser/1.0",
+          Authorization: "Bearer from-headers",
+        },
+      },
+      async () => {
+        await sdkFetch<unknown>("/test", { headers: { "User-Agent": "call-site" } });
+      }
+    );
+
+    const headers = (fetchMock.mock.calls[0] as [string, RequestInit])[1].headers as Headers;
+    expect(headers.get("X-Forwarded-For")).toBe("203.0.113.7");
+    expect(headers.get("User-Agent")).toBe("call-site");
+    expect(headers.get("Authorization")).toBe("Bearer scoped-token");
+  });
+
   it("sdkFetch outside runWithSdkContext falls back to module-level state", async () => {
     setApiBaseUrl("https://module.example.com");
     setTokenProvider(() => "module-token");

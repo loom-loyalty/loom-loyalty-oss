@@ -46,6 +46,12 @@ interface WrappedResponse<T = unknown> {
 interface ScopedSdkContext {
   baseUrl: string;
   tokenProvider: () => Promise<string | null> | string | null;
+  /**
+   * Extra headers sent on every request in the scope, such as the end user's `X-Forwarded-For`
+   * and `User-Agent` a server forwards for the Platform's audit log. A header the call sets
+   * itself wins, and `Authorization` always comes from `tokenProvider`.
+   */
+  headers?: Record<string, string>;
 }
 
 /**
@@ -292,6 +298,9 @@ export async function sdkFetch<T>(url: string, options?: RequestInit): Promise<T
 
   // Build request headers
   const headers = new Headers(options?.headers);
+  for (const [name, value] of Object.entries(scoped?.headers ?? {})) {
+    if (!headers.has(name) && name.toLowerCase() !== "authorization") headers.set(name, value);
+  }
 
   // A multipart body sets its own Content-Type, boundary included, so a JSON default would break it.
   if (!headers.has("Content-Type") && !(options?.body instanceof FormData)) {
