@@ -1,6 +1,6 @@
 {
   "name": "@loom-loyalty/skills",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": false,
   "license": "Apache-2.0",
   "description": "Agent skills for Loom Loyalty: treadle, the API, program design, campaigns, offers and analytics",

@@ -60684,9 +60684,15 @@ components:
           description: Localized description of the configuration
           additionalProperties:
             type: string
+        eventDateTimeJsonPath:
+          type: string
+          description: JSON path into a submitted custom event's body whose ISO-8601 value is the event's date-time when it carries no eventDateTime
         eventDescriptionJsonPath:
           type: string
           description: JSON path expression to extract event description
+        eventReferenceJsonPath:
+          type: string
+          description: JSON path into a submitted event's body whose value is the event's reference when it carries no eventReference, so a resubmit with the same value is refused
         eventSubTypeIdentifier:
           type: string
           description: Specific sub-type identifier for the event
@@ -67915,9 +67921,15 @@ components:
           description: Localized description of the configuration
           additionalProperties:
             type: string
+        eventDateTimeJsonPath:
+          type: string
+          description: JSON path into a submitted custom event's body whose ISO-8601 value is the event's date-time when it carries no eventDateTime
         eventDescriptionJsonPath:
           type: string
           description: JSON path expression to extract event description
+        eventReferenceJsonPath:
+          type: string
+          description: JSON path into a submitted event's body whose value is the event's reference when it carries no eventReference, so a resubmit with the same value is refused
         eventSubTypeIdentifier:
           type: string
           description: Specific sub-type identifier for the event
@@ -70646,9 +70658,15 @@ components:
           description: Localized description of the configuration
           additionalProperties:
             type: string
+        eventDateTimeJsonPath:
+          type: string
+          description: JSON path into a submitted custom event's body whose ISO-8601 value is the event's date-time when it carries no eventDateTime
         eventDescriptionJsonPath:
           type: string
           description: JSON path expression to extract event description
+        eventReferenceJsonPath:
+          type: string
+          description: JSON path into a submitted event's body whose value is the event's reference when it carries no eventReference, so a resubmit with the same value is refused
         eventSubTypeIdentifier:
           type: string
           description: Specific sub-type identifier for the event
