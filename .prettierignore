@@ -74,3 +74,6 @@ apps/docs/openapi.prod.json
 **/*.generated.ts
 
 .oss-export
+
+# Test fixtures: byte-for-byte copies of loom-loyalty-api's package transforms
+apps/ingest/test/fixtures/transforms/
