@@ -99,6 +99,20 @@ export function formatShortDate(dateOrString: Date | string | undefined | null):
 }
 
 /**
+ * The UTC calendar day of a moment, as `yyyy-MM-dd`.
+ *
+ * For API parameters that are UTC days (ledger liability periods, for example),
+ * where the local day would be off by one in the evening in the Americas.
+ *
+ * @example
+ * toISODateUTC(new Date("2026-11-18T05:30:00Z")) // "2026-11-18"
+ */
+export function toISODateUTC(date: Date): string {
+  if (!isValid(date)) return "";
+  return date.toISOString().slice(0, 10);
+}
+
+/**
  * Format a date for datetime display
  *
  * @param dateOrString - Date object or ISO string
