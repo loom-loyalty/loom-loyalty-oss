@@ -13,6 +13,7 @@ export {
   isWithinDateRange,
   parseISODateTime,
   toISODateTime,
+  toISODateUTC,
   type ISODate,
   type ISODateTime,
 } from "./dates";

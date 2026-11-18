@@ -21,6 +21,7 @@ import { CodeInput, useCodeInput } from "../../../forms/code-input.js";
 import { WithFieldError } from "../../../forms/field-errors.js";
 import { FormSheet } from "../../../forms/form-sheet.js";
 import { MetadataField, useMetadataField } from "../../../forms/metadata-field/index.js";
+import { cn } from "../../../lib/utils.js";
 import { Badge } from "../../../primitives/badge.js";
 import { Input } from "../../../primitives/input.js";
 import { Label } from "../../../primitives/label.js";
@@ -132,6 +133,7 @@ export function CustomerFormSheet({
   fieldErrors,
   schema,
   extendedFields = [],
+  canEditFraudStatus = true,
 }: CustomerFormSheetProps): ReactNode {
   // Local error state for metadata auto-creation failures
   const [localError, setLocalError] = useState<string | null>(null);
@@ -262,7 +264,8 @@ export function CustomerFormSheet({
 
     const formData = {
       statusCode: resolvedStatusCode || undefined,
-      fraudStatusCode: resolvedFraudStatusCode || undefined,
+      // Without permission the field is read-only: leave the key out so the API keeps the stored value.
+      ...(canEditFraudStatus ? { fraudStatusCode: resolvedFraudStatusCode || undefined } : {}),
       enrollmentCode: resolvedEnrollmentCode || undefined,
       externalId: externalId || undefined,
       ...(identityType === "individual"
@@ -588,6 +591,12 @@ export function CustomerFormSheet({
               {(fe) => (
                 <MetadataField
                   {...fe.inputProps}
+                  aria-describedby={
+                    cn(
+                      fe.inputProps["aria-describedby"],
+                      !canEditFraudStatus && "customer-fraud-status-hint"
+                    ) || undefined
+                  }
                   id="customer-fraud-status"
                   typeCode="CUSTOMER_FRAUD_STATUS"
                   typeLabel="Fraud Status"
@@ -596,11 +605,16 @@ export function CustomerFormSheet({
                     setFraudStatusCode(value);
                     setFraudStatusIsSuggested(isSuggested);
                   }}
-                  placeholder="Select fraud status..."
-                  disabled={isSubmitting}
+                  placeholder={canEditFraudStatus ? "Select fraud status..." : "Default"}
+                  disabled={isSubmitting || !canEditFraudStatus}
                 />
               )}
             </WithFieldError>
+            {!canEditFraudStatus && (
+              <p id="customer-fraud-status-hint" className="text-muted-foreground text-xs">
+                You don&apos;t have permission to change Fraud Status.
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">

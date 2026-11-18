@@ -39,17 +39,23 @@ vi.mock("../../../forms/metadata-field/index.js", () => ({
     typeCode,
     value,
     onValueChange,
+    disabled,
+    "aria-describedby": describedBy,
   }: {
     id?: string;
     typeCode: string;
     value: string;
     onValueChange: (v: string, isSuggested: boolean) => void;
+    disabled?: boolean;
+    "aria-describedby"?: string;
   }) => (
     <input
       id={id}
       data-widget="metadata-select"
       data-metadata-type={typeCode}
       value={value}
+      disabled={disabled}
+      aria-describedby={describedBy}
       onChange={(e) => onValueChange(e.target.value, metadataFieldMock.fireAsSuggested)}
     />
   ),
@@ -612,5 +618,64 @@ describe("CustomerFormSheet server field errors", () => {
     const code = screen.getByLabelText("Company Code");
     expect(code).toHaveAttribute("aria-invalid", "true");
     expect(code).toHaveAccessibleDescription("Code is taken.");
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────
+// Fraud Status permission (customer:fraud-statuses:write). Without it the
+// field is read-only and the save leaves fraudStatusCode out, so the API's
+// 403-on-change never fires for a Hub user.
+// ─────────────────────────────────────────────────────────────────────────
+
+describe("CustomerFormSheet — Fraud Status permission", () => {
+  const fraudField = () => document.querySelector("#customer-fraud-status") as HTMLInputElement;
+  const editCustomer = {
+    customerId: "c-1",
+    identity: { firstName: "Jane", lastName: "Doe" },
+    statusCode: "ACTIVE",
+    fraudStatusCode: "SUSPECTED",
+  } as never;
+
+  it("keeps Fraud Status editable and sends it when the user may change it (the default)", async () => {
+    const { onSubmit } = renderSheet({ mode: "edit", initialData: editCustomer });
+    expect(fraudField().disabled).toBe(false);
+
+    fireEvent.change(fraudField(), { target: { value: "FRAUD" } });
+    fireEvent.click(screen.getByRole("button", { name: /^Save Changes$/i }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+
+    expect((onSubmit.mock.calls[0]?.[0] as Record<string, unknown>).fraudStatusCode).toBe("FRAUD");
+  });
+
+  it("shows Fraud Status read-only with an explanation, and leaves it out of an edit save", async () => {
+    const { onSubmit } = renderSheet({
+      mode: "edit",
+      initialData: editCustomer,
+      canEditFraudStatus: false,
+    });
+
+    expect(fraudField().disabled).toBe(true);
+    expect(fraudField().value).toBe("SUSPECTED");
+    const hintId = fraudField().getAttribute("aria-describedby");
+    expect(hintId).toBeTruthy();
+    expect(document.getElementById(hintId as string)?.textContent).toMatch(/permission/i);
+
+    fireEvent.click(screen.getByRole("button", { name: /^Save Changes$/i }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+
+    expect(onSubmit.mock.calls[0]?.[0]).not.toHaveProperty("fraudStatusCode");
+  });
+
+  it("leaves Fraud Status out of a create for a user who may not change it", async () => {
+    const { onSubmit } = renderSheet({ mode: "create", canEditFraudStatus: false });
+    expect(fraudField().disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText(/First Name/i, { selector: "input" }), {
+      target: { value: "Jane" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /^Create Customer$/i }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+
+    expect(onSubmit.mock.calls[0]?.[0]).not.toHaveProperty("fraudStatusCode");
   });
 });

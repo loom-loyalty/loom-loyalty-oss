@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { formatUpcomingTime } from "./dates";
+import { formatUpcomingTime, toISODateUTC } from "./dates";
 
 describe("formatUpcomingTime", () => {
   it("shows only the clock time for a moment later today", () => {
@@ -19,5 +19,17 @@ describe("formatUpcomingTime", () => {
 
   it("returns an empty string for an invalid date", () => {
     expect(formatUpcomingTime(new Date(Number.NaN))).toBe("");
+  });
+});
+
+describe("toISODateUTC", () => {
+  it("returns the UTC calendar day, not the local one", () => {
+    // 11:30 PM CST on Nov 17 is already Nov 18 in UTC.
+    expect(toISODateUTC(new Date("2026-11-18T05:30:00Z"))).toBe("2026-11-18");
+    expect(toISODateUTC(new Date("2026-01-05T00:00:00Z"))).toBe("2026-01-05");
+  });
+
+  it("returns an empty string for an invalid date", () => {
+    expect(toISODateUTC(new Date(Number.NaN))).toBe("");
   });
 });

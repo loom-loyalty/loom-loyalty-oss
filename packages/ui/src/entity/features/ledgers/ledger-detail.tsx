@@ -16,10 +16,17 @@ import { Skeleton } from "../../../primitives/skeleton.js";
 export interface LedgerDetailProps {
   /** Ledger to display */
   ledger: ProgramLedger;
-  /** Recent statements for this ledger (optional) */
+  /** Recent statements across the ledger's accounts, newest first (optional) */
   statements?: ProgramLedgerStatement[];
   /** Whether statements are loading */
   statementsLoading?: boolean;
+  /** Whether loading statements failed (shows an inline error instead of the empty state) */
+  statementsError?: boolean;
+  /**
+   * Liability and breakage section (see `LedgerLiabilitySection`), shown above the statements.
+   * The app leaves it out for roles that can't read the report.
+   */
+  liabilitySection?: ReactNode;
 }
 
 /**
@@ -29,6 +36,8 @@ export function LedgerDetail({
   ledger,
   statements,
   statementsLoading,
+  statementsError,
+  liabilitySection,
 }: LedgerDetailProps): ReactNode {
   return (
     <div className="space-y-6">
@@ -50,6 +59,8 @@ export function LedgerDetail({
         </div>
       </section>
 
+      {liabilitySection}
+
       {/* Statements Section */}
       <section className="space-y-4">
         <h3 className="text-foreground text-sm font-semibold tracking-wide uppercase">
@@ -61,10 +72,14 @@ export function LedgerDetail({
               <Skeleton key={i} className="h-20 w-full" />
             ))}
           </div>
+        ) : statementsError ? (
+          <p role="alert" aria-live="assertive" className="text-destructive text-sm">
+            Statements could not be loaded.
+          </p>
         ) : statements && statements.length > 0 ? (
-          <div className="space-y-3">
+          <ul className="space-y-3" aria-label="Recent statements">
             {statements.map((stmt) => (
-              <div
+              <li
                 key={stmt.programLedgerStatementId}
                 className="border-border rounded-lg border p-4"
               >
@@ -77,6 +92,12 @@ export function LedgerDetail({
                     {stmt.status}
                   </Badge>
                 </div>
+                <p className="text-muted-foreground mb-2 text-xs">
+                  Account{" "}
+                  <span className="text-foreground font-mono break-all">
+                    {stmt.programAccountId}
+                  </span>
+                </p>
                 <div className="grid grid-cols-3 gap-3 text-sm">
                   <div>
                     <p className="text-muted-foreground text-xs">Available</p>
@@ -102,9 +123,9 @@ export function LedgerDetail({
                   {(stmt.periodCreditAmount ?? 0).toLocaleString()}) · Debits:{" "}
                   {stmt.periodDebitCount ?? 0} ({(stmt.periodDebitAmount ?? 0).toLocaleString()})
                 </div>
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
         ) : (
           <p className="text-muted-foreground text-sm">No statements available for this ledger.</p>
         )}

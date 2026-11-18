@@ -213,6 +213,7 @@ export {
   parseISODateTime,
   parseLocalizedDescription,
   toISODateTime,
+  toISODateUTC,
   type DescribeErrorOptions,
   type DescribedError,
   type ErrorCopyOverride,

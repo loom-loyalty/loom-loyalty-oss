@@ -593,6 +593,11 @@ export interface CustomerFormSheetProps {
   fieldErrors?: readonly FormFieldError[];
   schema?: UIEntitySchema;
   extendedFields?: string[];
+  /**
+   * Whether the user may change Fraud Status (the `customer:fraud-statuses:write` permission). When false the field
+   * is read-only and the save leaves `fraudStatusCode` out, so the API keeps the stored value. Defaults to true.
+   */
+  canEditFraudStatus?: boolean;
 }
 
 /**

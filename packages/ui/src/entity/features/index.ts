@@ -341,7 +341,20 @@ export type {
 
 export { getLedgerColumnsExtended } from "./ledgers/ledger-columns.js";
 export { LedgerDetail, type LedgerDetailProps } from "./ledgers/ledger-detail.js";
+export {
+  LedgerLiabilitySection,
+  type LedgerLiabilitySectionProps,
+  type LedgerLiabilityState,
+} from "./ledgers/ledger-liability-section.js";
 export { LedgerSkeleton } from "./ledgers/ledger-skeleton.js";
+export {
+  lastFullMonthUtc,
+  liabilityPeriodPresets,
+  monthBefore,
+  validateLiabilityPeriod,
+  type LiabilityPeriod,
+  type LiabilityPeriodPreset,
+} from "./ledgers/liability-period.js";
 export { LEDGER_STANDARD_FIELDS, type LedgerListFilters } from "./ledgers/types.js";
 
 // --- Workflows ---
