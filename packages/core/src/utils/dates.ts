@@ -8,7 +8,15 @@
  * - This module bridges the gap with type-safe conversions
  */
 
-import { format, formatDistanceToNow, formatISO, isSameDay, isValid, parseISO } from "date-fns";
+import {
+  format,
+  formatDistanceToNow,
+  formatISO,
+  isSameDay,
+  isValid,
+  parseISO,
+  type Locale,
+} from "date-fns";
 
 // =============================================================================
 // TYPE DEFINITIONS
@@ -143,6 +151,15 @@ export function formatUpcomingTime(date: Date, now: Date = new Date()): string {
   return format(date, isSameDay(date, now) ? "p" : "EEEE p");
 }
 
+/** Options for {@link formatDate}. */
+export interface FormatDateOptions {
+  /**
+   * A date-fns locale (for example `es` from `date-fns/locale`). Omitted means date-fns's default,
+   * English. The caller imports the locale, so a bundle carries only the locales it uses.
+   */
+  locale?: Locale;
+}
+
 /**
  * Format a date using a custom format string
  *
@@ -153,17 +170,21 @@ export function formatUpcomingTime(date: Date, now: Date = new Date()): string {
  * @example
  * formatDate(new Date(), "yyyy-MM-dd") // "2026-01-08"
  * formatDate(new Date(), "MMMM do, yyyy") // "January 8th, 2026"
+ * formatDate("2026-11-18", "d MMM", { locale: es }) // "18 nov" (es from "date-fns/locale")
  */
 export function formatDate(
   dateOrString: Date | string | undefined | null,
-  formatString: string = "PPP"
+  formatString: string = "PPP",
+  options: FormatDateOptions = {}
 ): string {
   if (!dateOrString) return "";
 
   const date = typeof dateOrString === "string" ? parseISODateTime(dateOrString) : dateOrString;
   if (!date || !isValid(date)) return "";
 
-  return format(date, formatString);
+  return options.locale
+    ? format(date, formatString, { locale: options.locale })
+    : format(date, formatString);
 }
 
 /**

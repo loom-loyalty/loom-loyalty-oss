@@ -25,7 +25,6 @@ describe("DataModelDetail lifecycle actions", () => {
         })}
         onEdit={vi.fn()}
         onDuplicate={vi.fn()}
-        onCreateVersion={vi.fn()}
         onPublish={vi.fn()}
         onEditType={vi.fn()}
         onDeleteType={vi.fn()}
@@ -84,7 +83,6 @@ describe("DataModelDetail lifecycle actions", () => {
           dataModel={model(type)}
           onEdit={vi.fn()}
           onDuplicate={vi.fn()}
-          onCreateVersion={vi.fn()}
           onPublish={vi.fn()}
           onEditType={vi.fn()}
           onDeleteType={vi.fn()}
@@ -96,7 +94,9 @@ describe("DataModelDetail lifecycle actions", () => {
       // status blocks mutation, same for both).
       expect(screen.getByRole("button", { name: /^Edit$/ })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Duplicate" })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "New Version" })).toBeInTheDocument();
+      // No New Version button anywhere (this assertion was
+      // inverted because the requirement changed).
+      expect(screen.queryByRole("button", { name: /new version/i })).not.toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Publish" })).toBeInTheDocument();
 
       // Edit Type / Delete Type call PUT/DELETE /data-model-types/{id}, a
@@ -111,6 +111,36 @@ describe("DataModelDetail lifecycle actions", () => {
       }
     }
   );
+});
+
+describe("DataModelDetail Edit by status (W1-W4)", () => {
+  const custom = {
+    dataModelTypeId: "type-order",
+    code: "ORDER",
+    name: "Order",
+    system: false,
+    primitive: false,
+  };
+
+  it.each([
+    ["DRAFT", true],
+    ["PUBLISHED", true],
+    ["ARCHIVED", false],
+  ])("a %s model shows Edit: %s, and never New Version", (versionStatus, showsEdit) => {
+    render(
+      <DataModelDetail
+        dataModel={{ ...model(custom), versionStatus } as DataModel}
+        onEdit={vi.fn()}
+        onPublish={vi.fn()}
+      />
+    );
+    if (showsEdit) {
+      expect(screen.getByRole("button", { name: /^Edit$/ })).toBeInTheDocument();
+    } else {
+      expect(screen.queryByRole("button", { name: /^Edit$/ })).not.toBeInTheDocument();
+    }
+    expect(screen.queryByRole("button", { name: /new version/i })).not.toBeInTheDocument();
+  });
 });
 
 describe("DataModelDetail elements", () => {

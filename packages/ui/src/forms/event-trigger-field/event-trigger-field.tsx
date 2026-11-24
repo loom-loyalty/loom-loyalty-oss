@@ -6,8 +6,11 @@
  *   type or sub-type ever renders here, regardless of variant count (KTD3) —
  *   the trigger is already fully implied by which variant row opened the sheet.
  * - Global mode (the standalone "New rule" entry point, R8): a full event-type
- *   picker (reusing `EventTypeField`'s query, KTD3) plus a sub-type sub-picker
- *   shown only when the selected event type has more than one variant, plus a
+ *   picker (reusing `EventTypeField`'s query, KTD3) plus a sub-type sub-picker.
+ *   When the event type says what its sub type names (`subTypeSource`, e.g. a
+ *   target for target.achieved), that picker lists those records by name, with
+ *   "Any" as the default. Otherwise it lists the configured variants, shown only
+ *   when the selected event type has more than one. Last comes a
  *   terminal "Add new event type" action (R9) that hands off to the caller —
  *   the inline-create flow itself lives in the app layer (KTD4/KTD9/U8).
  */
@@ -24,6 +27,8 @@ import {
   SelectValue,
 } from "../../primitives/select.js";
 import { EntitySelectBox } from "../entity-select-box";
+import { EventSubTypeField } from "../event-sub-type-field/event-sub-type-field.js";
+import { useEventTypeSubTypeSource } from "../event-sub-type-field/use-event-type-sub-type-source.js";
 import { useEventTriggerField } from "./use-event-trigger-field.js";
 
 export interface EventTriggerValue {
@@ -46,6 +51,11 @@ interface EventTriggerFieldGlobalProps {
   /** "Add new event type" (R9) — the caller owns the inline-create flow itself. */
   onCreateNew?: () => void;
   disabled?: boolean;
+  /**
+   * Event type codes whose sub type the caller sets itself, so no source picker shows for
+   * them (a reward rule's `redemption` sub type follows the rule's own code).
+   */
+  ignoreSubTypeSourceFor?: readonly string[];
   "aria-invalid"?: boolean;
   "aria-describedby"?: string;
 }
@@ -77,6 +87,7 @@ function GlobalEventTriggerPicker({
   onValueChange,
   onCreateNew,
   disabled,
+  ignoreSubTypeSourceFor,
   "aria-invalid": ariaInvalid,
   "aria-describedby": ariaDescribedBy,
 }: EventTriggerFieldGlobalProps): ReactNode {
@@ -95,7 +106,10 @@ function GlobalEventTriggerPicker({
 
   const eventTypeCode = value?.eventTypeCode ?? "";
   const subTypes = eventTypeCode ? getSubTypesFor(eventTypeCode) : [];
-  const showSubTypePicker = subTypes.some((subType) => subType !== "");
+  const { source: subTypeSource } = useEventTypeSubTypeSource(eventTypeCode || undefined);
+  const sourcePicker =
+    subTypeSource && !ignoreSubTypeSourceFor?.includes(eventTypeCode) ? subTypeSource : undefined;
+  const showSubTypePicker = !sourcePicker && subTypes.some((subType) => subType !== "");
 
   return (
     <div className="space-y-3">
@@ -120,6 +134,16 @@ function GlobalEventTriggerPicker({
         aria-invalid={ariaInvalid}
         aria-describedby={ariaDescribedBy}
       />
+      {sourcePicker && (
+        <EventSubTypeField
+          source={sourcePicker}
+          value={value?.eventSubTypeIdentifier ?? ""}
+          onValueChange={(code) =>
+            onValueChange({ eventTypeCode, eventSubTypeIdentifier: code || undefined })
+          }
+          disabled={disabled}
+        />
+      )}
       {showSubTypePicker && (
         <Select
           value={value?.eventSubTypeIdentifier || DEFAULT_SUB_TYPE_SENTINEL}

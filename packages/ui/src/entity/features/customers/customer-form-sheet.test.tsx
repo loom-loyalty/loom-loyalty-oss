@@ -17,7 +17,8 @@
  */
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import userEvent from "@testing-library/user-event";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Hoisted mutable state so individual tests can flip the isSuggested flag fired
 // by MetadataField's onValueChange + override the useMetadataField return shape.
@@ -258,6 +259,7 @@ const CUSTOMER_EDITABLE_IDS_INDIVIDUAL = new Set([
   "customer-fraud-status",
   "customer-enrollment",
   "customer-external-id",
+  "customer-preferred-language",
 ] as const);
 
 const EDITABLE_TAGS = new Set(["INPUT", "SELECT", "TEXTAREA", "BUTTON"]);
@@ -677,5 +679,130 @@ describe("CustomerFormSheet — Fraud Status permission", () => {
     await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
 
     expect(onSubmit.mock.calls[0]?.[0]).not.toHaveProperty("fraudStatusCode");
+  });
+});
+
+// Customer preferred language (brief customer-preferred-language, C10). Radix Select needs
+// pointer capture and scrollIntoView, which jsdom lacks.
+describe("CustomerFormSheet — preferred language", () => {
+  beforeAll(() => {
+    Element.prototype.scrollIntoView = vi.fn();
+    Element.prototype.hasPointerCapture = vi.fn(() => false);
+    Element.prototype.setPointerCapture = vi.fn();
+    Element.prototype.releasePointerCapture = vi.fn();
+  });
+
+  const languageSelect = () => screen.getByRole("combobox", { name: /^Language/ });
+  const customerWith = (preferredLanguage?: string) =>
+    ({
+      customerId: "c-1",
+      identity: { firstName: "Jane", lastName: "Doe" },
+      statusCode: "ACTIVE",
+      ...(preferredLanguage === undefined ? {} : { preferredLanguage }),
+    }) as never;
+
+  async function pick(label: string) {
+    const user = userEvent.setup();
+    await user.click(languageSelect());
+    await user.click(await screen.findByRole("option", { name: label }));
+  }
+
+  it("offers English and Español", async () => {
+    renderSheet({ mode: "edit", initialData: customerWith() });
+    const user = userEvent.setup();
+    await user.click(languageSelect());
+    expect((await screen.findAllByRole("option")).map((option) => option.textContent)).toEqual([
+      "English",
+      "Español",
+    ]);
+  });
+
+  it("marks each option with its own language (WCAG 3.1.2)", async () => {
+    renderSheet({ mode: "edit", initialData: customerWith() });
+    const user = userEvent.setup();
+    await user.click(languageSelect());
+    expect(
+      (await screen.findAllByRole("option")).map((option) => option.getAttribute("lang"))
+    ).toEqual(["en", "es"]);
+  });
+
+  it("links the 'Unset means English' hint to the select", () => {
+    renderSheet({ mode: "edit", initialData: customerWith() });
+    const hint = screen.getByText("Unset means English.");
+    expect(hint.id).not.toBe("");
+    expect((languageSelect().getAttribute("aria-describedby") ?? "").split(/\s+/)).toContain(
+      hint.id
+    );
+  });
+
+  it("prefills the stored language in edit mode", () => {
+    renderSheet({ mode: "edit", initialData: customerWith("es") });
+    expect(languageSelect()).toHaveTextContent("Español");
+  });
+
+  it("C10: sends es when staff pick Español and save", async () => {
+    const { onSubmit } = renderSheet({ mode: "edit", initialData: customerWith() });
+
+    await pick("Español");
+    fireEvent.click(screen.getByRole("button", { name: /^Save Changes$/i }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+
+    expect((onSubmit.mock.calls[0]?.[0] as Record<string, unknown>).preferredLanguage).toBe("es");
+  });
+
+  it("sends en when staff pick English for a Spanish-speaking customer", async () => {
+    const { onSubmit } = renderSheet({ mode: "edit", initialData: customerWith("es") });
+
+    await pick("English");
+    fireEvent.click(screen.getByRole("button", { name: /^Save Changes$/i }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+
+    expect((onSubmit.mock.calls[0]?.[0] as Record<string, unknown>).preferredLanguage).toBe("en");
+  });
+
+  it("leaves an unset language out of an edit save, so the API keeps it unset", async () => {
+    const { onSubmit } = renderSheet({ mode: "edit", initialData: customerWith() });
+    expect(languageSelect()).toHaveTextContent(/English \(default\)/);
+
+    fireEvent.click(screen.getByRole("button", { name: /^Save Changes$/i }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+
+    expect(onSubmit.mock.calls[0]?.[0]).not.toHaveProperty("preferredLanguage");
+  });
+
+  it("shows an unsupported stored value as unset and does not resend it", async () => {
+    const { onSubmit } = renderSheet({ mode: "edit", initialData: customerWith("fr") });
+    expect(languageSelect()).toHaveTextContent(/English \(default\)/);
+
+    fireEvent.click(screen.getByRole("button", { name: /^Save Changes$/i }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+
+    expect(onSubmit.mock.calls[0]?.[0]).not.toHaveProperty("preferredLanguage");
+  });
+
+  it("sends the picked language on create", async () => {
+    const { onSubmit } = renderSheet({ mode: "create" });
+    fireEvent.change(screen.getByLabelText(/First Name/i, { selector: "input" }), {
+      target: { value: "Jane" },
+    });
+
+    await pick("Español");
+    fireEvent.click(screen.getByRole("button", { name: /^Create Customer$/i }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+
+    expect((onSubmit.mock.calls[0]?.[0] as Record<string, unknown>).preferredLanguage).toBe("es");
+  });
+
+  it("shows a field error for an invalid language under the select", () => {
+    renderSheet({
+      mode: "edit",
+      initialData: customerWith(),
+      error: { message: "Some fields are invalid." },
+      fieldErrors: [{ field: "preferredLanguage", message: "Unsupported language." }],
+    });
+    // The error comes first, then the "Unset means English." hint, which is always linked.
+    expect(languageSelect()).toHaveAccessibleDescription(
+      "Unsupported language. Unset means English."
+    );
   });
 });

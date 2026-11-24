@@ -5,7 +5,7 @@
  * Wizard types (EventRuleWizardData, INITIAL_WIZARD_DATA, etc.) remain in the Hub app.
  */
 
-import { CheckCircle2, Circle, HelpCircle, Pause, type LucideIcon } from "lucide-react";
+import { Archive, CheckCircle2, Circle, HelpCircle, Pause, type LucideIcon } from "lucide-react";
 
 /**
  * Event rule categories - determines processing execution order.
@@ -71,24 +71,10 @@ export interface PageHeaderProps {
 }
 
 /**
- * Event-rule version status as inferred client-side (U3 / KTD3). The
- * `EventRule` API schema (`openapi.yaml`, `additionalProperties: false`)
- * carries no status/version field of any kind, so a cold read (page load,
- * or any record the current session hasn't just acted on) can only derive a
- * binary PUBLISHED-vs-not signal — by diffing a row's `eventRuleId` against
- * `GET /event-rules/by-code/{code}/latest-published`. DRAFT and PAUSED both
- * read as "not the latest published version" and are structurally
- * indistinguishable from that signal alone, so a cold, unconfirmed read
- * collapses into "unknown" rather than a false-confident guess.
- *
- * "draft" and "paused" are therefore never derived from a cold read — they
- * are only ever session-scoped hints supplied by the caller immediately
- * after its own createVersion/pause mutation resolves (see
- * `EventRuleDetailProps.recentVersionStatusHint`), where the outcome is
- * certain firsthand rather than inferred. That hint does not survive a
- * reload or apply to a version the current session didn't just act on.
+ * The badge for an event rule version, from its own `versionStatus` (the API
+ * returns it on every rule). "unknown" covers a missing or future status.
  */
-export type EventRuleVersionIndicator = "draft" | "published" | "paused" | "unknown";
+export type EventRuleVersionIndicator = "draft" | "published" | "paused" | "archived" | "unknown";
 
 export interface EventRuleVersionIndicatorInfo {
   label: string;
@@ -114,6 +100,11 @@ export const EVENT_RULE_VERSION_INDICATOR_INFO: Record<
     label: "Paused",
     icon: Pause,
     classes: "bg-warning/10 text-warning border-warning/20",
+  },
+  archived: {
+    label: "Archived",
+    icon: Archive,
+    classes: "bg-muted text-muted-foreground border-border",
   },
   unknown: {
     label: "Status unknown",

@@ -1,7 +1,12 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { LocalizedStringInput } from "./localized-string-input";
+import {
+  isOverLocalizedLimit,
+  LocalizedStringInput,
+  javaStrip,
+  localizedTextLength,
+} from "./localized-string-input";
 
 describe("[audit] LocalizedStringInput data-widget attrs", () => {
   it("renders data-widget='locale-tabbed-input' on the wrapper", () => {
@@ -228,7 +233,9 @@ describe("[audit] LocalizedStringInput locale code validation", () => {
     expect(screen.queryByPlaceholderText(/Lang code/i)).toBeNull();
   });
 
-  it("normalizes mixed-case region tags to BCP-47 short form", () => {
+  // Changed with the BCP 47 key decision (portal welcome copy brief, round 3):
+  // added locales are stored as `fr-CA`, no longer `fr_CA`.
+  it("normalizes mixed-case region tags to BCP 47 (fr_ca -> fr-CA)", () => {
     const onChange = vi.fn();
     render(<LocalizedStringInput value={{ en: "hi" }} onChange={onChange} />);
 
@@ -236,7 +243,7 @@ describe("[audit] LocalizedStringInput locale code validation", () => {
     fireEvent.change(screen.getByPlaceholderText("Enter text"), { target: { value: "salut" } });
 
     expect(onChange).toHaveBeenCalledTimes(1);
-    expect(onChange.mock.calls[0]?.[0]).toEqual({ en: "hi", fr_CA: "salut" });
+    expect(onChange.mock.calls[0]?.[0]).toEqual({ en: "hi", "fr-CA": "salut" });
   });
 });
 
@@ -420,5 +427,304 @@ describe("[audit] LocalizedStringInput id forwarding", () => {
     render(<LocalizedStringInput id="probe-area-id" multiline />);
     const input = screen.getByPlaceholderText("Enter text");
     expect(input.id).toBe("probe-area-id");
+  });
+});
+
+describe("javaStrip (mirrors Java String.strip())", () => {
+  it("strips Java whitespace but keeps non-breaking spaces and U+FEFF", () => {
+    expect(javaStrip("\t a b \u2003")).toBe("a b");
+    expect(javaStrip("\u00a0x\u00a0")).toBe("\u00a0x\u00a0");
+    expect(javaStrip("\ufeff")).toBe("\ufeff");
+    expect(javaStrip(" \n ")).toBe("");
+  });
+});
+
+describe("localizedTextLength (mirrors Java String.strip().length())", () => {
+  it("counts plain ASCII", () => {
+    expect(localizedTextLength("hello")).toBe(5);
+  });
+
+  it("strips ASCII whitespace and line breaks at both ends", () => {
+    expect(localizedTextLength("  \t hello \n\r ")).toBe(5);
+  });
+
+  it("strips Unicode spaces Java treats as whitespace (U+2003, U+3000, U+2028)", () => {
+    expect(localizedTextLength("\u2003\u3000hi\u2028")).toBe(2);
+  });
+
+  it("keeps a leading and trailing NBSP (Java isWhitespace is false for U+00A0)", () => {
+    expect(localizedTextLength("\u00a0hi\u00a0")).toBe(4);
+  });
+
+  it("keeps U+2007, U+202F and U+FEFF at the edges", () => {
+    expect(localizedTextLength("\u2007a\u202f")).toBe(3);
+    expect(localizedTextLength("\ufeffa")).toBe(2);
+  });
+
+  it("counts an emoji outside the BMP as 2 UTF-16 units", () => {
+    expect(localizedTextLength("\u{1F389}")).toBe(2);
+    expect(localizedTextLength(" a\u{1F389} ")).toBe(3);
+  });
+
+  it("counts whitespace-only as 0", () => {
+    expect(localizedTextLength(" \n\t ")).toBe(0);
+  });
+
+  it("keeps inner whitespace", () => {
+    expect(localizedTextLength(" a  b ")).toBe(4);
+  });
+});
+
+describe("isOverLocalizedLimit", () => {
+  it("is false when every locale fits", () => {
+    expect(isOverLocalizedLimit({ en: "abc", es: "abcd" }, 4)).toBe(false);
+  });
+
+  it("is true when any one locale is over", () => {
+    expect(isOverLocalizedLimit({ en: "abc", es: "abcde" }, 4)).toBe(true);
+  });
+
+  it("counts after stripping, like the API", () => {
+    expect(isOverLocalizedLimit({ en: "  abcd  " }, 4)).toBe(false);
+  });
+
+  it("tolerates null, undefined and non-string entries", () => {
+    expect(isOverLocalizedLimit(undefined, 4)).toBe(false);
+    expect(isOverLocalizedLimit(null, 4)).toBe(false);
+    expect(isOverLocalizedLimit({ en: null as unknown as string }, 4)).toBe(false);
+  });
+});
+
+describe("LocalizedStringInput maxLength", () => {
+  it("shows no counter when maxLength is not set", () => {
+    render(<LocalizedStringInput value={{ en: "hello" }} />);
+    expect(screen.queryByText(/\/\s*\d+/)).toBeNull();
+  });
+
+  it("shows a counter for the active locale, counted like the API", () => {
+    render(<LocalizedStringInput value={{ en: "  hello  ", es: "hola" }} maxLength={120} />);
+    expect(screen.getByText("5 / 120")).toBeInTheDocument();
+  });
+
+  it("updates the counter as the parent value changes", () => {
+    const { rerender } = render(<LocalizedStringInput value={{ en: "ab" }} maxLength={10} />);
+    expect(screen.getByText("2 / 10")).toBeInTheDocument();
+    rerender(<LocalizedStringInput value={{ en: "abc\u{1F389}" }} maxLength={10} />);
+    expect(screen.getByText("5 / 10")).toBeInTheDocument();
+  });
+
+  it("links the counter to the input with aria-describedby, merged with the caller's", () => {
+    render(
+      <LocalizedStringInput value={{ en: "hi" }} maxLength={10} aria-describedby="field-error" />
+    );
+    const input = screen.getByPlaceholderText("Enter text");
+    const ids = (input.getAttribute("aria-describedby") ?? "").split(/\s+/);
+    expect(ids).toContain("field-error");
+    const counter = screen.getByText("2 / 10");
+    expect(ids).toContain(counter.id);
+  });
+
+  it("does not set aria-invalid while within the limit", () => {
+    render(<LocalizedStringInput value={{ en: "abc" }} maxLength={3} />);
+    expect(screen.getByPlaceholderText("Enter text").hasAttribute("aria-invalid")).toBe(false);
+    expect(screen.queryByText(/over the/i)).toBeNull();
+  });
+
+  it("over the limit, shows an inline error linked to the input and sets aria-invalid", () => {
+    render(<LocalizedStringInput value={{ en: "abcdef" }} maxLength={4} />);
+    const input = screen.getByPlaceholderText("Enter text");
+    expect(input.getAttribute("aria-invalid")).toBe("true");
+    const error = screen.getByText(/2 characters over the 4-character limit/i);
+    expect((input.getAttribute("aria-describedby") ?? "").split(/\s+/)).toContain(error.id);
+    // Reached through aria-describedby, not a live region: a live region would re-announce on
+    // every keystroke, and the form's own save-blocked alert already speaks once.
+    expect(error.getAttribute("role")).toBeNull();
+    expect(error.closest("[aria-live]")).toBeNull();
+  });
+
+  it("still emits an over-limit value; the form decides whether to block submit", () => {
+    const onChange = vi.fn();
+    render(<LocalizedStringInput value={{ en: "ab" }} maxLength={3} onChange={onChange} />);
+    fireEvent.change(screen.getByPlaceholderText("Enter text"), {
+      target: { value: "abcdefgh" },
+    });
+    expect(onChange).toHaveBeenCalledWith({ en: "abcdefgh" });
+  });
+
+  it("names another locale that is over the limit when the active one fits", () => {
+    render(<LocalizedStringInput value={{ en: "ok", es: "demasiado" }} maxLength={4} />);
+    const input = screen.getByPlaceholderText("Enter text");
+    expect(input.getAttribute("aria-invalid")).toBe("true");
+    expect(screen.getByText(/Over the 4-character limit in ES/)).toBeInTheDocument();
+  });
+
+  it("does not set a native maxlength attribute (stripping would make it wrong)", () => {
+    render(<LocalizedStringInput value={{ en: "a" }} maxLength={4} />);
+    expect(screen.getByPlaceholderText("Enter text").hasAttribute("maxlength")).toBe(false);
+  });
+});
+
+describe("LocalizedStringInput rows", () => {
+  it("defaults the textarea to 4 rows", () => {
+    render(<LocalizedStringInput multiline />);
+    expect(screen.getByPlaceholderText("Enter text").getAttribute("rows")).toBe("4");
+  });
+
+  it("uses the rows prop for the textarea", () => {
+    render(<LocalizedStringInput multiline rows={10} />);
+    expect(screen.getByPlaceholderText("Enter text").getAttribute("rows")).toBe("10");
+  });
+
+  it("ignores rows on a single-line input", () => {
+    render(<LocalizedStringInput rows={10} />);
+    expect(screen.getByPlaceholderText("Enter text").hasAttribute("rows")).toBe(false);
+  });
+});
+
+describe("LocalizedStringInput BCP 47 locale keys", () => {
+  function addLanguage(langCode: string) {
+    fireEvent.click(screen.getByRole("button", { name: /Add Language/i }));
+    fireEvent.change(screen.getByPlaceholderText(/Lang code/i), { target: { value: langCode } });
+    fireEvent.click(screen.getByRole("button", { name: /^Add$/ }));
+  }
+
+  it("stores a typed es_MX as es-MX", () => {
+    const onChange = vi.fn();
+    render(<LocalizedStringInput value={{ en: "hi" }} onChange={onChange} />);
+    addLanguage("es_MX");
+    fireEvent.change(screen.getByPlaceholderText("Enter text"), { target: { value: "hola" } });
+    expect(onChange).toHaveBeenCalledWith({ en: "hi", "es-MX": "hola" });
+  });
+
+  it("stores a typed es-mx as es-MX", () => {
+    const onChange = vi.fn();
+    render(<LocalizedStringInput value={{ en: "hi" }} onChange={onChange} />);
+    addLanguage("es-mx");
+    fireEvent.change(screen.getByPlaceholderText("Enter text"), { target: { value: "hola" } });
+    expect(onChange).toHaveBeenCalledWith({ en: "hi", "es-MX": "hola" });
+  });
+
+  it("still displays and edits an existing underscore key (fr_CA)", () => {
+    const onChange = vi.fn();
+    const { container } = render(
+      <LocalizedStringInput
+        value={{ en: "hi", fr_CA: "salut" }}
+        onChange={onChange}
+        defaultLanguages={["fr_CA"]}
+      />
+    );
+    const input = screen.getByPlaceholderText("Enter text");
+    expect(input).toHaveValue("salut");
+    expect(container.querySelector('[role="combobox"]')?.textContent).toMatch(/fr_CA/i);
+    fireEvent.change(input, { target: { value: "bonjour" } });
+    expect(onChange).toHaveBeenCalledWith({ en: "hi", fr_CA: "bonjour" });
+  });
+
+  it("selects the existing underscore key instead of adding a duplicate fr-CA", () => {
+    const onChange = vi.fn();
+    render(<LocalizedStringInput value={{ en: "hi", fr_CA: "salut" }} onChange={onChange} />);
+    addLanguage("fr-CA");
+    const input = screen.getByPlaceholderText("Enter text");
+    expect(input).toHaveValue("salut");
+    fireEvent.change(input, { target: { value: "bonjour" } });
+    expect(onChange).toHaveBeenCalledWith({ en: "hi", fr_CA: "bonjour" });
+  });
+
+  it("rejects a malformed code with the inline error", () => {
+    render(<LocalizedStringInput value={{ en: "hi" }} />);
+    addLanguage("es_MX_extra");
+    expect(screen.getByRole("alert").textContent).toMatch(/es-MX/);
+  });
+});
+
+describe("LocalizedStringInput preview", () => {
+  const preview = (text: string) => <strong data-testid="rendered">{text.toUpperCase()}</strong>;
+
+  it("shows no Write/Preview toggle without a preview prop", () => {
+    render(<LocalizedStringInput value={{ en: "hi" }} />);
+    expect(screen.queryByRole("button", { name: /^Preview$/ })).toBeNull();
+  });
+
+  it("starts in Write mode with aria-pressed reflecting the mode", () => {
+    render(<LocalizedStringInput value={{ en: "hi" }} preview={preview} />);
+    expect(screen.getByRole("button", { name: /^Write$/ })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: /^Preview$/ })).toHaveAttribute(
+      "aria-pressed",
+      "false"
+    );
+    expect(screen.getByPlaceholderText("Enter text")).toBeInTheDocument();
+    expect(screen.queryByTestId("rendered")).toBeNull();
+  });
+
+  it("renders preview(activeText) for the active locale when Preview is pressed", () => {
+    const spy = vi.fn(preview);
+    render(<LocalizedStringInput value={{ en: "hi", es: "hola" }} preview={spy} multiline />);
+    fireEvent.click(screen.getByRole("button", { name: /^Preview$/ }));
+    expect(screen.getByRole("button", { name: /^Preview$/ })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+    expect(screen.getByTestId("rendered")).toHaveTextContent("HI");
+    expect(spy).toHaveBeenCalledWith("hi");
+    expect(screen.queryByPlaceholderText("Enter text")).toBeNull();
+  });
+
+  it("returns to Write mode and keeps the text", () => {
+    render(<LocalizedStringInput value={{ en: "hi" }} preview={preview} />);
+    fireEvent.click(screen.getByRole("button", { name: /^Preview$/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^Write$/ }));
+    expect(screen.getByPlaceholderText("Enter text")).toHaveValue("hi");
+    expect(screen.queryByTestId("rendered")).toBeNull();
+  });
+
+  it("toggles are native buttons (keyboard-operable) at least 44px tall", () => {
+    render(<LocalizedStringInput value={{ en: "hi" }} preview={preview} />);
+    for (const name of [/^Write$/, /^Preview$/]) {
+      const button = screen.getByRole("button", { name });
+      expect(button.tagName).toBe("BUTTON");
+      expect(button).toHaveAttribute("type", "button");
+      expect(button.className).toMatch(/min-h-11/);
+      expect(button.className).toMatch(/min-w-11/);
+    }
+  });
+
+  it("labels the preview region", () => {
+    render(<LocalizedStringInput value={{ en: "hi" }} preview={preview} />);
+    fireEvent.click(screen.getByRole("button", { name: /^Preview$/ }));
+    expect(screen.getByRole("region", { name: /preview/i })).toContainElement(
+      screen.getByTestId("rendered")
+    );
+  });
+
+  it("keeps the counter visible in Preview mode", () => {
+    render(<LocalizedStringInput value={{ en: "hi" }} preview={preview} maxLength={10} />);
+    fireEvent.click(screen.getByRole("button", { name: /^Preview$/ }));
+    expect(screen.getByText("2 / 10")).toBeInTheDocument();
+  });
+
+  it("names its editor-mode toggle, preview and language select after the field's label", () => {
+    render(
+      <>
+        <label htmlFor="terms">Program terms</label>
+        <LocalizedStringInput
+          id="terms"
+          label="Program terms"
+          value={{ en: "**Hi**" }}
+          preview={(text) => <span>{text}</span>}
+        />
+      </>
+    );
+
+    expect(screen.getByRole("group", { name: "Program terms editor mode" })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Program terms language" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Preview" }));
+    const region = screen.getByRole("region", { name: "Program terms preview" });
+    // The input is unmounted in preview, so the label's htmlFor resolves to the preview instead.
+    expect(region.id).toBe("terms");
+  });
+
+  it("names the language select 'Language' when no label is given", () => {
+    render(<LocalizedStringInput value={{ en: "hi" }} />);
+    expect(screen.getByRole("combobox", { name: "Language" })).toBeInTheDocument();
   });
 });

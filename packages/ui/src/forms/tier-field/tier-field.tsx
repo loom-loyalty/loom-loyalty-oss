@@ -4,7 +4,7 @@
 import type { ReactNode } from "react";
 import * as React from "react";
 
-import { EntitySelectBox } from "../entity-select-box";
+import { EntitySelectBox, type EntityCreateOption, type EntityOption } from "../entity-select-box";
 import { useTierField, type TierIdField } from "./use-tier-field";
 
 export interface TierFieldProps {
@@ -30,6 +30,14 @@ export interface TierFieldProps {
   "aria-describedby"?: string;
   /** ID for the trigger element */
   id?: string;
+  /** Several "+ New …" choices; see EntitySelectBox. */
+  createOptions?: EntityCreateOption[];
+  /** Called with the picked create option's key. */
+  onCreateOption?: (key: string) => void;
+  /** Marks the selection as an untouched suggestion. */
+  suggested?: boolean;
+  /** A record just created from "+ New …"; see EntitySelectBox. */
+  createdOption?: EntityOption;
 }
 
 export function TierField({
@@ -44,6 +52,10 @@ export function TierField({
   "aria-invalid": ariaInvalid,
   "aria-describedby": ariaDescribedBy,
   id,
+  createOptions,
+  onCreateOption,
+  suggested,
+  createdOption,
 }: TierFieldProps): ReactNode {
   const {
     options,
@@ -83,6 +95,10 @@ export function TierField({
         hasNextPage={hasNextPage}
         isFetchingNextPage={isFetchingNextPage}
         onLoadMore={fetchNextPage}
+        createOptions={createOptions}
+        onCreateOption={onCreateOption}
+        suggested={suggested}
+        createdOption={createdOption}
       />
       {renderCreateSheet?.(isCreateOpen, setIsCreateOpen)}
     </>

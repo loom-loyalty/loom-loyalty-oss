@@ -149,6 +149,8 @@ export interface CustomerSegment extends CustomerAudienceBase {
   lastComputedDateTime?: string | null;
   /** Where the segment's membership computation stands. */
   computationStatus?: SegmentComputationStatus;
+  /** A platform-built segment: read-only (no edit, version or delete). */
+  isSystem?: boolean;
 }
 
 /**
@@ -490,6 +492,8 @@ export interface AudienceFormSheetProps {
   schema?: UIEntitySchema;
   /** Names of extended (tenant-defined) fields beyond the standard audience fields. */
   extendedFields?: string[];
+  /** Shown above the fields, e.g. the warning that saving a live segment starts a draft. */
+  notice?: ReactNode;
 }
 
 export interface AudienceListFilters {

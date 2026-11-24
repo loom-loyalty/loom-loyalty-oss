@@ -13,6 +13,12 @@ import { useTargetField } from "../../forms/target-field/use-target-field.js";
 import { Label } from "../../primitives/label.js";
 import { Switch } from "../../primitives/switch.js";
 import { FieldsetLegend } from "../components/fieldset-legend.js";
+import {
+  COMPLETION_CREATE_OPTIONS,
+  isCompletionTarget,
+  useInlineTargetPicker,
+  type CreatedTargetRef,
+} from "../inline-create/use-inline-target-picker.js";
 import { PathOrValueField } from "../inputs/path-or-value-field.js";
 import type { ActionComponentProps, CompleteTargetDataAction } from "../types";
 
@@ -34,15 +40,23 @@ export const CompleteTargetActionComponent = memo(function CompleteTargetActionC
   );
 
   const handleTargetChange = useCallback(
-    (targetId: string) => {
+    (targetId: string, record?: CreatedTargetRef) => {
       const target = findTarget(targetId);
       update({
         targetId: targetId || undefined,
-        targetCode: target?.code ?? undefined,
+        // A just-created target may not be in the loaded list yet.
+        targetCode: record?.code ?? target?.code ?? undefined,
       });
     },
     [update, findTarget]
   );
+  const { pickerProps, createSheet } = useInlineTargetPicker({
+    value: value.targetId ?? "",
+    onSelect: handleTargetChange,
+    fieldKey: `${targetFieldId}.completeTarget`,
+    createOptions: COMPLETION_CREATE_OPTIONS,
+    fits: isCompletionTarget,
+  });
 
   return (
     <div className={className}>
@@ -57,9 +71,11 @@ export const CompleteTargetActionComponent = memo(function CompleteTargetActionC
               id={targetFieldId}
               value={value.targetId ?? ""}
               onValueChange={handleTargetChange}
+              {...pickerProps}
               placeholder="Select target..."
               disabled={disabled}
             />
+            {createSheet}
           </div>
           <label className="flex items-center gap-2">
             <Switch

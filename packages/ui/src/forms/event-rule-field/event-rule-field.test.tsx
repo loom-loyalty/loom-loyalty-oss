@@ -38,6 +38,19 @@ describe("[audit] useEventRuleField paginated wrapper", () => {
     await waitFor(() => expect(result.current.eventRules).toHaveLength(50));
   });
 
+  it("asks for current versions only, so a rule shows once (P1)", async () => {
+    const seen: string[] = [];
+    server.use(
+      http.get(`${API_BASE}/event-rules`, ({ request }) => {
+        seen.push(new URL(request.url).searchParams.get("currentVersionsOnly") ?? "");
+        return HttpResponse.json({ content: [], pageNumber: 0, totalPages: 0, totalSize: 0 });
+      })
+    );
+    const { Wrapper } = createQueryWrapper();
+    renderHook(() => useEventRuleField(), { wrapper: Wrapper });
+    await waitFor(() => expect(seen).toContain("true"));
+  });
+
   it("paginates", async () => {
     const { Wrapper } = createQueryWrapper();
     const { result } = renderHook(() => useEventRuleField(), { wrapper: Wrapper });

@@ -20,6 +20,7 @@ import * as React from "react";
 
 import { useInfiniteScrollSentinel } from "../hooks/use-infinite-scroll-sentinel";
 import { cn } from "../lib/utils";
+import { Badge } from "../primitives/badge";
 import { Button } from "../primitives/button";
 import {
   Command,
@@ -28,9 +29,10 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-  CommandSeparator,
 } from "../primitives/command";
 import { Popover, PopoverContent, PopoverTrigger } from "../primitives/popover";
+
+const CREATE_OPTION_PREFIX = "__create_option__:";
 
 export const ENTITY_COMBOBOX_DATA_ATTRS = (opts: {
   widgetType?: string;
@@ -55,6 +57,14 @@ export interface EntityOption {
   name: string;
   /** Optional secondary text (e.g., code, type) */
   secondaryText?: string;
+}
+
+/** A "+ New …" choice in the dropdown. */
+export interface EntityCreateOption {
+  /** Stable key passed back to `onCreateOption`. */
+  key: string;
+  /** Visible label, without the leading "+". */
+  label: string;
 }
 
 export interface EntitySelectBoxProps {
@@ -102,6 +112,29 @@ export interface EntitySelectBoxProps {
    * When provided, shows an "Add New" option at the bottom of the dropdown
    */
   onCreateNew?: () => void;
+
+  /**
+   * Several "+ New …" choices (for example "New counter", "New limit: Daily
+   * limit"). Picking one calls `onCreateOption` with its key. When the list
+   * has no records, the dropdown opens on these choices instead of an
+   * empty-list message.
+   */
+  createOptions?: EntityCreateOption[];
+
+  /** Called with the picked create option's key. */
+  onCreateOption?: (key: string) => void;
+
+  /**
+   * Marks the current selection as a suggestion the user has not confirmed.
+   * The mark is display-only; the caller clears it once the user picks.
+   */
+  suggested?: boolean;
+
+  /**
+   * A record just created from a "+ New …" choice. The trigger shows it while
+   * `value` names it and the loaded list (or search) doesn't hold it yet.
+   */
+  createdOption?: EntityOption;
 
   /**
    * Placeholder text when no value is selected
@@ -192,6 +225,10 @@ export function EntitySelectBox({
   value,
   onValueChange,
   onCreateNew,
+  createOptions,
+  onCreateOption,
+  suggested = false,
+  createdOption,
   placeholder = "Select an option...",
   disabled = false,
   className,
@@ -245,7 +282,10 @@ export function EntitySelectBox({
     }
   }, [value, currentMatch, lastResolved]);
 
-  const selectedOption = currentMatch ?? (lastResolved?.id === value ? lastResolved : undefined);
+  const selectedOption =
+    currentMatch ??
+    (lastResolved?.id === value ? lastResolved : undefined) ??
+    (value && createdOption?.id === value ? createdOption : undefined);
 
   const handleSelect = React.useCallback(
     (newValue: string) => {
@@ -254,12 +294,22 @@ export function EntitySelectBox({
         onCreateNew?.();
         return;
       }
+      if (newValue.startsWith(CREATE_OPTION_PREFIX)) {
+        setOpen(false);
+        onCreateOption?.(newValue.slice(CREATE_OPTION_PREFIX.length));
+        return;
+      }
 
       onValueChange?.(newValue);
       setOpen(false);
     },
-    [onValueChange, onCreateNew]
+    [onValueChange, onCreateNew, onCreateOption]
   );
+
+  const hasCreateOptions = (createOptions?.length ?? 0) > 0;
+  // With nothing to pick, lead with the create choices rather than "No X found."
+  const showEmptyCreateLead =
+    hasCreateOptions && options.length === 0 && !isLoading && !isFetchingNextPage && !searchValue;
 
   // A trigger with an associated <label for={id}> (or aria-labelledby) must take its
   // accessible name from that visible label; aria-label would override it. `labels`
@@ -320,6 +370,15 @@ export function EntitySelectBox({
                   ({selectedOption.secondaryText})
                 </span>
               )}
+              {suggested && (
+                <Badge
+                  variant="outline"
+                  className="shrink-0 text-xs group-hover:border-white group-hover:text-white"
+                  data-suggested="true"
+                >
+                  Suggested
+                </Badge>
+              )}
             </span>
           ) : isLoading ? (
             <span className="text-muted-foreground flex items-center gap-2 group-hover:text-white/70">
@@ -341,8 +400,13 @@ export function EntitySelectBox({
           />
           <CommandList>
             {/* While a page (or a search) is loading, "no results" would be premature. */}
-            {!isFetchingNextPage && (
+            {!isFetchingNextPage && !showEmptyCreateLead && (
               <CommandEmpty>No {entityLabel.toLowerCase()} found.</CommandEmpty>
+            )}
+            {showEmptyCreateLead && (
+              <p className="text-muted-foreground px-3 pt-2 text-xs">
+                Nothing here yet. Create one:
+              </p>
             )}
 
             {options.length > 0 && (
@@ -391,21 +455,40 @@ export function EntitySelectBox({
               </div>
             )}
 
-            {/* Add New option */}
-            {onCreateNew && (
-              <>
-                {options.length > 0 && <CommandSeparator />}
-                <CommandGroup>
-                  <CommandItem
-                    value="__create_new__"
-                    onSelect={() => handleSelect("__create_new__")}
-                    className="text-primary"
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    <span>Add New {entityLabel}</span>
-                  </CommandItem>
+            {/* "+ New …" choices stay visible: pinned to the bottom of the open list, and never
+                hidden by a search (Nate 11-22), so a long list can't push them out of view. */}
+            {(onCreateNew || hasCreateOptions) && (
+              <div
+                data-testid="entity-select-create-options"
+                className="!bg-card border-border sticky bottom-0 z-10 border-t"
+              >
+                <CommandGroup forceMount>
+                  {onCreateNew && (
+                    <CommandItem
+                      forceMount
+                      value="__create_new__"
+                      onSelect={() => handleSelect("__create_new__")}
+                      className="text-primary min-h-11"
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      <span>Add New {entityLabel}</span>
+                    </CommandItem>
+                  )}
+                  {createOptions?.map((option) => (
+                    <CommandItem
+                      forceMount
+                      key={option.key}
+                      value={`${CREATE_OPTION_PREFIX}${option.key}`}
+                      keywords={[option.label]}
+                      onSelect={() => handleSelect(`${CREATE_OPTION_PREFIX}${option.key}`)}
+                      className="text-primary min-h-11"
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      <span>{option.label}</span>
+                    </CommandItem>
+                  ))}
                 </CommandGroup>
-              </>
+              </div>
             )}
           </CommandList>
         </Command>

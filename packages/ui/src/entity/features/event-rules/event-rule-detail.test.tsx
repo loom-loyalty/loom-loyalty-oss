@@ -1,8 +1,7 @@
-// EventRuleDetail version-lifecycle actions (U3): button gating, the
-// PUBLISHED-vs-"status unknown" indicator, and the always-available fallback
-// for Create Version/Pause/Resume (KTD3 — the schema can't structurally
-// distinguish DRAFT from PAUSED, so those three are gated by the caller's
-// handler presence only, not by a live signal).
+// EventRuleDetail version-lifecycle actions: every button comes from the record's own
+// versionStatus, so the sheet never offers an action the API refuses. This
+// replaces the U3/KTD3 tests, which asserted the old fallback (Pause and
+// Resume always shown, status inferred); the requirement changed, so they did.
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
@@ -29,195 +28,106 @@ const eventRule: EntityRecord = {
   category: "PROMOTION",
 };
 
-describe("EventRuleDetail version lifecycle (U3)", () => {
-  it("renders no version status or actions when no version-lifecycle handler is passed", () => {
-    render(withQueryClient(<EventRuleDetail eventRule={eventRule} />));
+const ALL_HANDLERS = {
+  onPublish: vi.fn(),
+  onPause: vi.fn(),
+  onResume: vi.fn(),
+  onEdit: vi.fn(),
+  onDelete: vi.fn(),
+  onShowHistory: vi.fn(),
+};
 
-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "New Version" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Publish" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Pause" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Resume" })).not.toBeInTheDocument();
+function renderWith(status: string | undefined, extra: Record<string, unknown> = {}) {
+  render(
+    withQueryClient(
+      <EventRuleDetail
+        eventRule={{ ...eventRule, version: 2, versionStatus: status }}
+        canEdit
+        canDelete
+        {...ALL_HANDLERS}
+        {...extra}
+      />
+    )
+  );
+}
+
+const button = (name: string) => screen.queryByRole("button", { name });
+
+describe("EventRuleDetail shows only actions the rule's status allows", () => {
+  it.each([
+    ["DRAFT", ["Publish"], ["Pause", "Resume"]],
+    ["PUBLISHED", ["Pause"], ["Publish", "Resume"]],
+    ["PAUSED", ["Resume"], ["Publish", "Pause"]],
+    ["ARCHIVED", [], ["Publish", "Pause", "Resume"]],
+    [undefined, [], ["Publish", "Pause", "Resume"]],
+  ])("%s shows %j and hides %j", (status, shown, hidden) => {
+    renderWith(status);
+    for (const name of shown) expect(button(name)).toBeInTheDocument();
+    for (const name of hidden) expect(button(name)).not.toBeInTheDocument();
+    // Edit, Delete and Version history stay in every status.
+    expect(button("Edit")).toBeInTheDocument();
+    expect(button("Delete")).toBeInTheDocument();
+    expect(button("Version history")).toBeInTheDocument();
   });
 
-  it("shows Create Version, Pause, and Resume unconditionally once wired (KTD3 fallback)", () => {
-    render(
-      withQueryClient(
-        <EventRuleDetail
-          eventRule={eventRule}
-          canEdit
-          onCreateVersion={vi.fn()}
-          onPause={vi.fn()}
-          onResume={vi.fn()}
-        />
-      )
-    );
+  it.each(["DRAFT", "PUBLISHED", "PAUSED", "ARCHIVED"])(
+    "never shows a New Version button (%s)",
+    (status) => {
+      renderWith(status);
+      expect(screen.queryByRole("button", { name: /new version/i })).not.toBeInTheDocument();
+    }
+  );
 
-    // No isConfirmedPublished signal was passed — these three still render,
-    // matching KTD3's "always available, rely on inline errors" fallback.
-    expect(screen.getByRole("button", { name: "New Version" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Pause" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Resume" })).toBeInTheDocument();
+  it("an old version that a newer one replaced offers no lifecycle action", () => {
+    renderWith("PAUSED", { isReplaced: true });
+    expect(button("Resume")).not.toBeInTheDocument();
+    expect(button("Publish")).not.toBeInTheDocument();
+    expect(button("Pause")).not.toBeInTheDocument();
   });
 
-  it("hides version-lifecycle actions when canEdit is false", () => {
-    render(
-      withQueryClient(
-        <EventRuleDetail
-          eventRule={eventRule}
-          canEdit={false}
-          onCreateVersion={vi.fn()}
-          onPublish={vi.fn()}
-          onPause={vi.fn()}
-          onResume={vi.fn()}
-        />
-      )
-    );
-
-    expect(screen.queryByRole("button", { name: "New Version" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Publish" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Pause" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Resume" })).not.toBeInTheDocument();
+  it("hides lifecycle actions when canEdit is false", () => {
+    renderWith("PUBLISHED", { canEdit: false });
+    expect(button("Pause")).not.toBeInTheDocument();
+    expect(button("Edit")).not.toBeInTheDocument();
   });
 
-  it("hides Publish once the live signal confirms this record is already published", () => {
-    render(
-      withQueryClient(
-        <EventRuleDetail
-          eventRule={eventRule}
-          canEdit
-          onPublish={vi.fn()}
-          isConfirmedPublished={true}
-        />
-      )
-    );
-
-    expect(screen.queryByRole("button", { name: "Publish" })).not.toBeInTheDocument();
-    expect(screen.getByRole("status")).toHaveTextContent("Published");
+  it.each([
+    ["DRAFT", "Draft"],
+    ["PUBLISHED", "Published"],
+    ["PAUSED", "Paused"],
+    ["ARCHIVED", "Archived"],
+    [undefined, "Status unknown"],
+  ])("the badge shows the real status %s as %s", (status, label) => {
+    renderWith(status);
+    expect(screen.getByLabelText(`Version status: ${label}`)).toBeInTheDocument();
   });
 
-  it("shows Publish and a 'status unknown' indicator when not confirmed published", () => {
-    render(
-      withQueryClient(
-        <EventRuleDetail
-          eventRule={eventRule}
-          canEdit
-          onPublish={vi.fn()}
-          isConfirmedPublished={false}
-        />
-      )
-    );
-
-    expect(screen.getByRole("button", { name: "Publish" })).toBeInTheDocument();
-    expect(screen.getByRole("status")).toHaveTextContent("Status unknown");
-  });
-
-  it("shows the 'status unknown' indicator when isConfirmedPublished is undefined (loading)", () => {
-    render(withQueryClient(<EventRuleDetail eventRule={eventRule} canEdit onPause={vi.fn()} />));
-
-    expect(screen.getByRole("status")).toHaveTextContent("Status unknown");
-  });
-
-  it("shows a 'Draft' indicator when recentVersionStatusHint is 'draft'", () => {
-    render(
-      withQueryClient(
-        <EventRuleDetail
-          eventRule={eventRule}
-          canEdit
-          onPublish={vi.fn()}
-          isConfirmedPublished={false}
-          recentVersionStatusHint="draft"
-        />
-      )
-    );
-
-    expect(screen.getByRole("status")).toHaveTextContent("Draft");
-  });
-
-  it("shows a 'Paused' indicator when recentVersionStatusHint is 'paused'", () => {
-    render(
-      withQueryClient(
-        <EventRuleDetail
-          eventRule={eventRule}
-          canEdit
-          onPublish={vi.fn()}
-          isConfirmedPublished={false}
-          recentVersionStatusHint="paused"
-        />
-      )
-    );
-
-    expect(screen.getByRole("status")).toHaveTextContent("Paused");
-  });
-
-  it("ignores recentVersionStatusHint once isConfirmedPublished is true", () => {
-    render(
-      withQueryClient(
-        <EventRuleDetail
-          eventRule={eventRule}
-          canEdit
-          onPublish={vi.fn()}
-          isConfirmedPublished={true}
-          recentVersionStatusHint="paused"
-        />
-      )
-    );
-
-    expect(screen.getByRole("status")).toHaveTextContent("Published");
-  });
-
-  it("calls the corresponding handler when each version-lifecycle button is clicked", async () => {
+  it("calls the matching handler for each shown action", async () => {
     const user = userEvent.setup();
-    const onPublish = vi.fn();
-    const onCreateVersion = vi.fn();
     const onPause = vi.fn();
-    const onResume = vi.fn();
-
-    render(
-      withQueryClient(
-        <EventRuleDetail
-          eventRule={eventRule}
-          canEdit
-          onPublish={onPublish}
-          onCreateVersion={onCreateVersion}
-          onPause={onPause}
-          onResume={onResume}
-          isConfirmedPublished={false}
-        />
-      )
-    );
-
-    await user.click(screen.getByRole("button", { name: "New Version" }));
-    await user.click(screen.getByRole("button", { name: "Publish" }));
+    const onShowHistory = vi.fn();
+    renderWith("PUBLISHED", { onPause, onShowHistory });
     await user.click(screen.getByRole("button", { name: "Pause" }));
-    await user.click(screen.getByRole("button", { name: "Resume" }));
-
-    expect(onCreateVersion).toHaveBeenCalledTimes(1);
-    expect(onPublish).toHaveBeenCalledTimes(1);
-    expect(onPause).toHaveBeenCalledTimes(1);
-    expect(onResume).toHaveBeenCalledTimes(1);
+    await user.click(screen.getByRole("button", { name: "Version history" }));
+    expect(onPause).toHaveBeenCalledOnce();
+    expect(onShowHistory).toHaveBeenCalledOnce();
   });
 
-  it("disables the pending action's button via its isXxx pending flag", () => {
-    render(
-      withQueryClient(<EventRuleDetail eventRule={eventRule} canEdit onPause={vi.fn()} isPausing />)
-    );
-
-    expect(screen.getByRole("button", { name: "Pause" })).toBeDisabled();
+  it("disables the pending action's button", () => {
+    renderWith("PAUSED", { isResuming: true });
+    expect(button("Resume")).toBeDisabled();
   });
 
   it("renders a passed versionActionError inline", () => {
-    render(
-      withQueryClient(
-        <EventRuleDetail
-          eventRule={eventRule}
-          canEdit
-          onPublish={vi.fn()}
-          versionActionError="Rule is already PUBLISHED"
-        />
-      )
-    );
+    renderWith("PUBLISHED", { versionActionError: "Can only pause a PUBLISHED EventRule" });
+    expect(screen.getByText("Can only pause a PUBLISHED EventRule")).toBeInTheDocument();
+  });
 
-    expect(screen.getByRole("alert")).toHaveTextContent("Rule is already PUBLISHED");
+  it("renders no lifecycle row or badge when no lifecycle handler is passed", () => {
+    render(
+      withQueryClient(<EventRuleDetail eventRule={{ ...eventRule, versionStatus: "PUBLISHED" }} />)
+    );
+    expect(button("Pause")).not.toBeInTheDocument();
+    expect(button("Version history")).not.toBeInTheDocument();
   });
 });

@@ -82,6 +82,18 @@ export interface OfferFormSheetProps {
   schema?: UIEntitySchema;
   /** Extended field names to render (beyond standard fields) */
   extendedFields?: string[];
+  /** Programs a new record starts with (inline create from a rule or flow) */
+  defaultProgramIds?: string[];
+  /**
+   * Renders a create sheet for the audience picker. Call `onCreated` with the new
+   * audience's id (and its name and code, so the picker can show it) to select it. Leave unset where a second overlay would stack
+   * (an offer created inline from a rule).
+   */
+  renderAudienceCreateSheet?: (props: {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    onCreated: (customerAudienceId: string, record?: { name?: string; code?: string }) => void;
+  }) => ReactNode;
 }
 
 /**

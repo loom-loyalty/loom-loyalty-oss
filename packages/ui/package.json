@@ -165,6 +165,7 @@
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "d3": "catalog:",
+    "fast-check": "4.5.3",
     "jsdom": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",

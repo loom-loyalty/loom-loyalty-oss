@@ -24,7 +24,12 @@ const SEARCH_DEBOUNCE_MS = 250;
 const DEFAULT_PAGE_SIZE = 50;
 
 const fetchEventRulePage = ({ page, size, search }: SearchableInfiniteFetchParams) =>
-  eventEngineManagementListEventRules({ page, size, ...(search ? { search } : {}) });
+  eventEngineManagementListEventRules({
+    page,
+    size,
+    currentVersionsOnly: true,
+    ...(search ? { search } : {}),
+  });
 
 const matchesEventRule = (row: EventRule, needle: string): boolean =>
   !needle ||
@@ -72,7 +77,7 @@ export function useEventRuleField(options?: UseEventRuleFieldOptions): UseEventR
     fetchNextPage,
     totalAvailable,
   } = useSearchableInfiniteList<EventRule>({
-    queryKey: getEventEngineManagementListEventRulesQueryKey(),
+    queryKey: getEventEngineManagementListEventRulesQueryKey({ currentVersionsOnly: true }),
     fetchPage: fetchEventRulePage,
     pageSize,
     search: debouncedSearch,

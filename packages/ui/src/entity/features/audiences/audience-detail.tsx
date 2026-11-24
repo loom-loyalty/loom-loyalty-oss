@@ -7,7 +7,7 @@
 
 import { extractLocalizedString, formatDateTime, toISODateTime } from "@loom-loyalty/core";
 import type { SegmentExpressionHistory } from "@loom-loyalty/sdk";
-import { Edit, ExternalLink, PlayCircle, Plus, Trash2 } from "lucide-react";
+import { Edit, ExternalLink, PlayCircle, Trash2 } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { Badge } from "../../../primitives/badge.js";
@@ -65,17 +65,6 @@ export interface AudienceDetailProps {
   /** Inline error for the publish action (rendered above the action buttons) */
   publishError?: string | null;
   /**
-   * Create Version click handler — CUSTOMER_SEGMENT only. Creates a new DRAFT
-   * version from the segment's current PUBLISHED expression; the backend
-   * rejects this unless the segment is currently PUBLISHED (the mirror image
-   * of the constraint the Publish endpoint already enforces).
-   */
-  onCreateVersion?: () => void;
-  /** True while the create-version mutation is in flight */
-  isCreatingVersion?: boolean;
-  /** Inline error for the create-version action (rendered above the action buttons) */
-  createVersionError?: string | null;
-  /**
    * Prior expression versions for a segment (`GET
    * /customer-audiences/{id}/versions`). Unlike DataModel's version history,
    * `SegmentExpressionHistory` carries no `versionStatus` field at all (only
@@ -95,13 +84,10 @@ export function AudienceDetail({
   onDelete,
   onViewFullDetail,
   onPublish,
-  onCreateVersion,
   canEdit = true,
   canDelete = true,
   isPublishing = false,
-  isCreatingVersion = false,
   publishError,
-  createVersionError,
   versionHistory = [],
 }: AudienceDetailProps): ReactNode {
   const description = extractLocalizedString(audience.description);
@@ -109,10 +95,13 @@ export function AudienceDetail({
   // static list with no draft/published concept at all.
   const isSegment = isCustomerSegment(audience);
   const isDraftSegment = isSegment && audience.versionStatus === "DRAFT";
-  // Create Version's availability is the mirror image of Publish's: a
-  // PUBLISHED segment can spawn a new DRAFT, a DRAFT cannot (the backend
-  // 400s "Segment is not in PUBLISHED status" otherwise).
-  const isPublishedSegment = isSegment && audience.versionStatus === "PUBLISHED";
+  // System segments are read-only on the server (409 SYSTEM_SEGMENT_READ_ONLY
+  // on update, version and delete), so they get no Edit and no Delete. There
+  // is no New Version button: Edit on a published segment saves into a new
+  // draft version, and the edit sheet warns about it.
+  const isSystem = isSegment && audience.isSystem === true;
+  const showEdit = canEdit && !isSystem && !!onEdit;
+  const showDelete = canDelete && !isSystem && !!onDelete;
   const computationNote = getSegmentComputationNote(audience);
 
   return (
@@ -252,16 +241,10 @@ export function AudienceDetail({
         </div>
       )}
 
-      {createVersionError && (
-        <div className="border-destructive/30 bg-destructive/5 rounded-lg border p-3" role="alert">
-          <p className="text-destructive text-sm">{createVersionError}</p>
-        </div>
-      )}
-
       {/* Action Buttons */}
-      {(canEdit || canDelete || (canEdit && isDraftSegment && onPublish)) && (
+      {(showEdit || showDelete || (canEdit && isDraftSegment && onPublish)) && (
         <div className="border-border flex gap-2 border-t pt-4">
-          {canDelete && onDelete && (
+          {showDelete && (
             <Button variant="outline" className="flex-1" onClick={onDelete}>
               <Trash2 className="mr-2 h-4 w-4" />
               Delete
@@ -278,18 +261,7 @@ export function AudienceDetail({
               {isPublishing ? "Publishing…" : "Publish"}
             </Button>
           )}
-          {canEdit && isPublishedSegment && onCreateVersion && (
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={onCreateVersion}
-              disabled={isCreatingVersion}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              {isCreatingVersion ? "Creating…" : "New Version"}
-            </Button>
-          )}
-          {canEdit && onEdit && (
+          {showEdit && (
             <Button variant="primary-gradient" className="flex-1" onClick={onEdit}>
               <Edit className="mr-2 h-4 w-4" />
               Edit

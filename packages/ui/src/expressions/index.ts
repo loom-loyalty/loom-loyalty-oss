@@ -94,3 +94,34 @@ export {
 
 // Read-time migration for persisted (legacy-shaped) expressions.
 export { detectCorruptedNodes, normalizeExpression, type CorruptedNode } from "./migrate.js";
+
+// Inline create and suggested picks inside a rule or flow (pickers brief).
+export {
+  InlineCreateProvider,
+  useInlineCreate,
+  type InlineCreateContextValue,
+  type InlineSuggestion,
+} from "./inline-create/inline-create-context.js";
+export {
+  fitsEveryProgram,
+  pickSuggestion,
+  type SuggestionCandidate,
+  type SuggestionContext,
+} from "./inline-create/pick-suggestion.js";
+export {
+  useInlineRecordPicker,
+  type CreatedRecordRef,
+  type InlineRecordKind,
+  type InlineRecordPickerProps,
+  type UseInlineRecordPickerOptions,
+} from "./inline-create/use-inline-record-picker.js";
+export {
+  COMPLETION_CREATE_OPTIONS,
+  COUNTER_AND_LIMIT_CREATE_OPTIONS,
+  COUNTER_CREATE_OPTIONS,
+  isCompletionTarget,
+  useInlineTargetPicker,
+  type CreatedTargetRef,
+  type InlineTargetPickerProps,
+  type UseInlineTargetPickerOptions,
+} from "./inline-create/use-inline-target-picker.js";

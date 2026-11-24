@@ -8,6 +8,12 @@
 export { MetadataField, type MetadataFieldProps } from "./metadata-field";
 
 export {
+  MetadataReadAccessProvider,
+  useMetadataReadAccess,
+  type MetadataReadAccess,
+} from "./metadata-read-access";
+
+export {
   useMetadataField,
   type AnyCreatePayload,
   type UseMetadataFieldReturn,

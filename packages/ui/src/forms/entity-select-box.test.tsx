@@ -289,3 +289,125 @@ describe("EntitySelectBox accessible name", () => {
     expect(trigger.hasAttribute("aria-label")).toBe(false);
   });
 });
+
+describe("EntitySelectBox create options and suggestions (pickers brief S1, S3, S4)", () => {
+  const options = [
+    { id: "t1", name: "Visits this year" },
+    { id: "t2", name: "Visits today" },
+  ];
+
+  it("S1: lists existing records and every '+ New …' choice, and reports which one was picked", () => {
+    const onCreateOption = vi.fn();
+    render(
+      <EntitySelectBox
+        entityLabel="Target"
+        options={options}
+        createOptions={[
+          { key: "counter", label: "New counter" },
+          { key: "daily-limit", label: "New limit: Daily limit" },
+        ]}
+        onCreateOption={onCreateOption}
+      />
+    );
+    fireEvent.click(screen.getByRole("combobox"));
+    expect(screen.getByText("Visits this year")).toBeTruthy();
+    expect(screen.getByText("New counter")).toBeTruthy();
+    fireEvent.click(screen.getByText("New limit: Daily limit"));
+    expect(onCreateOption).toHaveBeenCalledWith("daily-limit");
+  });
+
+  it("'+ New …' stays on screen below a long list: pinned to the bottom of the open list (Nate 11-22)", () => {
+    const many = Array.from({ length: 30 }, (_, i) => ({ id: `a${i}`, name: `Audience ${i}` }));
+    render(
+      <EntitySelectBox
+        entityLabel="Customer Audience"
+        options={many}
+        createOptions={[{ key: "audience", label: "New audience" }]}
+        onCreateOption={vi.fn()}
+      />
+    );
+    fireEvent.click(screen.getByRole("combobox"));
+    const pinned = screen.getByTestId("entity-select-create-options");
+    expect(pinned.className).toMatch(/\bsticky\b/);
+    expect(pinned.className).toMatch(/\bbottom-0\b/);
+    expect(pinned.textContent).toContain("New audience");
+  });
+
+  it("shows a record just created from '+ New …' when the loaded list doesn't hold it (Codex fe#1960)", () => {
+    render(
+      <EntitySelectBox
+        entityLabel="Target"
+        options={[{ id: "t1", name: "Visits" }]}
+        lookupOptions={[{ id: "t1", name: "Visits" }]}
+        value="t-new"
+        createdOption={{ id: "t-new", name: "Punch card", secondaryText: "punch-card" }}
+      />
+    );
+    expect(screen.getByRole("combobox").textContent).toContain("Punch card");
+  });
+
+  it("pinned '+ New …' choices keep a 44px touch target (Codex fe#1960)", () => {
+    render(
+      <EntitySelectBox
+        entityLabel="Target"
+        options={[]}
+        createOptions={[{ key: "counter", label: "New counter" }]}
+        onCreateOption={vi.fn()}
+      />
+    );
+    fireEvent.click(screen.getByRole("combobox"));
+    const item = screen.getByRole("option", { name: /new counter/i });
+    expect(item.className).toContain("min-h-11");
+  });
+
+  it("'+ New …' stays offered when a search matches no records (Nate 11-22)", () => {
+    render(
+      <EntitySelectBox
+        entityLabel="Target"
+        options={options}
+        createOptions={[{ key: "counter", label: "New counter" }]}
+        onCreateOption={vi.fn()}
+      />
+    );
+    fireEvent.click(screen.getByRole("combobox"));
+    fireEvent.change(screen.getByPlaceholderText("Search targets..."), {
+      target: { value: "zzz no such target" },
+    });
+    expect(screen.getByText("New counter")).toBeTruthy();
+  });
+
+  it("S4: with no records it opens on the '+ New …' choices, not an empty-list message", () => {
+    render(
+      <EntitySelectBox
+        entityLabel="Target"
+        options={[]}
+        createOptions={[{ key: "counter", label: "New counter" }]}
+        onCreateOption={vi.fn()}
+      />
+    );
+    fireEvent.click(screen.getByRole("combobox"));
+    expect(screen.getByText("New counter")).toBeTruthy();
+    expect(screen.queryByText("No target found.")).toBeNull();
+    expect(screen.getByText("Nothing here yet. Create one:")).toBeTruthy();
+  });
+
+  it("S3: marks a suggested selection on the trigger", () => {
+    render(<EntitySelectBox entityLabel="Target" options={options} value="t2" suggested />);
+    const trigger = screen.getByRole("combobox");
+    expect(trigger.textContent).toContain("Visits today");
+    expect(trigger.textContent).toContain("Suggested");
+  });
+
+  it("S3: shows no mark when the selection is not a suggestion", () => {
+    render(<EntitySelectBox entityLabel="Target" options={options} value="t2" />);
+    expect(screen.getByRole("combobox").textContent).not.toContain("Suggested");
+  });
+
+  it("keeps the single 'Add New' row when only onCreateNew is given (regression)", () => {
+    const onCreateNew = vi.fn();
+    render(<EntitySelectBox entityLabel="Target" options={options} onCreateNew={onCreateNew} />);
+    fireEvent.click(screen.getByRole("combobox"));
+    fireEvent.click(screen.getByText("Add New Target"));
+    expect(onCreateNew).toHaveBeenCalledOnce();
+  });
+});

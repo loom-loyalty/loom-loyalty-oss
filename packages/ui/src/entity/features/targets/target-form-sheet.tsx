@@ -10,6 +10,7 @@
  * Milestone steps support manual reordering.
  */
 
+import { describeError } from "@loom-loyalty/core";
 import type {
   CompletionTarget,
   CounterTarget,
@@ -24,7 +25,16 @@ import type {
   XOfYTarget,
 } from "@loom-loyalty/sdk";
 import { ArrowDown, ArrowUp, ChevronDown, Plus, X } from "lucide-react";
-import { useCallback, useId, useMemo, useState, type FormEvent, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from "react";
 
 import { CodeInput, useCodeInput } from "../../../forms/code-input.js";
 import { DiscriminatorRadioGroup } from "../../../forms/discriminator-radio-group.js";
@@ -36,6 +46,10 @@ import {
   type LocalizedString,
 } from "../../../forms/localized-string-input.js";
 import { MetadataField, useMetadataField } from "../../../forms/metadata-field/index.js";
+import {
+  SUGGESTED_COMPLETION_TARGET_TYPES,
+  SUGGESTED_COUNTER_TARGET_TYPES,
+} from "../../../forms/metadata-field/suggested-options.js";
 import { ProgramMultiField } from "../../../forms/program-field/index.js";
 import { cn } from "../../../lib/utils.js";
 import { Badge } from "../../../primitives/badge.js";
@@ -65,7 +79,12 @@ import {
   toStrictDurationPeriodValue,
   type DurationPeriodValue,
 } from "../../format-duration-period.js";
-import { activeWindowError, cycleWindowError, CycleWindowFields } from "./cycle-window-fields.js";
+import {
+  activeWindowError,
+  browserTimeZone,
+  cycleWindowError,
+  CycleWindowFields,
+} from "./cycle-window-fields.js";
 import {
   GROWTH_ALGORITHM_OPTIONS,
   GROWTH_OPERATOR_OPTIONS,
@@ -73,6 +92,7 @@ import {
   TARGET_TYPE_LABELS,
   TARGET_TYPE_OPTIONS,
   type CycleWindow,
+  type TargetCreatePreset,
   type TargetFormSheetProps,
 } from "./types.js";
 
@@ -129,6 +149,73 @@ const METADATA_TYPE_CODE_MAP: Record<string, string> = {
 };
 
 // ============================================================
+// Compact create presets
+// ============================================================
+
+const COMPACT_TITLES: Record<TargetCreatePreset, string> = {
+  counter: "New counter",
+  "daily-limit": "New limit",
+  "weekly-limit": "New limit",
+  completion: "New completion target",
+};
+
+const COMPACT_VALUE_LABELS: Record<TargetCreatePreset, string> = {
+  counter: "How many to reach",
+  "daily-limit": "Limit per day",
+  "weekly-limit": "Limit per week",
+  completion: "",
+};
+
+interface PresetValues {
+  name: string;
+  cappingTarget: boolean;
+  targetValue: number | undefined;
+  cycleWindow: CycleWindow | undefined;
+  numberOfCycles: number | undefined;
+}
+
+/**
+ * About ten years of cycles. The API makes one cycle when a counter has a cycle window but no count
+ * and no end date, so a limit without a count would refuse every event after its first day or week.
+ */
+const LIMIT_CYCLES = { DAYS: 3650, WEEKS: 520 } as const;
+
+/** Starting values for a compact create. A limit is a capping counter of 1 that resets each calendar day or week. */
+function presetValues(preset: TargetCreatePreset, timeZone: string | undefined): PresetValues {
+  if (preset === "counter" || preset === "completion") {
+    return {
+      name: "",
+      cappingTarget: false,
+      targetValue: undefined,
+      cycleWindow: undefined,
+      numberOfCycles: undefined,
+    };
+  }
+  const daily = preset === "daily-limit";
+  return {
+    name: daily ? "Daily limit" : "Weekly limit",
+    cappingTarget: true,
+    targetValue: 1,
+    cycleWindow: {
+      durationPeriodType: "CALENDAR",
+      durationPeriod: daily ? "DAYS" : "WEEKS",
+      durationPeriodValue: 1,
+      timeZone: timeZone || browserTimeZone(),
+    },
+    numberOfCycles: daily ? LIMIT_CYCLES.DAYS : LIMIT_CYCLES.WEEKS,
+  };
+}
+
+/** The sub-type a compact create uses: an existing one when the org has it, else the suggestion (created on save). */
+const COMPACT_SUB_TYPES: Record<string, { code: string; name: string }> = {
+  COUNTER: SUGGESTED_COUNTER_TARGET_TYPES.find((o) => o.code === "visit-target")!,
+  COMPLETION: SUGGESTED_COMPLETION_TARGET_TYPES.find((o) => o.code === "activity-completion")!,
+};
+
+const presetTargetType = (preset: TargetCreatePreset) =>
+  preset === "completion" ? "COMPLETION" : "COUNTER";
+
+// ============================================================
 // Form Sheet Component
 // ============================================================
 
@@ -147,17 +234,29 @@ export function TargetFormSheet({
   allTargetsLoading = false,
   allTargetsError = false,
   lockCode = false,
+  variant = "full",
+  preset = "counter",
+  defaultProgramIds,
+  defaultTimeZone,
 }: TargetFormSheetProps): ReactNode {
   const [formError, setFormError] = useState<string | null>(null);
+  // Compact create (pickers brief S6/S7): name and a number; "More options" expands in place.
+  const isCompact = variant === "compact" && mode === "create" && !initialData;
+  const [expanded, setExpanded] = useState(!isCompact);
+  const [codeRevealed, setCodeRevealed] = useState(false);
+  const submittingRef = useRef(false);
+  const initialPreset = isCompact ? presetValues(preset, defaultTimeZone) : undefined;
 
   // Base form state
   const initialType = initialData ? (initialData as unknown as { type: string }).type : "";
-  const [name, setName] = useState(initialData?.name ?? "");
-  const [programIds, setProgramIds] = useState<string[]>(initialData?.programIds ?? []);
+  const [name, setName] = useState(initialData?.name ?? initialPreset?.name ?? "");
+  const [programIds, setProgramIds] = useState<string[]>(
+    initialData?.programIds ?? (isCompact ? (defaultProgramIds ?? []) : [])
+  );
   const [description, setDescription] = useState<LocalizedString>(
     () => getLocalizedDescription(initialData?.description) ?? {}
   );
-  const [targetType, setTargetType] = useState(initialType);
+  const [targetType, setTargetType] = useState(isCompact ? presetTargetType(preset) : initialType);
   const [scope, setScope] = useState(
     (initialData as unknown as { scope: string } | undefined)?.scope ?? "GLOBAL"
   );
@@ -178,10 +277,14 @@ export function TargetFormSheet({
   const [counterTypeIsSuggested, setCounterTypeIsSuggested] = useState(false);
   const initCounter =
     initialData && initialType === "COUNTER" ? (initialData as CounterTarget) : undefined;
-  const [targetValue, setTargetValue] = useState<number | undefined>(initCounter?.targetValue);
-  const [cappingTarget, setCappingTarget] = useState(initCounter?.cappingTarget ?? false);
+  const [targetValue, setTargetValue] = useState<number | undefined>(
+    initCounter?.targetValue ?? initialPreset?.targetValue
+  );
+  const [cappingTarget, setCappingTarget] = useState(
+    initCounter?.cappingTarget ?? initialPreset?.cappingTarget ?? false
+  );
   const [numberOfCycles, setNumberOfCycles] = useState<number | undefined>(
-    initCounter?.numberOfCycles
+    initCounter?.numberOfCycles ?? initialPreset?.numberOfCycles
   );
   const [numberOfCyclesToAchieve, setNumberOfCyclesToAchieve] = useState<number | undefined>(
     initCounter?.numberOfCyclesToAchieve
@@ -193,7 +296,7 @@ export function TargetFormSheet({
     initCounter?.carryOverToNextCycle ?? false
   );
   const [cycleWindow, setCycleWindow] = useState<CycleWindow | undefined>(
-    initCounter?.cycleDurationPeriod as CycleWindow | undefined
+    (initCounter?.cycleDurationPeriod as CycleWindow | undefined) ?? initialPreset?.cycleWindow
   );
   const [growthOperator, setGrowthOperator] = useState(initCounter?.growthTargetOperator ?? "");
   const [growthOperand, setGrowthOperand] = useState<number | undefined>(
@@ -237,7 +340,10 @@ export function TargetFormSheet({
 
   // Collapsible state for advanced sections
   const [cyclesOpen, setCyclesOpen] = useState(
-    () => (initCounter?.numberOfCycles ?? 0) > 0 || !!initCounter?.cycleDurationPeriod
+    () =>
+      (initCounter?.numberOfCycles ?? 0) > 0 ||
+      !!initCounter?.cycleDurationPeriod ||
+      !!initialPreset?.cycleWindow
   );
   const [growthOpen, setGrowthOpen] = useState(() => !!initCounter?.growthTargetOperator);
 
@@ -256,7 +362,93 @@ export function TargetFormSheet({
 
   // Metadata field hooks for auto-creating suggested metadata
   const metadataTypeCode = METADATA_TYPE_CODE_MAP[targetType] ?? "COMPLETION_TARGET_TYPE";
-  const { createMetadata, findOption, isTypeNotFound } = useMetadataField(metadataTypeCode);
+  const {
+    createMetadata,
+    findOption,
+    isTypeNotFound,
+    metadataOptionsAll = [],
+    isLoading: metadataOptionsLoading,
+    hasNextPage: metadataHasNextPage = false,
+    isFetchingNextPage: metadataFetchingNextPage = false,
+    fetchNextPage: fetchNextMetadataPage,
+  } = useMetadataField(metadataTypeCode);
+
+  // The compact sheet picks an existing sub-type by code or name, so it needs every page of them;
+  // inferring absence from the first page would re-create one that exists (a 409).
+  useEffect(() => {
+    if (!open || !isCompact || !metadataHasNextPage || metadataFetchingNextPage) return;
+    fetchNextMetadataPage?.();
+  }, [open, isCompact, metadataHasNextPage, metadataFetchingNextPage, fetchNextMetadataPage]);
+  const metadataOptionsIncomplete = metadataOptionsLoading || metadataHasNextPage;
+
+  // The organization's zone can arrive after the sheet opens; read it at open time without resetting typing.
+  const defaultTimeZoneRef = useRef(defaultTimeZone);
+  defaultTimeZoneRef.current = defaultTimeZone;
+  // The zone the preset filled in; a cycle still on it is untouched and may follow a later org zone.
+  const presetTimeZoneRef = useRef<string | undefined>(undefined);
+
+  // Each time a compact create opens (or its preset changes), start from the preset.
+  useEffect(() => {
+    if (!open || !isCompact) return;
+    const values = presetValues(preset, defaultTimeZoneRef.current);
+    presetTimeZoneRef.current = values.cycleWindow?.timeZone;
+    setName(values.name);
+    setProgramIds(defaultProgramIds ?? []);
+    setTargetType(presetTargetType(preset));
+    setTargetValue(values.targetValue);
+    setCappingTarget(values.cappingTarget);
+    setCycleWindow(values.cycleWindow);
+    setNumberOfCycles(values.numberOfCycles);
+    setCyclesOpen(!!values.cycleWindow);
+    setExpanded(false);
+    setCodeRevealed(false);
+    // defaultProgramIds is read at open time only; a new array each render must not reset typing.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, isCompact, preset]);
+
+  // A zone that arrives later (the organization query resolving) moves the limit's cycle to it and
+  // keeps what was typed. A zone the user picked by hand stays.
+  useEffect(() => {
+    if (!open || !isCompact || !defaultTimeZone) return;
+    const presetZone = presetTimeZoneRef.current;
+    if (!presetZone || presetZone === defaultTimeZone) return;
+    presetTimeZoneRef.current = defaultTimeZone;
+    setCycleWindow((current) =>
+      current && current.timeZone === presetZone
+        ? { ...current, timeZone: defaultTimeZone }
+        : current
+    );
+  }, [open, isCompact, defaultTimeZone]);
+
+  // "More options" unmounts its own button; move focus to the first field it reveals.
+  const focusRevealedRef = useRef(false);
+  useEffect(() => {
+    if (!expanded || !focusRevealedRef.current) return;
+    focusRevealedRef.current = false;
+    const group = document.getElementById("target-type");
+    const first = group?.matches("button, input")
+      ? group
+      : group?.querySelector<HTMLElement>("button, input");
+    first?.focus();
+  }, [expanded]);
+
+  const resolveCompactSubType = useCallback(
+    (type: string): { code: string; suggested: boolean } | undefined => {
+      const sub = COMPACT_SUB_TYPES[type];
+      if (!sub) return undefined;
+      const wanted = sub.name.trim().toLowerCase();
+      const existing = metadataOptionsAll.find(
+        (o) => o.code === sub.code || o.name.trim().toLowerCase() === wanted
+      );
+      return existing
+        ? { code: existing.code, suggested: false }
+        : { code: sub.code, suggested: true };
+    },
+    [metadataOptionsAll]
+  );
+
+  const codeHasServerError = (fieldErrors ?? []).some((fe) => fe.field === "code");
+  const showCompactCode = codeRevealed || codeHasServerError || codeInput.error != null;
 
   // Filter available targets (exclude current target in edit mode)
   const availableTargets = useMemo(() => {
@@ -325,6 +517,8 @@ export function TargetFormSheet({
     resetVariantFields(initialData, initialType);
     codeInput.reset();
     setExtendedFieldValues(extractExtendedFields(initialData, extendedFields));
+    setExpanded(!isCompact);
+    setCodeRevealed(false);
   };
 
   const handleOpenChange = (newOpen: boolean) => {
@@ -373,12 +567,36 @@ export function TargetFormSheet({
   const handleSubmit = useCallback(
     async (e: FormEvent<HTMLFormElement>) => {
       e.preventDefault();
+      // One create per press, however fast Save is pressed again (S18).
+      if (submittingRef.current) return;
       setFormError(null);
 
       // Validation
       if (!name.trim()) {
         setFormError("Name is required.");
         return;
+      }
+
+      if (isCompact && !codeInput.value.trim()) {
+        setCodeRevealed(true);
+        setFormError("Couldn't make a code from this name. Enter a code.");
+        return;
+      }
+
+      // A compact create has no sub-type picker: use the org's own type, or suggest one.
+      let counterCode = counterTypeCode;
+      let counterCodeIsSuggested = counterTypeIsSuggested;
+      let completionCode = completionTypeCode;
+      let completionCodeIsSuggested = completionTypeIsSuggested;
+      if (isCompact && targetType === "COUNTER" && !counterCode) {
+        const resolved = resolveCompactSubType("COUNTER")!;
+        counterCode = resolved.code;
+        counterCodeIsSuggested = resolved.suggested;
+      }
+      if (isCompact && targetType === "COMPLETION" && !completionCode) {
+        const resolved = resolveCompactSubType("COMPLETION")!;
+        completionCode = resolved.code;
+        completionCodeIsSuggested = resolved.suggested;
       }
 
       if (programIds.length === 0) {
@@ -392,11 +610,11 @@ export function TargetFormSheet({
       }
 
       // Type-specific validation
-      if (targetType === "COMPLETION" && !completionTypeCode) {
+      if (targetType === "COMPLETION" && !completionCode) {
         setFormError("Completion target type is required.");
         return;
       }
-      if (targetType === "COUNTER" && !counterTypeCode) {
+      if (targetType === "COUNTER" && !counterCode) {
         setFormError("Counter target type is required.");
         return;
       }
@@ -457,16 +675,16 @@ export function TargetFormSheet({
 
       // Auto-create suggested metadata if needed
       const typeIsSuggested =
-        (targetType === "COMPLETION" && completionTypeIsSuggested) ||
-        (targetType === "COUNTER" && counterTypeIsSuggested) ||
+        (targetType === "COMPLETION" && completionCodeIsSuggested) ||
+        (targetType === "COUNTER" && counterCodeIsSuggested) ||
         (targetType === "MILESTONE" && milestoneTypeIsSuggested) ||
         (targetType === "X_OF_Y" && xofYTypeIsSuggested);
 
       const activeTypeCode =
         targetType === "COMPLETION"
-          ? completionTypeCode
+          ? completionCode
           : targetType === "COUNTER"
-            ? counterTypeCode
+            ? counterCode
             : targetType === "MILESTONE"
               ? milestoneTypeCode
               : xofYTypeCode;
@@ -476,119 +694,128 @@ export function TargetFormSheet({
       // always "found" by it — checking `!findOption(...)` here can never be true and this
       // branch never ran. Use the found option's own suggested data instead, matching the
       // (correct) equivalent check in program-form-sheet.tsx's handleSubmit.
-      if (typeIsSuggested && !isTypeNotFound) {
-        const option = findOption(activeTypeCode);
-        if (option) {
-          // No local try/catch by design: a rejection here (e.g. a 409 from a
-          // stale option cache) is meant to propagate to the parent's
-          // onSubmit catch, which surfaces it via setFormError without
-          // aborting the target POST below — see target-list-page.tsx's
-          // onSubmit wrapper and the "[audit] L3" contract test block in
-          // target-form-sheet.test.tsx. This component assumes that parent
-          // wrapper; a caller that renders it without one will see this
-          // rejection go unhandled.
-          await createMetadata({
-            code: option.code,
-            name: option.name,
-            description: option.description ? { en: option.description } : undefined,
-          });
-        }
-      }
-
-      const hasDescription = Object.values(description).some((v) => v.trim() !== "");
-
-      // Build base fields
-      const baseFields = {
-        programIds,
-        code: codeInput.value,
-        name,
-        scope: scope as "GLOBAL" | "PROGRAM" | "RULE" | "EVENT",
-        // Sent back as loaded on edit, so a full-PUT update never drops the window.
-        ...(durationPeriod ? { durationPeriod: toStrictDurationPeriodValue(durationPeriod) } : {}),
-        description: hasDescription ? description : undefined,
-        ...extendedFieldValues,
-      };
-
-      // Build type-specific payload
-      let formData: CreateTarget;
-
-      switch (targetType) {
-        case "COMPLETION":
-          formData = {
-            ...baseFields,
-            type: "COMPLETION",
-            completionTargetTypeCode: completionTypeCode,
-          } as CreateCompletionTarget & Record<string, unknown>;
-          break;
-
-        case "COUNTER": {
-          const counterPayload: CreateCounterTarget & Record<string, unknown> = {
-            ...baseFields,
-            type: "COUNTER",
-            counterTargetTypeCode: counterTypeCode,
-            ...(targetValue != null ? { targetValue } : {}),
-            ...(cappingTarget ? { cappingTarget: true } : {}),
-          };
-          if (cyclesOpen && numberOfCycles) {
-            counterPayload.numberOfCycles = numberOfCycles;
-            if (numberOfCyclesToAchieve) {
-              counterPayload.numberOfCyclesToAchieve = numberOfCyclesToAchieve;
-            }
-            if (cyclesMustBeConsecutive) {
-              counterPayload.cyclesMustBeConsecutive = true;
-            }
-            if (carryOverToNextCycle) {
-              counterPayload.carryOverToNextCycle = true;
+      submittingRef.current = true;
+      try {
+        if (typeIsSuggested && !isTypeNotFound) {
+          const option = findOption(activeTypeCode);
+          if (option) {
+            // Catch here so a failed type create shows in this sheet and no
+            // target is created against a type that doesn't exist. Callers
+            // like the inline "+ New" picker have no onSubmit catch of their own.
+            try {
+              await createMetadata({
+                code: option.code,
+                name: option.name,
+                description: option.description ? { en: option.description } : undefined,
+              });
+            } catch (err) {
+              setFormError(
+                describeError(err, { fallback: "Couldn't create the target type." }).message
+              );
+              return;
             }
           }
-          // The cycle window is sent whenever one is set, collapsed or not, so a full-PUT edit
-          // never drops it. An old record without a period type gets the SLIDING default.
-          if (cycleWindow) {
-            counterPayload.cycleDurationPeriod = toStrictDurationPeriodValue(cycleWindow);
-          }
-          if (growthOpen && growthOperator) {
-            counterPayload.growthTargetOperator =
-              growthOperator as CreateCounterTarget["growthTargetOperator"];
-            if (growthOperand != null) {
-              counterPayload.growthTargetOperand = growthOperand;
-            }
-            if (growthAlgorithm) {
-              counterPayload.growthTargetAlgorithm =
-                growthAlgorithm as CreateCounterTarget["growthTargetAlgorithm"];
-            }
-          }
-          formData = counterPayload;
-          break;
         }
 
-        case "MILESTONE":
-          formData = {
-            ...baseFields,
-            type: "MILESTONE",
-            milestoneTargetTypeCode: milestoneTypeCode,
-            items: milestoneItems.map((item) => ({
-              targetId: item.targetId,
-              order: item.order,
-            })),
-          } as CreateMilestoneTarget & Record<string, unknown>;
-          break;
+        const hasDescription = Object.values(description).some((v) => v.trim() !== "");
 
-        case "X_OF_Y":
-          formData = {
-            ...baseFields,
-            type: "X_OF_Y",
-            xofYTargetTypeCode: xofYTypeCode,
-            itemTargetIds: xofYItemTargetIds,
-            targetValue: xofYTargetValue!,
-          } as CreateXOfYTarget & Record<string, unknown>;
-          break;
+        // Build base fields
+        const baseFields = {
+          programIds,
+          code: codeInput.value,
+          name,
+          scope: scope as "GLOBAL" | "PROGRAM" | "RULE" | "EVENT",
+          // Sent back as loaded on edit, so a full-PUT update never drops the window.
+          ...(durationPeriod
+            ? { durationPeriod: toStrictDurationPeriodValue(durationPeriod) }
+            : {}),
+          description: hasDescription ? description : undefined,
+          ...extendedFieldValues,
+        };
 
-        default:
-          setFormError("Invalid target type.");
-          return;
+        // Build type-specific payload
+        let formData: CreateTarget;
+
+        switch (targetType) {
+          case "COMPLETION":
+            formData = {
+              ...baseFields,
+              type: "COMPLETION",
+              completionTargetTypeCode: completionCode,
+            } as CreateCompletionTarget & Record<string, unknown>;
+            break;
+
+          case "COUNTER": {
+            const counterPayload: CreateCounterTarget & Record<string, unknown> = {
+              ...baseFields,
+              type: "COUNTER",
+              counterTargetTypeCode: counterCode,
+              ...(targetValue != null ? { targetValue } : {}),
+              ...(cappingTarget ? { cappingTarget: true } : {}),
+            };
+            if (cyclesOpen && numberOfCycles) {
+              counterPayload.numberOfCycles = numberOfCycles;
+              if (numberOfCyclesToAchieve) {
+                counterPayload.numberOfCyclesToAchieve = numberOfCyclesToAchieve;
+              }
+              if (cyclesMustBeConsecutive) {
+                counterPayload.cyclesMustBeConsecutive = true;
+              }
+              if (carryOverToNextCycle) {
+                counterPayload.carryOverToNextCycle = true;
+              }
+            }
+            // The cycle window is sent whenever one is set, collapsed or not, so a full-PUT edit
+            // never drops it. An old record without a period type gets the SLIDING default.
+            if (cycleWindow) {
+              counterPayload.cycleDurationPeriod = toStrictDurationPeriodValue(cycleWindow);
+            }
+            if (growthOpen && growthOperator) {
+              counterPayload.growthTargetOperator =
+                growthOperator as CreateCounterTarget["growthTargetOperator"];
+              if (growthOperand != null) {
+                counterPayload.growthTargetOperand = growthOperand;
+              }
+              if (growthAlgorithm) {
+                counterPayload.growthTargetAlgorithm =
+                  growthAlgorithm as CreateCounterTarget["growthTargetAlgorithm"];
+              }
+            }
+            formData = counterPayload;
+            break;
+          }
+
+          case "MILESTONE":
+            formData = {
+              ...baseFields,
+              type: "MILESTONE",
+              milestoneTargetTypeCode: milestoneTypeCode,
+              items: milestoneItems.map((item) => ({
+                targetId: item.targetId,
+                order: item.order,
+              })),
+            } as CreateMilestoneTarget & Record<string, unknown>;
+            break;
+
+          case "X_OF_Y":
+            formData = {
+              ...baseFields,
+              type: "X_OF_Y",
+              xofYTargetTypeCode: xofYTypeCode,
+              itemTargetIds: xofYItemTargetIds,
+              targetValue: xofYTargetValue!,
+            } as CreateXOfYTarget & Record<string, unknown>;
+            break;
+
+          default:
+            setFormError("Invalid target type.");
+            return;
+        }
+
+        await onSubmit(formData);
+      } finally {
+        submittingRef.current = false;
       }
-
-      await onSubmit(formData);
     },
     [
       name,
@@ -628,11 +855,91 @@ export function TargetFormSheet({
       findOption,
       createMetadata,
       onSubmit,
+      isCompact,
+      resolveCompactSubType,
     ]
   );
 
-  const title = mode === "create" ? "Create Target" : `Edit ${initialData?.name ?? "Target"}`;
-  const submitLabel = mode === "create" ? "Create Target" : "Save Changes";
+  const showCompactBody = isCompact && !expanded;
+  const title = isCompact
+    ? COMPACT_TITLES[preset]
+    : mode === "create"
+      ? "Create Target"
+      : `Edit ${initialData?.name ?? "Target"}`;
+  const submitLabel = isCompact ? "Create" : mode === "create" ? "Create Target" : "Save Changes";
+  const codeField = (
+    <div className="space-y-2">
+      <Label htmlFor="target-code">
+        Code <span className="text-destructive">*</span>
+      </Label>
+      <WithFieldError field="code" hideMessage>
+        {(fe) => (
+          <CodeInput
+            data-field={fe.inputProps["data-field"]}
+            id="target-code"
+            sourceValue={name}
+            value={codeInput.value}
+            onChange={codeInput.onChange}
+            error={fe.error ?? codeInput.error}
+            format="kebab-case"
+            placeholder="target-code"
+            required
+            disabled={isSubmitting || mode === "edit" || lockCode}
+            showReset={mode === "create" && !lockCode}
+          />
+        )}
+      </WithFieldError>
+      {mode === "create" && !lockCode && (
+        <p className="text-muted-foreground text-xs">
+          Auto-generated from name. Edit to customize.
+        </p>
+      )}
+    </div>
+  );
+  const nameField = (
+    <div className="space-y-2">
+      <Label htmlFor="target-name">
+        Name <span className="text-destructive">*</span>
+      </Label>
+      <WithFieldError field="name">
+        {(fe) => (
+          <Input
+            {...fe.inputProps}
+            id="target-name"
+            type="text"
+            data-widget="text-input"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Enter target name"
+            required
+            disabled={isSubmitting}
+          />
+        )}
+      </WithFieldError>
+    </div>
+  );
+  const programsField = (
+    <div className="space-y-2">
+      <Label htmlFor="target-programs">
+        Programs <span className="text-destructive">*</span>
+      </Label>
+      <WithFieldError field="programIds" value={programIds}>
+        {(fe) => (
+          <ProgramMultiField
+            {...fe.inputProps}
+            id="target-programs"
+            value={programIds}
+            onValueChange={setProgramIds}
+            placeholder="Select programs..."
+            disabled={isSubmitting}
+          />
+        )}
+      </WithFieldError>
+      <p className="text-muted-foreground text-xs">
+        Associate this target with one or more programs.
+      </p>
+    </div>
+  );
 
   return (
     <FormSheet
@@ -640,261 +947,243 @@ export function TargetFormSheet({
       onOpenChange={handleOpenChange}
       title={title}
       onSubmit={handleSubmit}
-      submitDisabled={codeInput.error != null}
+      // A compact create picks an existing counter or completion type, so it waits for that list.
+      submitDisabled={codeInput.error != null || (isCompact && metadataOptionsIncomplete)}
       onCancel={handleCancel}
       isSubmitting={isSubmitting}
       submitLabel={submitLabel}
       error={formError ?? error}
       fieldErrors={fieldErrors}
     >
-      <div className="space-y-6">
-        {/* Name field */}
-        <div className="space-y-2">
-          <Label htmlFor="target-name">
-            Name <span className="text-destructive">*</span>
-          </Label>
-          <WithFieldError field="name">
-            {(fe) => (
+      {showCompactBody ? (
+        <div className="space-y-6" data-variant="compact">
+          {nameField}
+          {preset !== "completion" && (
+            <div className="space-y-2">
+              <Label htmlFor="target-compact-value">
+                {COMPACT_VALUE_LABELS[preset]} <span className="text-destructive">*</span>
+              </Label>
               <Input
-                {...fe.inputProps}
-                id="target-name"
-                type="text"
-                data-widget="text-input"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Enter target name"
+                id="target-compact-value"
+                type="number"
+                inputMode="numeric"
+                min={1}
+                data-widget="number-input"
+                value={targetValue ?? ""}
+                onChange={(e) =>
+                  setTargetValue(e.target.value === "" ? undefined : Number(e.target.value))
+                }
                 required
                 disabled={isSubmitting}
               />
-            )}
-          </WithFieldError>
+              {cappingTarget && cycleWindow?.timeZone && (
+                <p className="text-muted-foreground text-xs">
+                  Once a member reaches the limit, rules counting it stop for that member until it
+                  resets at midnight{preset === "weekly-limit" ? " at the start of the week" : ""},{" "}
+                  {cycleWindow.timeZone}.
+                </p>
+              )}
+            </div>
+          )}
+          {showCompactCode && codeField}
+          {(defaultProgramIds?.length ?? 0) === 0 && programsField}
+          <Button
+            type="button"
+            variant="link"
+            className="min-h-11 min-w-11 px-0"
+            onClick={() => {
+              focusRevealedRef.current = true;
+              setExpanded(true);
+            }}
+          >
+            More options
+          </Button>
         </div>
+      ) : (
+        <div className="space-y-6">
+          {nameField}
 
-        {/* Code field with auto-generation */}
-        <div className="space-y-2">
-          <Label htmlFor="target-code">
-            Code <span className="text-destructive">*</span>
-          </Label>
-          <WithFieldError field="code" hideMessage>
-            {(fe) => (
-              <CodeInput
-                data-field={fe.inputProps["data-field"]}
-                id="target-code"
-                sourceValue={name}
-                value={codeInput.value}
-                onChange={codeInput.onChange}
-                error={fe.error ?? codeInput.error}
-                format="kebab-case"
-                placeholder="target-code"
-                required
-                disabled={isSubmitting || mode === "edit" || lockCode}
-                showReset={mode === "create" && !lockCode}
-              />
+          {/* Code field with auto-generation */}
+          {codeField}
+
+          {/* Target Type */}
+          <div className="space-y-2">
+            <Label id="target-type-label" htmlFor="target-type">
+              Target Type <span className="text-destructive">*</span>
+            </Label>
+            <WithFieldError field="type" value={targetType}>
+              {(fe) => (
+                <DiscriminatorRadioGroup
+                  {...fe.inputProps}
+                  id="target-type"
+                  value={targetType}
+                  onValueChange={handleTypeChange}
+                  options={[...TARGET_TYPE_OPTIONS]}
+                  disabled={isSubmitting || mode === "edit"}
+                  aria-labelledby="target-type-label"
+                />
+              )}
+            </WithFieldError>
+            {mode === "edit" && (
+              <p className="text-muted-foreground text-xs">
+                Target type cannot be changed after creation.
+              </p>
             )}
-          </WithFieldError>
-          {mode === "create" && !lockCode && (
-            <p className="text-muted-foreground text-xs">
-              Auto-generated from name. Edit to customize.
-            </p>
+          </div>
+
+          {/* Programs multi-select */}
+          {programsField}
+
+          {/* Description */}
+          <div className="space-y-2">
+            <Label htmlFor="target-description">Description</Label>
+            <WithFieldError field="description" value={description}>
+              {(fe) => (
+                <LocalizedStringInput
+                  {...fe.inputProps}
+                  id="target-description"
+                  value={description}
+                  onChange={setDescription}
+                  placeholder="Describe this target"
+                  multiline
+                  disabled={isSubmitting}
+                />
+              )}
+            </WithFieldError>
+          </div>
+
+          {/* Scope */}
+          <div className="space-y-2">
+            <Label htmlFor="target-scope">Scope</Label>
+            <WithFieldError field="scope" value={scope}>
+              {(fe) => (
+                <Select value={scope} onValueChange={setScope} disabled={isSubmitting}>
+                  <SelectTrigger {...fe.inputProps} id="target-scope" data-widget="select">
+                    <SelectValue placeholder="Select scope..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TARGET_SCOPE_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </WithFieldError>
+          </div>
+
+          {/* Active window */}
+          <DurationPeriodBuilder
+            value={durationPeriod}
+            onChange={setDurationPeriod}
+            label="Set active window"
+            description="How long a member's progress runs before it starts again. The cycle window splits it into cycles."
+            disabled={isSubmitting}
+          />
+
+          {/* ============================================================ */}
+          {/* Type-Specific Configuration */}
+          {/* ============================================================ */}
+
+          {targetType === "COMPLETION" && (
+            <CompletionFields
+              typeCode={completionTypeCode}
+              onTypeCodeChange={(code, isSuggested) => {
+                setCompletionTypeCode(code);
+                setCompletionTypeIsSuggested(isSuggested);
+              }}
+              disabled={isSubmitting}
+            />
+          )}
+
+          {targetType === "COUNTER" && (
+            <CounterFields
+              typeCode={counterTypeCode}
+              onTypeCodeChange={(code, isSuggested) => {
+                setCounterTypeCode(code);
+                setCounterTypeIsSuggested(isSuggested);
+              }}
+              targetValue={targetValue}
+              onTargetValueChange={setTargetValue}
+              cappingTarget={cappingTarget}
+              onCappingTargetChange={setCappingTarget}
+              cyclesOpen={cyclesOpen}
+              onCyclesOpenChange={setCyclesOpen}
+              numberOfCycles={numberOfCycles}
+              onNumberOfCyclesChange={setNumberOfCycles}
+              numberOfCyclesToAchieve={numberOfCyclesToAchieve}
+              onNumberOfCyclesToAchieveChange={setNumberOfCyclesToAchieve}
+              cyclesMustBeConsecutive={cyclesMustBeConsecutive}
+              onCyclesMustBeConsecutiveChange={setCyclesMustBeConsecutive}
+              carryOverToNextCycle={carryOverToNextCycle}
+              onCarryOverToNextCycleChange={setCarryOverToNextCycle}
+              cycleWindow={cycleWindow}
+              onCycleWindowChange={setCycleWindow}
+              hasActiveWindow={!!durationPeriod}
+              growthOpen={growthOpen}
+              onGrowthOpenChange={setGrowthOpen}
+              growthOperator={growthOperator}
+              onGrowthOperatorChange={setGrowthOperator}
+              growthOperand={growthOperand}
+              onGrowthOperandChange={setGrowthOperand}
+              growthAlgorithm={growthAlgorithm}
+              onGrowthAlgorithmChange={setGrowthAlgorithm}
+              disabled={isSubmitting}
+            />
+          )}
+
+          {targetType === "MILESTONE" && (
+            <MilestoneFields
+              typeCode={milestoneTypeCode}
+              onTypeCodeChange={(code, isSuggested) => {
+                setMilestoneTypeCode(code);
+                setMilestoneTypeIsSuggested(isSuggested);
+              }}
+              items={milestoneItems}
+              availableTargets={availableTargets}
+              onAddItem={addMilestoneItem}
+              onRemoveItem={removeMilestoneItem}
+              onMoveItem={moveMilestoneItem}
+              disabled={isSubmitting}
+              allTargetsLoading={allTargetsLoading}
+              allTargetsError={allTargetsError}
+            />
+          )}
+
+          {targetType === "X_OF_Y" && (
+            <XOfYFields
+              typeCode={xofYTypeCode}
+              onTypeCodeChange={(code, isSuggested) => {
+                setXofYTypeCode(code);
+                setXofYTypeIsSuggested(isSuggested);
+              }}
+              targetValue={xofYTargetValue}
+              onTargetValueChange={setXofYTargetValue}
+              itemTargetIds={xofYItemTargetIds}
+              availableTargets={availableTargets}
+              onAddItem={addXofYItem}
+              onRemoveItem={removeXofYItem}
+              disabled={isSubmitting}
+              allTargetsLoading={allTargetsLoading}
+              allTargetsError={allTargetsError}
+            />
+          )}
+
+          {/* Extended Fields Section */}
+          {schema && extendedFields.length > 0 && (
+            <ExtendedFieldsSection
+              schema={schema}
+              fields={extendedFields}
+              data={extendedFieldValues}
+              mode="edit"
+              onChange={handleExtendedFieldChange}
+              title="Additional Information"
+              defaultCollapsed={false}
+            />
           )}
         </div>
-
-        {/* Target Type */}
-        <div className="space-y-2">
-          <Label id="target-type-label" htmlFor="target-type">
-            Target Type <span className="text-destructive">*</span>
-          </Label>
-          <WithFieldError field="type" value={targetType}>
-            {(fe) => (
-              <DiscriminatorRadioGroup
-                {...fe.inputProps}
-                id="target-type"
-                value={targetType}
-                onValueChange={handleTypeChange}
-                options={[...TARGET_TYPE_OPTIONS]}
-                disabled={isSubmitting || mode === "edit"}
-                aria-labelledby="target-type-label"
-              />
-            )}
-          </WithFieldError>
-          {mode === "edit" && (
-            <p className="text-muted-foreground text-xs">
-              Target type cannot be changed after creation.
-            </p>
-          )}
-        </div>
-
-        {/* Programs multi-select */}
-        <div className="space-y-2">
-          <Label htmlFor="target-programs">
-            Programs <span className="text-destructive">*</span>
-          </Label>
-          <WithFieldError field="programIds" value={programIds}>
-            {(fe) => (
-              <ProgramMultiField
-                {...fe.inputProps}
-                id="target-programs"
-                value={programIds}
-                onValueChange={setProgramIds}
-                placeholder="Select programs..."
-                disabled={isSubmitting}
-              />
-            )}
-          </WithFieldError>
-          <p className="text-muted-foreground text-xs">
-            Associate this target with one or more programs.
-          </p>
-        </div>
-
-        {/* Description */}
-        <div className="space-y-2">
-          <Label htmlFor="target-description">Description</Label>
-          <WithFieldError field="description" value={description}>
-            {(fe) => (
-              <LocalizedStringInput
-                {...fe.inputProps}
-                id="target-description"
-                value={description}
-                onChange={setDescription}
-                placeholder="Describe this target"
-                multiline
-                disabled={isSubmitting}
-              />
-            )}
-          </WithFieldError>
-        </div>
-
-        {/* Scope */}
-        <div className="space-y-2">
-          <Label htmlFor="target-scope">Scope</Label>
-          <WithFieldError field="scope" value={scope}>
-            {(fe) => (
-              <Select value={scope} onValueChange={setScope} disabled={isSubmitting}>
-                <SelectTrigger {...fe.inputProps} id="target-scope" data-widget="select">
-                  <SelectValue placeholder="Select scope..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {TARGET_SCOPE_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </WithFieldError>
-        </div>
-
-        {/* Active window */}
-        <DurationPeriodBuilder
-          value={durationPeriod}
-          onChange={setDurationPeriod}
-          label="Set active window"
-          description="How long a member's progress runs before it starts again. The cycle window splits it into cycles."
-          disabled={isSubmitting}
-        />
-
-        {/* ============================================================ */}
-        {/* Type-Specific Configuration */}
-        {/* ============================================================ */}
-
-        {targetType === "COMPLETION" && (
-          <CompletionFields
-            typeCode={completionTypeCode}
-            onTypeCodeChange={(code, isSuggested) => {
-              setCompletionTypeCode(code);
-              setCompletionTypeIsSuggested(isSuggested);
-            }}
-            disabled={isSubmitting}
-          />
-        )}
-
-        {targetType === "COUNTER" && (
-          <CounterFields
-            typeCode={counterTypeCode}
-            onTypeCodeChange={(code, isSuggested) => {
-              setCounterTypeCode(code);
-              setCounterTypeIsSuggested(isSuggested);
-            }}
-            targetValue={targetValue}
-            onTargetValueChange={setTargetValue}
-            cappingTarget={cappingTarget}
-            onCappingTargetChange={setCappingTarget}
-            cyclesOpen={cyclesOpen}
-            onCyclesOpenChange={setCyclesOpen}
-            numberOfCycles={numberOfCycles}
-            onNumberOfCyclesChange={setNumberOfCycles}
-            numberOfCyclesToAchieve={numberOfCyclesToAchieve}
-            onNumberOfCyclesToAchieveChange={setNumberOfCyclesToAchieve}
-            cyclesMustBeConsecutive={cyclesMustBeConsecutive}
-            onCyclesMustBeConsecutiveChange={setCyclesMustBeConsecutive}
-            carryOverToNextCycle={carryOverToNextCycle}
-            onCarryOverToNextCycleChange={setCarryOverToNextCycle}
-            cycleWindow={cycleWindow}
-            onCycleWindowChange={setCycleWindow}
-            hasActiveWindow={!!durationPeriod}
-            growthOpen={growthOpen}
-            onGrowthOpenChange={setGrowthOpen}
-            growthOperator={growthOperator}
-            onGrowthOperatorChange={setGrowthOperator}
-            growthOperand={growthOperand}
-            onGrowthOperandChange={setGrowthOperand}
-            growthAlgorithm={growthAlgorithm}
-            onGrowthAlgorithmChange={setGrowthAlgorithm}
-            disabled={isSubmitting}
-          />
-        )}
-
-        {targetType === "MILESTONE" && (
-          <MilestoneFields
-            typeCode={milestoneTypeCode}
-            onTypeCodeChange={(code, isSuggested) => {
-              setMilestoneTypeCode(code);
-              setMilestoneTypeIsSuggested(isSuggested);
-            }}
-            items={milestoneItems}
-            availableTargets={availableTargets}
-            onAddItem={addMilestoneItem}
-            onRemoveItem={removeMilestoneItem}
-            onMoveItem={moveMilestoneItem}
-            disabled={isSubmitting}
-            allTargetsLoading={allTargetsLoading}
-            allTargetsError={allTargetsError}
-          />
-        )}
-
-        {targetType === "X_OF_Y" && (
-          <XOfYFields
-            typeCode={xofYTypeCode}
-            onTypeCodeChange={(code, isSuggested) => {
-              setXofYTypeCode(code);
-              setXofYTypeIsSuggested(isSuggested);
-            }}
-            targetValue={xofYTargetValue}
-            onTargetValueChange={setXofYTargetValue}
-            itemTargetIds={xofYItemTargetIds}
-            availableTargets={availableTargets}
-            onAddItem={addXofYItem}
-            onRemoveItem={removeXofYItem}
-            disabled={isSubmitting}
-            allTargetsLoading={allTargetsLoading}
-            allTargetsError={allTargetsError}
-          />
-        )}
-
-        {/* Extended Fields Section */}
-        {schema && extendedFields.length > 0 && (
-          <ExtendedFieldsSection
-            schema={schema}
-            fields={extendedFields}
-            data={extendedFieldValues}
-            mode="edit"
-            onChange={handleExtendedFieldChange}
-            title="Additional Information"
-            defaultCollapsed={false}
-          />
-        )}
-      </div>
+      )}
     </FormSheet>
   );
 }

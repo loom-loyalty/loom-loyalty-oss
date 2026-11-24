@@ -13,7 +13,15 @@ import { useProgramField } from "../../forms/program-field/use-program-field.js"
 import { TargetField } from "../../forms/target-field/index.js";
 import { useTargetField } from "../../forms/target-field/use-target-field.js";
 import { Label } from "../../primitives/label.js";
+import {
+  COUNTER_CREATE_OPTIONS,
+  useInlineTargetPicker,
+  type CreatedTargetRef,
+} from "../inline-create/use-inline-target-picker.js";
 import type { ActionComponentProps, RegisterTargetAction } from "../types";
+
+/** Any target can be registered, so any one fits a suggestion. */
+const anyTarget = () => true;
 
 type RegisterTargetData = RegisterTargetAction["registerTarget"];
 
@@ -36,15 +44,23 @@ export const RegisterTargetActionComponent = memo(function RegisterTargetActionC
   );
 
   const handleTargetChange = useCallback(
-    (targetId: string) => {
+    (targetId: string, record?: CreatedTargetRef) => {
       const target = findTarget(targetId);
       update({
         targetId: targetId || undefined,
-        targetCode: target?.code ?? undefined,
+        // A just-created target may not be in the loaded list yet.
+        targetCode: record?.code ?? target?.code ?? undefined,
       });
     },
     [update, findTarget]
   );
+  const { pickerProps, createSheet } = useInlineTargetPicker({
+    value: value.targetId ?? "",
+    onSelect: handleTargetChange,
+    fieldKey: `${targetFieldId}.registerTarget`,
+    createOptions: COUNTER_CREATE_OPTIONS,
+    fits: anyTarget,
+  });
 
   const handleProgramChange = useCallback(
     (programId: string) => {
@@ -82,9 +98,11 @@ export const RegisterTargetActionComponent = memo(function RegisterTargetActionC
             id={targetFieldId}
             value={value.targetId ?? ""}
             onValueChange={handleTargetChange}
+            {...pickerProps}
             placeholder="Select target..."
             disabled={disabled}
           />
+          {createSheet}
         </div>
         <div>
           <Label htmlFor={programFieldId} className="mb-1.5 block text-xs">

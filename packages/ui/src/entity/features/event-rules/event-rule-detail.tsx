@@ -5,7 +5,7 @@
  */
 
 import { extractLocalizedString, formatDateTime } from "@loom-loyalty/core";
-import { Edit, PauseCircle, PlayCircle, Plus, RotateCw, Trash2 } from "lucide-react";
+import { Edit, History, PauseCircle, PlayCircle, RotateCw, Trash2 } from "lucide-react";
 import { useMemo, type ReactNode } from "react";
 
 import { ExpressionSummary } from "../../../expressions/expression-summary.js";
@@ -19,6 +19,7 @@ import {
   type EnabledInEnvironment,
 } from "../../environment-workflow/environment-status-column.js";
 import { StatusIndicatorBadge } from "../../status-indicator-badge.js";
+import { getEventRuleLifecycleActions, toEventRuleVersionStatus } from "./event-rule-actions.js";
 import { EventRuleCategoryBadge } from "./event-rule-category-badge.js";
 import {
   CATEGORY_INFO,
@@ -37,40 +38,22 @@ export interface EventRuleDetailProps {
   canEdit?: boolean;
   canDelete?: boolean;
   /**
-   * Version lifecycle (U3) — mirrors `DataModelDetail`'s optional-prop shape
-   * (see `data-model-detail.tsx`). All four are gated behind `canEdit`, same
-   * as `onEdit`. Create Version / Pause / Resume are always shown once wired
-   * (KTD3's fallback — the schema can't structurally distinguish DRAFT from
-   * PAUSED, so gating relies on inline errors from the server instead);
-   * Publish is gated by `isConfirmedPublished`.
+   * Version lifecycle. Each button shows only when the rule's own
+   * `versionStatus` allows it (Publish on DRAFT, Pause on PUBLISHED, Resume on
+   * PAUSED), all behind `canEdit`. There is no New Version button: Edit on a
+   * live or paused version saves into a new draft.
    */
   onPublish?: () => void;
-  onCreateVersion?: () => void;
   onPause?: () => void;
   onResume?: () => void;
-  /**
-   * Whether this exact record is confirmed (live) to be the event rule's
-   * current published version — diffed by the caller against
-   * `GET /event-rules/by-code/{code}/latest-published` (KTD3). `undefined`
-   * or `false` both render as "not confirmed published" and cover DRAFT,
-   * PAUSED, and any non-latest PUBLISHED version alike, since the `EventRule`
-   * schema has no field to split those further.
-   */
-  isConfirmedPublished?: boolean;
-  /**
-   * Session-scoped refinement of the badge shown when `isConfirmedPublished`
-   * is not true: "draft" right after this session's own createVersion
-   * succeeds, "paused" right after this session's own pause succeeds.
-   * Ignored once `isConfirmedPublished` is true. Falls back to the generic
-   * "unknown" indicator when unset — this is never re-derived from a cold
-   * read (KTD3; see `EventRuleVersionIndicator`'s doc comment in types.ts).
-   */
-  recentVersionStatusHint?: "draft" | "paused";
+  /** Opens the read-only version history. */
+  onShowHistory?: () => void;
+  /** A newer non-draft version replaced this one: it is old and never made live again. */
+  isReplaced?: boolean;
   isPublishing?: boolean;
-  isCreatingVersion?: boolean;
   isPausing?: boolean;
   isResuming?: boolean;
-  /** Inline error for a rejected version-lifecycle action (KTD3 fallback). */
+  /** Inline error for a rejected version-lifecycle action. */
   versionActionError?: string | null;
 }
 
@@ -84,13 +67,11 @@ export function EventRuleDetail({
   canEdit = true,
   canDelete = true,
   onPublish,
-  onCreateVersion,
   onPause,
   onResume,
-  isConfirmedPublished,
-  recentVersionStatusHint,
+  onShowHistory,
+  isReplaced,
   isPublishing,
-  isCreatingVersion,
   isPausing,
   isResuming,
   versionActionError,
@@ -154,18 +135,15 @@ export function EventRuleDetail({
     [eventRule.eventActionsExpression]
   );
 
-  const showVersionActions = !!(onPublish || onCreateVersion || onPause || onResume);
+  const showVersionActions = !!(onPublish || onPause || onResume || onShowHistory);
+  const lifecycle = getEventRuleLifecycleActions(eventRule.versionStatus, { isReplaced });
 
   return (
     <div className="space-y-6">
-      {/* Version status (U3) — mirrors DataModelDetail's header VersionStatusBadge. */}
+      {/* Version status, from the record's own versionStatus. */}
       {showVersionActions && (
         <div className="flex flex-wrap items-center gap-2">
-          <EventRuleVersionStatusBadge
-            indicator={
-              isConfirmedPublished === true ? "published" : (recentVersionStatusHint ?? "unknown")
-            }
-          />
+          <EventRuleVersionStatusBadge indicator={versionIndicator(eventRule.versionStatus)} />
         </div>
       )}
 
@@ -321,19 +299,7 @@ export function EventRuleDetail({
       {/* Action Buttons */}
       {(canEdit || canDelete || showVersionActions) && (
         <div className="border-border flex flex-wrap gap-2 border-t pt-4">
-          {canEdit && onCreateVersion && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={onCreateVersion}
-              disabled={isCreatingVersion}
-            >
-              <Plus className="mr-1.5 h-3.5 w-3.5" />
-              New Version
-            </Button>
-          )}
-          {canEdit && onPublish && isConfirmedPublished !== true && (
+          {canEdit && onPublish && lifecycle.publish && (
             <Button
               type="button"
               variant="outline"
@@ -346,7 +312,7 @@ export function EventRuleDetail({
               Publish
             </Button>
           )}
-          {canEdit && onPause && (
+          {canEdit && onPause && lifecycle.pause && (
             <Button
               type="button"
               variant="outline"
@@ -359,7 +325,7 @@ export function EventRuleDetail({
               Pause
             </Button>
           )}
-          {canEdit && onResume && (
+          {canEdit && onResume && lifecycle.resume && (
             <Button
               type="button"
               variant="outline"
@@ -370,6 +336,12 @@ export function EventRuleDetail({
             >
               <RotateCw className="mr-1.5 h-3.5 w-3.5" />
               Resume
+            </Button>
+          )}
+          {onShowHistory && (
+            <Button type="button" variant="outline" size="sm" onClick={onShowHistory}>
+              <History className="mr-1.5 h-3.5 w-3.5" />
+              Version history
             </Button>
           )}
           <div className="flex-1" />
@@ -415,4 +387,9 @@ function EventRuleVersionStatusBadge({
 }): ReactNode {
   const config = EVENT_RULE_VERSION_INDICATOR_INFO[indicator];
   return <StatusIndicatorBadge config={config} ariaLabelPrefix="Version status" />;
+}
+
+function versionIndicator(versionStatus: unknown): EventRuleVersionIndicator {
+  const status = toEventRuleVersionStatus(versionStatus);
+  return status ? (status.toLowerCase() as EventRuleVersionIndicator) : "unknown";
 }

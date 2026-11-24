@@ -30,6 +30,32 @@ vi.mock("./use-event-trigger-field", () => ({
   }),
 }));
 
+const sourceByEventType: Record<string, string | undefined> = {};
+vi.mock("../event-sub-type-field/use-event-type-sub-type-source.js", () => ({
+  useEventTypeSubTypeSource: (eventTypeCode: string | undefined) => ({
+    source: eventTypeCode ? sourceByEventType[eventTypeCode] : undefined,
+    isLoading: false,
+  }),
+}));
+
+vi.mock("../event-sub-type-field/event-sub-type-field.js", () => ({
+  EventSubTypeField: (props: {
+    source: string;
+    value: string;
+    onValueChange: (code: string) => void;
+  }) => (
+    <button
+      type="button"
+      data-testid="sub-type-source-picker"
+      data-source={props.source}
+      data-value={props.value}
+      onClick={() => props.onValueChange("TG001")}
+    >
+      source picker
+    </button>
+  ),
+}));
+
 import { EventTriggerField, type EventTriggerValue } from "./event-trigger-field";
 
 function openCombobox(container: HTMLElement, index = 0): void {
@@ -157,5 +183,58 @@ describe("EventTriggerField — contextual mode (R7)", () => {
 
     expect(container.querySelectorAll('[role="combobox"]')).toHaveLength(0);
     expect(screen.getByText(/RETURN/)).toBeInTheDocument();
+  });
+});
+
+describe("EventTriggerField — sub type from the event type's source", () => {
+  it("shows the source picker for a type with a source and stores the picked code", () => {
+    sourceByEventType["purchase"] = "TARGET";
+    const onValueChange = vi.fn();
+    const { container } = render(
+      <EventTriggerField
+        mode="global"
+        value={{ eventTypeCode: "purchase" }}
+        onValueChange={onValueChange}
+      />
+    );
+    const picker = screen.getByTestId("sub-type-source-picker");
+    expect(picker.dataset.source).toBe("TARGET");
+    expect(picker.dataset.value).toBe("");
+    // The configuration-based sub-type select gives way to the source picker.
+    expect(container.querySelectorAll('[role="combobox"]')).toHaveLength(1);
+
+    fireEvent.click(picker);
+    expect(onValueChange).toHaveBeenCalledWith({
+      eventTypeCode: "purchase",
+      eventSubTypeIdentifier: "TG001",
+    });
+    delete sourceByEventType["purchase"];
+  });
+
+  it("keeps today's sub-type select for a type the caller excludes (redemption)", () => {
+    sourceByEventType["purchase"] = "EVENT_RULE";
+    const { container } = render(
+      <EventTriggerField
+        mode="global"
+        value={{ eventTypeCode: "purchase" }}
+        onValueChange={vi.fn()}
+        ignoreSubTypeSourceFor={["purchase"]}
+      />
+    );
+    expect(screen.queryByTestId("sub-type-source-picker")).toBeNull();
+    expect(container.querySelectorAll('[role="combobox"]')).toHaveLength(2);
+    delete sourceByEventType["purchase"];
+  });
+
+  it("keeps today's sub-type select for a type without a source", () => {
+    const { container } = render(
+      <EventTriggerField
+        mode="global"
+        value={{ eventTypeCode: "purchase" }}
+        onValueChange={vi.fn()}
+      />
+    );
+    expect(screen.queryByTestId("sub-type-source-picker")).toBeNull();
+    expect(container.querySelectorAll('[role="combobox"]')).toHaveLength(2);
   });
 });

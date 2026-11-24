@@ -57,6 +57,10 @@
       "types": "./dist/feature-flags/index.d.ts",
       "import": "./dist/feature-flags/index.js"
     },
+    "./markdown": {
+      "types": "./dist/markdown/index.d.ts",
+      "import": "./dist/markdown/index.js"
+    },
     "./notifications": {
       "types": "./dist/notifications/index.d.ts",
       "import": "./dist/notifications/index.js"
@@ -98,7 +102,8 @@
     "@openfeature/react-sdk": "1.4.1",
     "@openfeature/web-sdk": "1.10.0",
     "date-fns": "catalog:",
-    "lucide-react": "catalog:"
+    "lucide-react": "catalog:",
+    "react-markdown": "10.1.0"
   },
   "repository": {
     "type": "git",

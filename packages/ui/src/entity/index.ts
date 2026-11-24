@@ -66,5 +66,8 @@ export {
   type StatusIndicatorBadgeProps,
 } from "./status-indicator-badge.js";
 
+// Warning shown when an edit to a live version saves into a new draft
+export { NewDraftWarning, type NewDraftWarningProps } from "./versioning/new-draft-warning.js";
+
 // Feature entity components (specialized views, forms, columns, skeletons)
 export * from "./features/index.js";
