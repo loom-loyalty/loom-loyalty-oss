@@ -25,6 +25,7 @@ export function getEventRuleColumnsExtended(): Column<EntityRecord>[] {
         <div>
           <p className="text-foreground font-medium">{rule.name as string}</p>
           <p className="text-muted-foreground font-mono text-xs">{rule.code as string}</p>
+          <DraftOpenMarker rule={rule} />
         </div>
       ),
     },
@@ -99,4 +100,20 @@ export function getEventRuleColumnsExtended(): Column<EntityRecord>[] {
       ),
     },
   ];
+}
+
+/**
+ * "Draft open · vN" on a live, paused or archived row whose rule has an
+ * unpublished draft. The API sets `openDraftVersion` on list rows only; an
+ * older API leaves it out, and then nothing shows.
+ */
+function DraftOpenMarker({ rule }: { rule: EntityRecord }) {
+  const draftVersion = rule.openDraftVersion;
+  if (typeof draftVersion !== "number" || rule.versionStatus === "DRAFT") return null;
+  return (
+    <Badge variant="outline" className="mt-1 font-normal">
+      <span aria-hidden="true">Draft open · v{draftVersion}</span>
+      <span className="sr-only">Draft version {draftVersion} open</span>
+    </Badge>
+  );
 }

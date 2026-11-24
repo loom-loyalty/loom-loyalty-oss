@@ -11,7 +11,7 @@
 
 import { useState, type ReactNode } from "react";
 
-import { EntitySelectBox } from "../entity-select-box";
+import { EntitySelectBox, type EntityCreateOption, type EntityOption } from "../entity-select-box";
 import { useTargetField } from "./use-target-field";
 
 export interface TargetFieldProps {
@@ -33,6 +33,14 @@ export interface TargetFieldProps {
   "aria-describedby"?: string;
   /** ID for the trigger element */
   id?: string;
+  /** Several "+ New …" choices; see EntitySelectBox. */
+  createOptions?: EntityCreateOption[];
+  /** Called with the picked create option's key. */
+  onCreateOption?: (key: string) => void;
+  /** Marks the selection as an untouched suggestion. */
+  suggested?: boolean;
+  /** A record just created from "+ New …"; see EntitySelectBox. */
+  createdOption?: EntityOption;
 }
 
 export function TargetField({
@@ -45,6 +53,10 @@ export function TargetField({
   "aria-invalid": ariaInvalid,
   "aria-describedby": ariaDescribedBy,
   id,
+  createOptions,
+  onCreateOption,
+  suggested,
+  createdOption,
 }: TargetFieldProps): ReactNode {
   const {
     options,
@@ -72,6 +84,10 @@ export function TargetField({
         value={value}
         onValueChange={onValueChange}
         onCreateNew={renderCreateSheet ? () => setIsCreateOpen(true) : undefined}
+        createOptions={createOptions}
+        onCreateOption={onCreateOption}
+        suggested={suggested}
+        createdOption={createdOption}
         isLoading={isLoading}
         error={displayError}
         disabled={disabled}

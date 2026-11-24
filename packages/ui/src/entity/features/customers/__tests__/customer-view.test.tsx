@@ -1,9 +1,15 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { CustomerDetail } from "../customer-view";
-import type { CustomerData, CustomerEvent, LedgerEntry } from "../types";
+import type {
+  CustomerBadgeEntry,
+  CustomerData,
+  CustomerEvent,
+  CustomerTierEntry,
+  LedgerEntry,
+} from "../types";
 
 const LINKED_EVENT_ID = "evt_aaaabbbbccccddddeeeeffff00001111";
 const UNLINKED_EVENT_ID = "evt_11112222333344445555666677778888";
@@ -253,5 +259,176 @@ describe("CustomerDetail — program referrals", () => {
       screen.getByRole("button", { name: "View customer cus_referrer000000000000000000000" })
     );
     expect(onViewCustomer).toHaveBeenCalledWith("cus_referrer000000000000000000000");
+  });
+});
+
+describe("CustomerDetail — statements tab (api#2695 slice 4b)", () => {
+  it("adds a Statements tab that mounts its panel only when opened", async () => {
+    const user = userEvent.setup();
+    render(
+      <CustomerDetail
+        data={createCustomerData()}
+        statementsPanel={<p>Statements panel content</p>}
+      />
+    );
+
+    // Not mounted until opened, so the Hub sends no statements request for a closed tab.
+    expect(screen.queryByText("Statements panel content")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "More customer sections" }));
+    await user.click(screen.getByRole("menuitem", { name: "Statements" }));
+    expect(screen.getByRole("tab", { name: "Statements" })).toHaveAttribute(
+      "aria-selected",
+      "true"
+    );
+    expect(screen.getByText("Statements panel content")).toBeVisible();
+  });
+
+  it("has no Statements entry without a panel (a role without the statements scope)", async () => {
+    const user = userEvent.setup();
+    render(<CustomerDetail data={createCustomerData()} />);
+    await user.click(screen.getByRole("button", { name: "More customer sections" }));
+    expect(screen.queryByRole("menuitem", { name: "Statements" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "Statements" })).not.toBeInTheDocument();
+  });
+});
+
+describe("CustomerDetail — tab row (Nate, 11-18)", () => {
+  it("keeps three tabs in the row and lists the rest under More", async () => {
+    const user = userEvent.setup();
+    render(<CustomerDetail data={createCustomerData()} statementsPanel={<p>Statements</p>} />);
+
+    const row = screen.getByRole("tablist", { name: "Customer detail sections" });
+    expect(
+      within(row)
+        .getAllByRole("tab")
+        .map((tab) => tab.textContent)
+    ).toEqual(["Overview", "Membership", "Status"]);
+    await user.click(screen.getByRole("button", { name: "More customer sections" }));
+    expect(screen.getAllByRole("menuitem").map((item) => item.textContent)).toEqual([
+      "Promotions",
+      "Preferences",
+      "Statements",
+    ]);
+  });
+
+  it("opens a section picked from More", async () => {
+    const user = userEvent.setup();
+    render(<CustomerDetail data={createCustomerData()} />);
+
+    await user.click(screen.getByRole("button", { name: "More customer sections" }));
+    await user.click(screen.getByRole("menuitem", { name: "Preferences" }));
+    expect(screen.getByRole("tabpanel", { name: "Preferences" })).toBeVisible();
+    expect(document.getElementById("tabpanel-overview")).not.toBeVisible();
+  });
+});
+
+describe("CustomerDetail — tier and badge cards (Nate, 11-18)", () => {
+  const tierEntry: CustomerTierEntry = {
+    tierId: "tie_aaaabbbbccccddddeeeeffff00001111",
+    tierCode: "GOLD",
+    tierName: "Gold",
+    tierRank: 1,
+    startDateTime: "2026-01-01T10:00:00Z",
+    active: true,
+    lifetimeTier: false,
+    trialTier: false,
+    issuedDateTime: "2026-01-01T10:00:00Z",
+    cancelled: false,
+  };
+  const badgeEntry: CustomerBadgeEntry = {
+    badgeId: "bdg_aaaabbbbccccddddeeeeffff00001111",
+    badgeCode: "FIRST",
+    badgeName: "First visit",
+    badgeType: "ACHIEVEMENT",
+    badgeRank: 1,
+    startDateTime: "2026-01-01T10:00:00Z",
+    active: true,
+    issuedDateTime: "2026-01-01T10:00:00Z",
+    issuedReason: "Welcome",
+    cancelled: false,
+  };
+
+  it("shows both cards while it is not known whether the programs define any", () => {
+    render(<CustomerDetail data={createCustomerData()} />);
+    expect(screen.getByText("Tier Status")).toBeInTheDocument();
+    expect(screen.getByText("Badges")).toBeInTheDocument();
+  });
+
+  it("hides both cards when the member's programs define no tiers and no badges", () => {
+    render(
+      <CustomerDetail data={createCustomerData()} tiersDefined={false} badgesDefined={false} />
+    );
+    expect(screen.queryByText("Tier Status")).not.toBeInTheDocument();
+    expect(screen.queryByText("Badges")).not.toBeInTheDocument();
+    // The balance card stays.
+    expect(screen.getAllByText("Points").length).toBeGreaterThan(0);
+  });
+
+  it("hides each card on its own", () => {
+    render(<CustomerDetail data={createCustomerData()} tiersDefined={false} badgesDefined />);
+    expect(screen.queryByText("Tier Status")).not.toBeInTheDocument();
+    expect(screen.getByText("Badges")).toBeInTheDocument();
+  });
+
+  // jsdom can't measure layout, so these pin the classes that do it: grid rows stretch their
+  // cells, each cell and card fills its cell's height, and the column count follows the cards.
+  function cardGrid(): HTMLElement {
+    const balance = screen.getByRole("status", { name: /^Points:/ });
+    return balance.parentElement!.parentElement!;
+  }
+
+  it("gives every card the full height of its row (Nate, 10:02 AM CT)", () => {
+    render(<CustomerDetail data={createCustomerData()} />);
+    for (const name of [/^Tier Status:/, /^Badges:/, /^Points:/]) {
+      const card = screen.getByRole("status", { name });
+      expect(card).toHaveClass("h-full");
+      expect(card.parentElement).toHaveClass("h-full");
+    }
+    expect(cardGrid()).toHaveClass("md:grid-cols-3");
+  });
+
+  it("stretches a lone card across the full width", () => {
+    render(
+      <CustomerDetail data={createCustomerData()} tiersDefined={false} badgesDefined={false} />
+    );
+    expect(cardGrid().className).not.toMatch(/md:grid-cols-[23]/);
+  });
+
+  it("splits two cards into two equal columns", () => {
+    render(<CustomerDetail data={createCustomerData()} tiersDefined={false} badgesDefined />);
+    expect(cardGrid()).toHaveClass("md:grid-cols-2");
+  });
+
+  it("ignores cancelled tiers and badges when deciding to keep a card", () => {
+    const data = {
+      ...createCustomerData(),
+      tiers: [{ ...tierEntry, active: false, cancelled: true }],
+      badges: [{ ...badgeEntry, active: false, cancelled: true }],
+    };
+    render(<CustomerDetail data={data} tiersDefined={false} badgesDefined={false} />);
+    expect(screen.queryByText("Tier Status")).not.toBeInTheDocument();
+    expect(screen.queryByText("Badges")).not.toBeInTheDocument();
+  });
+
+  it("keeps a card for a member who holds a tier or badge anyway", () => {
+    const data = { ...createCustomerData(), tiers: [tierEntry], badges: [badgeEntry] };
+    render(<CustomerDetail data={data} tiersDefined={false} badgesDefined={false} />);
+    expect(screen.getByText("Tier Status")).toBeInTheDocument();
+    expect(screen.getByText("Badges")).toBeInTheDocument();
+  });
+});
+
+describe("CustomerDetail — below-header slot (Nate, 11-21)", () => {
+  it("renders the slot right after the member header, before the status cards", () => {
+    render(
+      <CustomerDetail
+        data={createCustomerData()}
+        belowHeader={<section aria-label="Fraud cases">Fraud</section>}
+      />
+    );
+    const header = screen.getByRole("banner");
+    const slot = screen.getByRole("region", { name: "Fraud cases" });
+    expect(header.nextElementSibling).toContainElement(slot);
+    expect(header.compareDocumentPosition(slot) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 });

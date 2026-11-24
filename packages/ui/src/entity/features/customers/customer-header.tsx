@@ -14,6 +14,7 @@
 import {
   ArrowLeft,
   Copy,
+  Languages,
   Mail,
   MoreHorizontal,
   Pencil,
@@ -35,6 +36,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../../../primitives/dropdown-menu";
+import { preferredLanguageLabel } from "./preferred-language";
 import {
   formatCurrencyValue,
   getActiveTier,
@@ -173,6 +175,12 @@ export function CustomerHeader({
                   <span>{phone.number}</span>
                 </span>
               )}
+              <span className="inline-flex items-center gap-1">
+                <Languages className="h-3.5 w-3.5" aria-hidden="true" />
+                <span aria-label="Preferred language" role="note">
+                  {preferredLanguageLabel(data.customer.preferredLanguage)}
+                </span>
+              </span>
             </div>
           </div>
         </div>

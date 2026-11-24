@@ -14,6 +14,11 @@ import { Input } from "../../primitives/input.js";
 import { Label } from "../../primitives/label.js";
 import { Switch } from "../../primitives/switch.js";
 import { FieldsetLegend } from "../components/fieldset-legend.js";
+import {
+  COUNTER_CREATE_OPTIONS,
+  useInlineTargetPicker,
+  type CreatedTargetRef,
+} from "../inline-create/use-inline-target-picker.js";
 import { JsonPathInput } from "../inputs/json-path-input.js";
 import { PathOrValueField } from "../inputs/path-or-value-field.js";
 import { PreOperationSelector } from "../inputs/pre-operation-selector.js";
@@ -38,15 +43,22 @@ export const AddCounterDataActionComponent = memo(function AddCounterDataActionC
   );
 
   const handleTargetChange = useCallback(
-    (targetId: string) => {
+    (targetId: string, record?: CreatedTargetRef) => {
       const target = findTarget(targetId);
       update({
         targetId: targetId || undefined,
-        targetCode: target?.code ?? undefined,
+        // A just-created target may not be in the loaded list yet.
+        targetCode: record?.code ?? target?.code ?? undefined,
       });
     },
     [update, findTarget]
   );
+  const { pickerProps, createSheet } = useInlineTargetPicker({
+    value: value.targetId ?? "",
+    onSelect: handleTargetChange,
+    fieldKey: `${targetFieldId}.addCounterData`,
+    createOptions: COUNTER_CREATE_OPTIONS,
+  });
 
   return (
     <div className={className}>
@@ -118,9 +130,11 @@ export const AddCounterDataActionComponent = memo(function AddCounterDataActionC
               id={targetFieldId}
               value={value.targetId ?? ""}
               onValueChange={handleTargetChange}
+              {...pickerProps}
               placeholder="Select target..."
               disabled={disabled}
             />
+            {createSheet}
           </div>
           <label className="flex items-center gap-2">
             <Switch

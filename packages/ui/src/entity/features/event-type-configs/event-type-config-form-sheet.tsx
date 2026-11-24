@@ -12,6 +12,9 @@ import type { CreateEventTypeConfiguration, EventTypeConfiguration } from "@loom
 import { useCallback, useState, type FormEvent, type ReactNode } from "react";
 
 import { CodeInput, useCodeInput } from "../../../forms/code-input.js";
+import { EventSubTypeField } from "../../../forms/event-sub-type-field/event-sub-type-field.js";
+import { EVENT_SUB_TYPE_SOURCE_LABELS } from "../../../forms/event-sub-type-field/sub-type-sources.js";
+import { useEventTypeSubTypeSource } from "../../../forms/event-sub-type-field/use-event-type-sub-type-source.js";
 import { WithFieldError } from "../../../forms/field-errors.js";
 import { FormSheet } from "../../../forms/form-sheet.js";
 import {
@@ -73,6 +76,7 @@ export function EventTypeConfigFormSheet({
   // Form state - standard fields
   const [name, setName] = useState(initialData?.name ?? "");
   const [eventTypeCode, setEventTypeCode] = useState(getInitialEventTypeCode(initialData));
+  const { source: subTypeSource } = useEventTypeSubTypeSource(eventTypeCode || undefined);
   const [eventSubTypeIdentifier, setEventSubTypeIdentifier] = useState(
     initialData?.eventSubTypeIdentifier ?? ""
   );
@@ -316,6 +320,8 @@ export function EventTypeConfigFormSheet({
                 typeLabel="Event Type"
                 value={eventTypeCode}
                 onValueChange={(value, isSuggested) => {
+                  // A sub type names a record of the event type's own source; it can't carry over.
+                  if (value !== eventTypeCode) setEventSubTypeIdentifier("");
                   setEventTypeCode(value);
                   setTypeIsSuggested(isSuggested);
                 }}
@@ -326,24 +332,42 @@ export function EventTypeConfigFormSheet({
           </WithFieldError>
         </div>
 
-        {/* Sub Type Identifier */}
+        {/* Sub Type: a picker of the records it names when the event type has a source, else free text */}
         <div className="space-y-2">
-          <Label htmlFor="event-sub-type-identifier">Sub Type Identifier</Label>
+          <Label htmlFor="event-sub-type-identifier">
+            {subTypeSource
+              ? `Sub Type (${EVENT_SUB_TYPE_SOURCE_LABELS[subTypeSource]})`
+              : "Sub Type Identifier"}
+          </Label>
           <WithFieldError field="eventSubTypeIdentifier">
-            {(fe) => (
-              <Input
-                {...fe.inputProps}
-                id="event-sub-type-identifier"
-                type="text"
-                value={eventSubTypeIdentifier}
-                onChange={(e) => setEventSubTypeIdentifier(e.target.value)}
-                placeholder="e.g. PURCHASE, RETURN"
-                disabled={isSubmitting}
-              />
-            )}
+            {(fe) =>
+              subTypeSource ? (
+                <EventSubTypeField
+                  id="event-sub-type-identifier"
+                  source={subTypeSource}
+                  value={eventSubTypeIdentifier}
+                  onValueChange={setEventSubTypeIdentifier}
+                  disabled={isSubmitting}
+                  aria-invalid={fe.inputProps["aria-invalid"]}
+                  aria-describedby={fe.inputProps["aria-describedby"]}
+                />
+              ) : (
+                <Input
+                  {...fe.inputProps}
+                  id="event-sub-type-identifier"
+                  type="text"
+                  value={eventSubTypeIdentifier}
+                  onChange={(e) => setEventSubTypeIdentifier(e.target.value)}
+                  placeholder="e.g. PURCHASE, RETURN"
+                  disabled={isSubmitting}
+                />
+              )
+            }
           </WithFieldError>
           <p className="text-muted-foreground text-xs">
-            Optional sub-type to further categorize events.
+            {subTypeSource
+              ? `Pick one ${EVENT_SUB_TYPE_SOURCE_LABELS[subTypeSource]} to configure only its events, or leave it on any.`
+              : "Optional sub-type to further categorize events."}
           </p>
         </div>
 

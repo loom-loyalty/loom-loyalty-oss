@@ -63,6 +63,7 @@ export function TierFormSheet({
   fieldErrors,
   schema,
   extendedFields = [],
+  defaultProgramIds,
 }: TierFormSheetProps): ReactNode {
   // Form state - standard fields
   const [name, setName] = useState(initialData?.name ?? "");
@@ -75,7 +76,8 @@ export function TierFormSheet({
     initialData?.durationPeriod
   );
   const [programIds, setProgramIds] = useState<string[]>(
-    () => (initialData as { programIds?: string[] } | undefined)?.programIds ?? []
+    () =>
+      (initialData as { programIds?: string[] } | undefined)?.programIds ?? defaultProgramIds ?? []
   );
   const [downgradeTierId, setDowngradeTierId] = useState(
     initialData?.tierExpiryDowngradeTierId ?? ""
@@ -114,7 +116,9 @@ export function TierFormSheet({
     setDurationPeriod(initialData?.durationPeriod);
     setDowngradeTierId(initialData?.tierExpiryDowngradeTierId ?? "");
     setDowngradeDurationPeriod(initialData?.tierExpiryDowngradeDurationPeriod);
-    setProgramIds((initialData as { programIds?: string[] } | undefined)?.programIds ?? []);
+    setProgramIds(
+      (initialData as { programIds?: string[] } | undefined)?.programIds ?? defaultProgramIds ?? []
+    );
     codeInput.reset();
     setExtendedFieldValues(extractExtendedFields(initialData, extendedFields));
   };

@@ -1,5 +1,5 @@
 import type { EventTypeConfiguration } from "@loom-loyalty/sdk";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 // Stub MetadataField so this suite never hits the real SDK/react-query. The
@@ -36,6 +36,34 @@ vi.mock("../../../forms/metadata-field/index.js", () => ({
     findOption: () => undefined,
     isTypeNotFound: false,
   }),
+}));
+
+const sourceByEventType: Record<string, string | undefined> = {};
+vi.mock("../../../forms/event-sub-type-field/use-event-type-sub-type-source.js", () => ({
+  useEventTypeSubTypeSource: (eventTypeCode: string | undefined) => ({
+    source: eventTypeCode ? sourceByEventType[eventTypeCode] : undefined,
+    isLoading: false,
+  }),
+}));
+
+vi.mock("../../../forms/event-sub-type-field/event-sub-type-field.js", () => ({
+  EventSubTypeField: (props: {
+    id?: string;
+    source: string;
+    value: string;
+    onValueChange: (code: string) => void;
+  }) => (
+    <button
+      type="button"
+      id={props.id}
+      data-testid="sub-type-source-picker"
+      data-source={props.source}
+      data-value={props.value}
+      onClick={() => props.onValueChange("TG002")}
+    >
+      source picker
+    </button>
+  ),
 }));
 
 import { EventTypeConfigFormSheet, getInitialEventTypeCode } from "./event-type-config-form-sheet";
@@ -141,5 +169,53 @@ describe("EventTypeConfigFormSheet — lockEventType", () => {
     });
     const field = getEventTypeField();
     expect(field.disabled).toBe(false);
+  });
+});
+
+describe("EventTypeConfigFormSheet — sub type from the event type's source", () => {
+  it("shows a target picker for target.achieved and saves the picked target's code", async () => {
+    sourceByEventType["target.achieved"] = "TARGET";
+    const { onSubmit } = renderSheet({
+      mode: "edit",
+      initialData: makeConfig({
+        eventTypeCode: "target.achieved",
+        eventSubTypeIdentifier: "TG001",
+      }),
+    });
+    expect(screen.getByText("Sub Type (target)")).toBeInTheDocument();
+    const picker = screen.getByTestId("sub-type-source-picker");
+    expect(picker.dataset.source).toBe("TARGET");
+    expect(picker.dataset.value).toBe("TG001");
+    expect(screen.queryByPlaceholderText(/sub type/i)).toBeNull();
+
+    fireEvent.click(picker);
+    fireEvent.click(screen.getByRole("button", { name: "Save Changes" }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    expect(onSubmit.mock.calls[0]?.[0]).toMatchObject({
+      eventTypeCode: "target.achieved",
+      eventSubTypeIdentifier: "TG002",
+    });
+    delete sourceByEventType["target.achieved"];
+  });
+
+  it("keeps the free-text box for a type without a source", () => {
+    renderSheet({ mode: "edit", initialData: makeConfig({ eventTypeCode: "transaction" }) });
+    expect(screen.getByText("Sub Type Identifier")).toBeInTheDocument();
+    expect(screen.queryByTestId("sub-type-source-picker")).toBeNull();
+  });
+
+  it("clears the sub type when the event type changes, since it named the old type's record", async () => {
+    sourceByEventType["target.achieved"] = "TARGET";
+    renderSheet({
+      mode: "create",
+      initialData: makeConfig({ eventTypeCode: "target.achieved" }),
+    });
+    fireEvent.click(screen.getByTestId("sub-type-source-picker"));
+    expect(screen.getByTestId("sub-type-source-picker").dataset.value).toBe("TG002");
+
+    fireEvent.change(getEventTypeField(), { target: { value: "transaction" } });
+    const freeText = screen.getByLabelText("Sub Type Identifier") as HTMLInputElement;
+    expect(freeText.value).toBe("");
+    delete sourceByEventType["target.achieved"];
   });
 });

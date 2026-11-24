@@ -14,6 +14,7 @@ import { Label } from "../../primitives/label.js";
 import { Switch } from "../../primitives/switch.js";
 import { FieldsetLegend } from "../components/fieldset-legend.js";
 import { SegmentedSwitch } from "../components/segmented-switch.js";
+import { useInlineRecordPicker } from "../inline-create/use-inline-record-picker.js";
 import type { ActionComponentProps, IssueCustomerCouponAction } from "../types";
 
 type IssueCouponData = IssueCustomerCouponAction["issueCustomerCoupon"];
@@ -61,15 +62,19 @@ export const IssueCouponActionComponent = memo(function IssueCouponActionCompone
   );
 
   const handleOfferChange = useCallback(
-    (offerId: string) => {
+    (offerId: string, record?: { code?: string }) => {
       const offer = findOffer(offerId);
       update({
         couponOfferId: offerId || undefined,
-        couponOfferCode: offer?.code ?? undefined,
+        couponOfferCode: record?.code ?? offer?.code ?? undefined,
       });
     },
     [update, findOffer]
   );
+  const { pickerProps: offerPickerProps, createSheet: offerCreateSheet } = useInlineRecordPicker({
+    kind: "offer",
+    onSelect: handleOfferChange,
+  });
 
   return (
     <div className={className}>
@@ -131,7 +136,9 @@ export const IssueCouponActionComponent = memo(function IssueCouponActionCompone
                 onValueChange={handleOfferChange}
                 placeholder="Select coupon offer..."
                 disabled={disabled}
+                {...offerPickerProps}
               />
+              {offerCreateSheet}
             </div>
           ) : null}
         </fieldset>

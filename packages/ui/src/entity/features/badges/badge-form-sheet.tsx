@@ -78,6 +78,7 @@ export function BadgeFormSheet({
   fieldErrors,
   schema,
   extendedFields = [],
+  defaultProgramIds,
 }: BadgeFormSheetProps): ReactNode {
   // Form state - standard fields
   const [name, setName] = useState(initialData?.name ?? "");
@@ -86,7 +87,9 @@ export function BadgeFormSheet({
   const [description, setDescription] = useState<LocalizedString>(
     () => getLocalizedDescription(initialData?.description) ?? {}
   );
-  const [programIds, setProgramIds] = useState<string[]>(() => initialData?.programIds ?? []);
+  const [programIds, setProgramIds] = useState<string[]>(
+    () => initialData?.programIds ?? defaultProgramIds ?? []
+  );
   const [rank, setRank] = useState<string>(
     initialData?.rank != null ? String(initialData.rank) : ""
   );
@@ -127,7 +130,7 @@ export function BadgeFormSheet({
     setTypeCode(extractTypeCode(initialData));
     setTypeIsSuggested(false);
     setDescription(getLocalizedDescription(initialData?.description) ?? {});
-    setProgramIds(initialData?.programIds ?? []);
+    setProgramIds(initialData?.programIds ?? defaultProgramIds ?? []);
     setRank(initialData?.rank != null ? String(initialData.rank) : "");
     setDurationPeriod(initialData?.durationPeriod);
     setLocalError(null);

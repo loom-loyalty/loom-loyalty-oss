@@ -52,13 +52,18 @@ vi.mock("../../../forms/customer-audience-field/index.js", () => ({
     value,
     onValueChange,
     disabled,
+    renderCreateSheet,
+    createdOption,
   }: {
     id?: string;
     value: string;
     onValueChange: (id: string) => void;
     disabled?: boolean;
+    renderCreateSheet?: (open: boolean, onOpenChange: (open: boolean) => void) => unknown;
+    createdOption?: { id: string; name: string };
   }) => (
-    <div data-mock="customer-audience-field">
+    <div data-mock="customer-audience-field" data-created-name={createdOption?.name ?? ""}>
+      {renderCreateSheet ? (renderCreateSheet(true, () => {}) as never) : null}
       <input id={id} type="text" readOnly value={value} />
       <button
         type="button"
@@ -1086,5 +1091,52 @@ describe("[audit] L3 — OFFER auto-create suggested metadata", () => {
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
     expect(metadataFieldMock.hookReturn.createMetadata).not.toHaveBeenCalled();
+  });
+});
+
+describe("Pickers brief: inline create from a rule or flow", () => {
+  it("starts a new offer in the given programs (S14)", () => {
+    renderSheet({ defaultProgramIds: ["prog-rule"] });
+    expect(screen.getByDisplayValue("prog-rule", { exact: true })).toBeTruthy();
+  });
+
+  it("an edit keeps the offer's own programs", () => {
+    renderSheet({
+      mode: "edit",
+      defaultProgramIds: ["prog-rule"],
+      initialData: { offerId: "o1", name: "O", code: "o", programIds: ["prog-own"] } as never,
+    });
+    expect(screen.getByDisplayValue("prog-own")).toBeTruthy();
+    expect(screen.queryByDisplayValue("prog-rule")).toBeNull();
+  });
+
+  it("selects an audience created from the audience picker (S2)", () => {
+    const renderAudienceCreateSheet = vi.fn(
+      ({ onCreated }: { onCreated: (id: string) => void }) => (
+        <button type="button" onClick={() => onCreated("aud-new")}>
+          Create audience
+        </button>
+      )
+    );
+    renderSheet({ renderAudienceCreateSheet });
+    fireEvent.click(screen.getByRole("button", { name: "Create audience" }));
+    expect(screen.getByDisplayValue("aud-new")).toBeTruthy();
+  });
+
+  it("hands the created audience to the picker so it shows even when a search hides it (Codex fe#1960)", () => {
+    const renderAudienceCreateSheet = vi.fn(
+      ({ onCreated }: { onCreated: (id: string, record?: { name?: string }) => void }) => (
+        <button type="button" onClick={() => onCreated("aud-new", { name: "Regulars" })}>
+          Create audience
+        </button>
+      )
+    );
+    renderSheet({ renderAudienceCreateSheet });
+    fireEvent.click(screen.getByRole("button", { name: "Create audience" }));
+    expect(
+      document
+        .querySelector("[data-mock='customer-audience-field']")
+        ?.getAttribute("data-created-name")
+    ).toBe("Regulars");
   });
 });

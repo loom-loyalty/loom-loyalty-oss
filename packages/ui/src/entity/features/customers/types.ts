@@ -35,6 +35,8 @@ export interface Customer {
   enrollmentDateTime: string;
   createdAt: string;
   lastActivityDateTime?: string;
+  /** Stored language subtag (`en`, `es`); unset or unsupported reads as English. */
+  preferredLanguage?: string;
 }
 
 export interface CustomerIdentity {

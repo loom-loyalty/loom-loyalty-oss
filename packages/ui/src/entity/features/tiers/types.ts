@@ -56,6 +56,8 @@ export interface TierFormSheetProps {
   schema?: UIEntitySchema;
   /** Extended field names to render (beyond standard fields) */
   extendedFields?: string[];
+  /** Programs a new record starts with (inline create from a rule or flow) */
+  defaultProgramIds?: string[];
 }
 
 /**

@@ -224,6 +224,14 @@ export {
 // --- Customers (Customer View) ---
 
 export { CustomerHeader, type CustomerHeaderProps } from "./customers/customer-header.js";
+export {
+  CustomerStatementsPanel,
+  type CustomerStatementsPanelProps,
+  type LatestStatementState,
+  type StatementAccountState,
+  type StatementCurrencyOption,
+  type StatementListState,
+} from "./customers/customer-statements-panel.js";
 export { CustomerDetail, type CustomerDetailProps } from "./customers/customer-view.js";
 export {
   EntityLinkButton,
@@ -237,6 +245,20 @@ export {
   LedgerHistorySheet,
   type LedgerHistorySheetProps,
 } from "./customers/ledger-history-sheet.js";
+export {
+  PREFERRED_LANGUAGE_OPTIONS,
+  preferredLanguageLabel,
+  supportedPreferredLanguage,
+  type PreferredLanguageCode,
+} from "./customers/preferred-language.js";
+export {
+  lastTwelveMonthsUtc,
+  statementRangePresets,
+  statementRangeQuery,
+  validateStatementRange,
+  type StatementRange,
+  type StatementRangePreset,
+} from "./customers/statement-range.js";
 export {
   deriveCouponStatus,
   formatCurrencyValue,
@@ -390,12 +412,23 @@ export {
 // --- Event Rules ---
 
 export {
+  getEventRuleLifecycleActions,
+  isEventRuleVersionReplaced,
+  toEventRuleVersionStatus,
+  type EventRuleLifecycleActions,
+  type EventRuleVersionStatus,
+} from "./event-rules/event-rule-actions.js";
+export {
   EventRuleCategoryBadge,
   type EventRuleCategoryBadgeProps,
 } from "./event-rules/event-rule-category-badge.js";
 export { getEventRuleColumnsExtended } from "./event-rules/event-rule-columns.js";
 export { EventRuleDetail, type EventRuleDetailProps } from "./event-rules/event-rule-detail.js";
 export { EventRuleSkeleton } from "./event-rules/event-rule-skeleton.js";
+export {
+  EventRuleVersionHistoryDialog,
+  type EventRuleVersionHistoryDialogProps,
+} from "./event-rules/event-rule-version-history-dialog.js";
 export {
   CATEGORY_INFO,
   CATEGORY_LABELS,
@@ -770,4 +803,8 @@ export {
 } from "./customers/record-activity/index.js";
 
 // Patterns (preview): discovered segments, member summaries, lookalikes
+export * from "./fraud/index.js";
 export * from "./patterns/index.js";
+
+// Onboarding quest (Warp Up): panel, sidebar card, chapter helpers
+export * from "./onboarding/index.js";

@@ -14,6 +14,7 @@ import { StatusBadge } from "../../../data-display/status-badge.js";
 import { Badge } from "../../../primitives/badge.js";
 import { Button } from "../../../primitives/button.js";
 import { ExtendedFieldsSection } from "../../extended-fields-section.js";
+import { preferredLanguageLabel } from "./preferred-language.js";
 import { type CustomerPreviewProps, getSDKCustomerName } from "./types.js";
 
 /**
@@ -105,6 +106,12 @@ export function CustomerPreview({
               <dd className="text-foreground font-mono text-sm">{c.externalId as string}</dd>
             </div>
           )}
+          <div>
+            <dt className="text-muted-foreground text-sm">Language</dt>
+            <dd className="text-foreground text-sm">
+              {preferredLanguageLabel(c.preferredLanguage)}
+            </dd>
+          </div>
           {status && (
             <div>
               <dt className="text-muted-foreground text-sm">Status</dt>

@@ -63,6 +63,7 @@ export function DataModelFormSheet({
   isSubmitting: isSubmittingProp = false,
   error: errorProp,
   fieldErrors,
+  notice,
 }: DataModelFormSheetProps): ReactNode {
   // ----- State -----
   const [typeCode, setTypeCode] = useState(initialData?.type?.code ?? "");
@@ -302,6 +303,7 @@ export function DataModelFormSheet({
         className="sm:max-w-2xl"
       >
         <div className="space-y-6">
+          {notice}
           {/* Type Selector */}
           <section className="space-y-2">
             <Label htmlFor="dm-type">

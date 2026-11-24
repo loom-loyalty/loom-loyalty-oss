@@ -26,6 +26,7 @@ import { CodeInput, useCodeInput } from "../../../forms/code-input.js";
 import { CustomerAudienceField } from "../../../forms/customer-audience-field/index.js";
 import { DiscriminatorRadioGroup } from "../../../forms/discriminator-radio-group.js";
 import { DurationPeriodBuilder } from "../../../forms/duration-period-builder.js";
+import type { EntityOption } from "../../../forms/entity-select-box.js";
 import { WithFieldError } from "../../../forms/field-errors.js";
 import { FormSheet } from "../../../forms/form-sheet.js";
 import {
@@ -142,17 +143,23 @@ export function OfferFormSheet({
   fieldErrors,
   schema,
   extendedFields = [],
+  defaultProgramIds,
+  renderAudienceCreateSheet,
 }: OfferFormSheetProps): ReactNode {
   // Form state - standard fields
   const [name, setName] = useState(initialData?.name ?? "");
   const [type, setType] = useState<string>(initialData?.type ?? "COUPON");
-  const [programIds, setProgramIds] = useState<string[]>(initialData?.programIds ?? []);
+  const [programIds, setProgramIds] = useState<string[]>(
+    initialData?.programIds ?? defaultProgramIds ?? []
+  );
   const [programIdsError, setProgramIdsError] = useState<string | null>(null);
   // initialData.customerAudience is the response-shape nested entity. Pull its
   // id so the field round-trips through edit mode.
   const [customerAudienceId, setCustomerAudienceId] = useState<string>(
     initialData?.customerAudience?.customerAudienceId ?? ""
   );
+  // An audience just created from "+ New", shown on the picker before its list holds it.
+  const [createdAudience, setCreatedAudience] = useState<EntityOption | undefined>();
   const [description, setDescription] = useState<LocalizedString>(
     () => getLocalizedDescription(initialData?.description as Record<string, unknown>) ?? {}
   );
@@ -246,7 +253,7 @@ export function OfferFormSheet({
   const resetForm = () => {
     setName(initialData?.name ?? "");
     setType(initialData?.type ?? "COUPON");
-    setProgramIds(initialData?.programIds ?? []);
+    setProgramIds(initialData?.programIds ?? defaultProgramIds ?? []);
     setProgramIdsError(null);
     setCustomerAudienceId(initialData?.customerAudience?.customerAudienceId ?? "");
     setDescription(
@@ -553,8 +560,27 @@ export function OfferFormSheet({
                 id="offer-customer-audience"
                 value={customerAudienceId}
                 onValueChange={setCustomerAudienceId}
+                createdOption={createdAudience}
                 placeholder="Select a customer audience..."
                 disabled={isSubmitting}
+                renderCreateSheet={
+                  renderAudienceCreateSheet
+                    ? (open, onOpenChange) =>
+                        renderAudienceCreateSheet({
+                          open,
+                          onOpenChange,
+                          onCreated: (createdId, record) => {
+                            setCreatedAudience({
+                              id: createdId,
+                              name: record?.name ?? record?.code ?? createdId,
+                              secondaryText: record?.code,
+                            });
+                            setCustomerAudienceId(createdId);
+                            onOpenChange(false);
+                          },
+                        })
+                    : undefined
+                }
               />
             )}
           </WithFieldError>

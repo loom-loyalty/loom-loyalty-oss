@@ -102,15 +102,21 @@ import {
 // ─── Constants ──────────────────────────────────────────────────────────────
 
 /** Left column tab IDs */
-type LeftTabId = "overview" | "membership" | "status" | "promotions" | "preferences";
+type LeftTabId = "overview" | "membership" | "status" | "promotions" | "preferences" | "statements";
 
+/** The tabs kept in the row; the rest sit under the row's More menu. */
 const LEFT_TABS: Array<{ id: LeftTabId; label: string }> = [
   { id: "overview", label: "Overview" },
   { id: "membership", label: "Membership" },
   { id: "status", label: "Status" },
+];
+
+const MORE_TABS: Array<{ id: LeftTabId; label: string }> = [
   { id: "promotions", label: "Promotions" },
   { id: "preferences", label: "Preferences" },
 ];
+
+const STATEMENTS_TAB: { id: LeftTabId; label: string } = { id: "statements", label: "Statements" };
 
 /** Stagger animation delay increment in milliseconds. */
 const STAGGER_INCREMENT_MS = 80;
@@ -323,6 +329,21 @@ export interface CustomerDetailProps {
   onEventsPageChange?: (page: number) => void;
   /** Optional content shown at the top of the Overview tab, e.g. a member summary. */
   overviewSummary?: ReactNode;
+  /** Optional full-width content directly under the member header, e.g. a fraud review. */
+  belowHeader?: ReactNode;
+  /**
+   * The member's statements (api#2695 slice 4b). Given, it adds a Statements tab that mounts
+   * this content only while the tab is open; left out (a role without the statements scope),
+   * there is no tab.
+   */
+  statementsPanel?: ReactNode;
+  /**
+   * Whether any of the member's programs defines a tier. False hides the Tier Status card unless
+   * the member holds a tier anyway; left out (not known yet, or the lookup failed), it shows.
+   */
+  tiersDefined?: boolean;
+  /** Whether any of the member's programs defines a badge; hides the Badges card like `tiersDefined`. */
+  badgesDefined?: boolean;
 }
 
 // ─── Utility: Group events by date ──────────────────────────────────────────
@@ -410,6 +431,10 @@ export function CustomerDetail({
   onSelectedEventChange,
   renderEventActions,
   overviewSummary,
+  belowHeader,
+  statementsPanel,
+  tiersDefined,
+  badgesDefined,
   selectedEventTags,
   eventTagsLoading,
   eventTagsError,
@@ -589,6 +614,7 @@ export function CustomerDetail({
     <div className={cn("flex h-full flex-col", className)}>
       {/* Edge-to-edge header */}
       <CustomerHeader data={data} onEdit={onEdit} onBack={onBack} actions={actions} />
+      {belowHeader && <div>{belowHeader}</div>}
 
       {/* Two-column layout */}
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
@@ -598,17 +624,21 @@ export function CustomerDetail({
           <QuickStatusSection
             tierProgress={tierProgress}
             activeBadges={activeBadges}
+            showTierCard={tiersDefined !== false || activeTier !== undefined}
+            showBadgeCard={badgesDefined !== false || activeBadges.length > 0}
             activePrograms={activePrograms}
             currencies={data.currencies}
           />
 
-          {/* Tab navigation */}
+          {/* Tab navigation: a few tabs in the row, the rest under More */}
           <div className="px-4 py-2 lg:px-6">
             <GradientTabs
-              tabs={LEFT_TABS.map((t) => ({ id: t.id, label: t.label }))}
+              tabs={LEFT_TABS}
+              overflowTabs={statementsPanel ? [...MORE_TABS, STATEMENTS_TAB] : MORE_TABS}
               activeTab={activeTab}
               onTabChange={(id) => setActiveTab(id as LeftTabId)}
               ariaLabel="Customer detail sections"
+              moreLabel="More customer sections"
             />
           </div>
 
@@ -704,6 +734,17 @@ export function CustomerDetail({
               onDeletePreference={onDeletePreference}
             />
           </div>
+          {statementsPanel && (
+            <div
+              className="flex-1 overflow-y-auto px-4 pt-2 pb-4 lg:px-6 lg:pb-6"
+              role="tabpanel"
+              id="tabpanel-statements"
+              aria-labelledby="tab-statements"
+              hidden={activeTab !== "statements"}
+            >
+              {activeTab === "statements" && statementsPanel}
+            </div>
+          )}
         </div>
 
         {/* ── RIGHT COLUMN (~42%): Activity Timeline ── */}
@@ -1056,13 +1097,29 @@ interface QuickStatusSectionProps {
     percentage: number | undefined;
   } | null;
   activeBadges: CustomerData["badges"];
+  /** False when the member's programs define no tiers and the member holds none. */
+  showTierCard: boolean;
+  /** False when the member's programs define no badges and the member holds none. */
+  showBadgeCard: boolean;
   activePrograms: CustomerData["programs"];
   currencies: CustomerData["currencies"];
 }
 
+/**
+ * Column count by number of cards, as literal classes so Tailwind keeps them. A lone card spans
+ * the full width (Nate, 11-18).
+ */
+const QUICK_STATUS_COLUMNS: Record<number, string> = {
+  1: "md:grid-cols-1",
+  2: "md:grid-cols-2",
+  3: "md:grid-cols-3",
+};
+
 function QuickStatusSection({
   tierProgress,
   activeBadges,
+  showTierCard,
+  showBadgeCard,
   activePrograms,
   currencies,
 }: QuickStatusSectionProps) {
@@ -1086,54 +1143,73 @@ function QuickStatusSection({
           .join(", ") + (activePrograms.length > 2 ? ` +${activePrograms.length - 2} more` : "")
       : "No active programs";
 
+  const cards: Array<{ key: string; node: ReactNode }> = [];
+  if (showTierCard) {
+    cards.push({
+      key: "tier",
+      node: (
+        <StatCard
+          icon={Shield}
+          title="Tier Status"
+          value={tierProgress?.current.tierName ?? "No Tier"}
+          subtitle={tierSubtitle}
+          variant="primary"
+          size="lg"
+          className="h-full"
+        />
+      ),
+    });
+  }
+  if (showBadgeCard) {
+    cards.push({
+      key: "badges",
+      node: (
+        <StatCard
+          icon={Award}
+          title="Badges"
+          value={activeBadges.length > 0 ? `${activeBadges.length} Active` : "0"}
+          subtitle={badgeSubtitle}
+          variant="accent"
+          size="lg"
+          className="h-full"
+        />
+      ),
+    });
+  }
+  cards.push({
+    key: currencies.length > 0 ? "balance" : "programs",
+    node:
+      currencies.length > 0 ? (
+        <CurrencyBalanceCard
+          currency={currencies[0]!}
+          currencyCount={currencies.length}
+          className="h-full"
+        />
+      ) : (
+        <StatCard
+          icon={Users}
+          title="Programs"
+          value={activePrograms.length > 0 ? `${activePrograms.length} Active` : "0"}
+          subtitle={programSubtitle}
+          variant="success"
+          size="lg"
+          className="h-full"
+        />
+      ),
+  });
+
   return (
     <div className="px-4 pt-4 pb-2 lg:px-6 lg:pt-6 lg:pb-2">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div
-          className="animate-fade-slide-up transition-transform hover:scale-[1.02]"
-          style={{ "--stagger-index": 0 } as CSSProperties}
-        >
-          <StatCard
-            icon={Shield}
-            title="Tier Status"
-            value={tierProgress?.current.tierName ?? "No Tier"}
-            subtitle={tierSubtitle}
-            variant="primary"
-            size="lg"
-          />
-        </div>
-
-        <div
-          className="animate-fade-slide-up transition-transform hover:scale-[1.02]"
-          style={{ "--stagger-index": 1 } as CSSProperties}
-        >
-          <StatCard
-            icon={Award}
-            title="Badges"
-            value={activeBadges.length > 0 ? `${activeBadges.length} Active` : "0"}
-            subtitle={badgeSubtitle}
-            variant="accent"
-            size="lg"
-          />
-        </div>
-
-        <div
-          className="animate-fade-slide-up transition-transform hover:scale-[1.02]"
-          style={{ "--stagger-index": 2 } as CSSProperties}
-        >
-          {currencies.length > 0 ? (
-            <CurrencyBalanceCard currency={currencies[0]!} currencyCount={currencies.length} />
-          ) : (
-            <StatCard
-              icon={Users}
-              title="Programs"
-              value={activePrograms.length > 0 ? `${activePrograms.length} Active` : "0"}
-              subtitle={programSubtitle}
-              variant="success"
-              size="lg"
-            />
-          )}
-        </div>
+      <div className={cn("grid grid-cols-1 gap-4", QUICK_STATUS_COLUMNS[cards.length])}>
+        {cards.map((card, index) => (
+          <div
+            key={card.key}
+            className="animate-fade-slide-up h-full transition-transform hover:scale-[1.02]"
+            style={{ "--stagger-index": index } as CSSProperties}
+          >
+            {card.node}
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -2024,9 +2100,11 @@ function TimelineEventCard({
 function CurrencyBalanceCard({
   currency,
   currencyCount = 1,
+  className,
 }: {
   currency: CurrencyBalance;
   currencyCount?: number;
+  className?: string;
 }) {
   const subtitle =
     `Earned ${formatCurrencyValue(currency.earned, currency.decimalPlaces, currency.symbol)} · Pending ${formatCurrencyValue(currency.pending, currency.decimalPlaces, currency.symbol)}` +
@@ -2035,6 +2113,7 @@ function CurrencyBalanceCard({
   return (
     <StatCard
       icon={CreditCard}
+      className={className}
       title={currency.currencyName}
       value={formatCurrencyValue(currency.available, currency.decimalPlaces, currency.symbol)}
       subtitle={subtitle}

@@ -114,110 +114,54 @@ describe("AudienceDetail — Publish action", () => {
   });
 });
 
-// AudienceDetail — Create Version action (U4).
-//
-// Mirrors the Publish suite's style above. Create Version's availability is
-// deliberately the mirror image of Publish's: a PUBLISHED segment can spawn a
-// new DRAFT, a DRAFT cannot (the backend 400s "Segment is not in PUBLISHED
-// status" otherwise) — so gating tests below assert the inverse of the
-// equivalent Publish test just above them.
-describe("AudienceDetail — Create Version action", () => {
-  it("shows an enabled New Version button for a PUBLISHED segment and invokes onCreateVersion on click", async () => {
-    const user = userEvent.setup();
-    const onCreateVersion = vi.fn();
+// The New Version button is gone ("There should be no New
+// Version button"). These replace the old "Create Version action" tests,
+// whose requirement changed: Edit on a published segment now starts the
+// draft, and system segments are read-only.
+describe("AudienceDetail — no New Version, system segments read-only", () => {
+  it.each(["DRAFT", "PUBLISHED"] as const)(
+    "shows no New Version button for a %s segment (W4)",
+    (versionStatus) => {
+      render(
+        <AudienceDetail
+          audience={segment({ versionStatus })}
+          onEdit={vi.fn()}
+          onDelete={vi.fn()}
+          onPublish={vi.fn()}
+        />
+      );
+      expect(screen.queryByRole("button", { name: /new version/i })).not.toBeInTheDocument();
+    }
+  );
+
+  it("shows Edit on a PUBLISHED segment (Edit starts the draft)", () => {
     render(
       <AudienceDetail
         audience={segment({ versionStatus: "PUBLISHED" })}
-        onCreateVersion={onCreateVersion}
-        canEdit
-        canDelete
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
       />
     );
-
-    const button = screen.getByRole("button", { name: "New Version" });
-    expect(button).toBeEnabled();
-    await user.click(button);
-    expect(onCreateVersion).toHaveBeenCalledTimes(1);
-  });
-
-  it("does not show New Version for a DRAFT segment", () => {
-    render(<AudienceDetail audience={segment()} onCreateVersion={vi.fn()} canEdit canDelete />);
-    expect(screen.queryByRole("button", { name: "New Version" })).not.toBeInTheDocument();
-  });
-
-  it("never shows New Version for a CUSTOMER_LIST audience (no version lifecycle)", () => {
-    render(<AudienceDetail audience={list()} onCreateVersion={vi.fn()} canEdit canDelete />);
-    expect(screen.queryByRole("button", { name: "New Version" })).not.toBeInTheDocument();
-  });
-
-  it("hides New Version for a read-only viewer (canEdit=false) even on a PUBLISHED segment", () => {
-    render(
-      <AudienceDetail
-        audience={segment({ versionStatus: "PUBLISHED" })}
-        onCreateVersion={vi.fn()}
-        canEdit={false}
-        canDelete={false}
-      />
-    );
-    expect(screen.queryByRole("button", { name: "New Version" })).not.toBeInTheDocument();
-  });
-
-  it("omits New Version entirely when no onCreateVersion handler is supplied", () => {
-    render(<AudienceDetail audience={segment({ versionStatus: "PUBLISHED" })} canEdit canDelete />);
-    expect(screen.queryByRole("button", { name: /New Version/ })).not.toBeInTheDocument();
-  });
-
-  it("disables the button and shows a pending label while isCreatingVersion", () => {
-    render(
-      <AudienceDetail
-        audience={segment({ versionStatus: "PUBLISHED" })}
-        onCreateVersion={vi.fn()}
-        isCreatingVersion
-        canEdit
-        canDelete
-      />
-    );
-    const button = screen.getByRole("button", { name: "Creating…" });
-    expect(button).toBeDisabled();
-  });
-
-  it("renders an inline error banner when createVersionError is set", () => {
-    render(
-      <AudienceDetail
-        audience={segment({ versionStatus: "PUBLISHED" })}
-        onCreateVersion={vi.fn()}
-        createVersionError="Segment is not in PUBLISHED status"
-        canEdit
-        canDelete
-      />
-    );
-    expect(screen.getByRole("alert")).toHaveTextContent("Segment is not in PUBLISHED status");
-  });
-
-  it("Create Version's availability is consistent with the isDraftSegment gate already governing Publish (never both available)", () => {
-    const { rerender } = render(
-      <AudienceDetail
-        audience={segment({ versionStatus: "DRAFT" })}
-        onPublish={vi.fn()}
-        onCreateVersion={vi.fn()}
-        canEdit
-        canDelete
-      />
-    );
-    expect(screen.getByRole("button", { name: "Publish" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "New Version" })).not.toBeInTheDocument();
-
-    rerender(
-      <AudienceDetail
-        audience={segment({ versionStatus: "PUBLISHED" })}
-        onPublish={vi.fn()}
-        onCreateVersion={vi.fn()}
-        canEdit
-        canDelete
-      />
-    );
+    expect(screen.getByRole("button", { name: "Edit" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Publish" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "New Version" })).toBeInTheDocument();
+  });
+
+  it("gives a system segment no Edit and no Delete (spec 10)", () => {
+    render(
+      <AudienceDetail
+        audience={segment({ versionStatus: "PUBLISHED", isSystem: true })}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+      />
+    );
+    expect(screen.queryByRole("button", { name: "Edit" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
+  });
+
+  it("keeps Edit and Delete on a customer list", () => {
+    render(<AudienceDetail audience={list()} onEdit={vi.fn()} onDelete={vi.fn()} />);
+    expect(screen.getByRole("button", { name: "Edit" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Delete" })).toBeInTheDocument();
   });
 });
 

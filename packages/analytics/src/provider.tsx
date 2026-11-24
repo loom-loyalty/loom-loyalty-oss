@@ -8,10 +8,16 @@ const TinybirdContext = createContext<TinybirdTokenState | null>(null);
 interface TinybirdProviderProps {
   children: ReactNode;
   fetchToken: () => Promise<AnalyticsTokenResponse>;
+  /** False when the caller can't mint a token, so it is never requested. Defaults to true. */
+  enabled?: boolean;
 }
 
-export function TinybirdProvider({ children, fetchToken }: TinybirdProviderProps): ReactNode {
-  const state = useTinybirdToken(fetchToken);
+export function TinybirdProvider({
+  children,
+  fetchToken,
+  enabled = true,
+}: TinybirdProviderProps): ReactNode {
+  const state = useTinybirdToken(fetchToken, { enabled });
   return <TinybirdContext.Provider value={state}>{children}</TinybirdContext.Provider>;
 }
 

@@ -17,6 +17,7 @@ import { useMemo } from "react";
 import { dataModelCodeKey } from "../../entity/features/data-models/code-key.js";
 import { useAllPages } from "../../hooks/use-all-pages";
 import { useAllDataModelTypes } from "../data-model-field/use-all-data-model-types";
+import { useMetadataReadAccess } from "../metadata-field/metadata-read-access";
 import type { MetadataOption } from "../metadata-select-box";
 import type { DataModelOption } from "./types";
 
@@ -39,9 +40,10 @@ export interface UseMetadataTypeCategoryReturn {
  * entry cannot say which category it belongs to. The type record can.
  */
 export function useMetadataTypeCategory(typeCode: string): UseMetadataTypeCategoryReturn {
+  const access = useMetadataReadAccess();
   const { data, isLoading, error } = useMetadataManagementGetMetadataTypeByCode(typeCode, {
     query: {
-      enabled: !!typeCode,
+      enabled: !!typeCode && access.types,
       staleTime: TYPE_STALE_TIME_MS,
       retry: false,
     },
@@ -52,7 +54,7 @@ export function useMetadataTypeCategory(typeCode: string): UseMetadataTypeCatego
 
   return {
     category: data?.data?.category,
-    isLoading: !!typeCode && isLoading,
+    isLoading: !!typeCode && access.types && isLoading,
     isTypeNotFound,
   };
 }
@@ -72,14 +74,17 @@ export function useMetadataSubTypeOptions(
   typeCode: string,
   category: MetadataTypeCategory | undefined
 ): UseMetadataSubTypeOptionsReturn {
-  const dataModelTypesQuery = useAllDataModelTypes(category === "DATA_TYPE");
+  const access = useMetadataReadAccess();
+  const dataModelTypesQuery = useAllDataModelTypes(
+    category === "DATA_TYPE" && access.dataModelTypes
+  );
 
   // About 250 countries: more than one page, so read them all.
   const countriesQuery = useAllPages<Metadata>({
     queryKey: getMetadataManagementListMetadataByTypeQueryKey(COUNTRY_TYPE_CODE),
     fetchPage: (page, size) =>
       metadataManagementListMetadataByType(COUNTRY_TYPE_CODE, { page, size }),
-    enabled: category === "LOCATION",
+    enabled: category === "LOCATION" && access.entries,
     staleTime: TYPE_STALE_TIME_MS,
     source: "country-options",
   });

@@ -8,7 +8,7 @@
 
 import { formatDateTime, toISODateTime } from "@loom-loyalty/core";
 import type { DataModel } from "@loom-loyalty/sdk";
-import { Copy, Edit, Lock, PlayCircle, Plus, Trash2 } from "lucide-react";
+import { Copy, Edit, Lock, PlayCircle, Trash2 } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { Badge } from "../../../primitives/badge.js";
@@ -40,7 +40,6 @@ export interface DataModelDetailProps {
   onEdit?: () => void;
   onDelete?: () => void;
   onDuplicate?: () => void;
-  onCreateVersion?: () => void;
   onPublish?: () => void;
   onPublishVersion?: (version: DataModel) => void;
   /** Type-level actions (custom-only — the backend unconditionally rejects
@@ -51,7 +50,6 @@ export interface DataModelDetailProps {
   onDeleteType?: () => void;
   /** Pending flags */
   isPublishing?: boolean;
-  isCreatingVersion?: boolean;
   /**
    * ID of the version currently being published. Forwarded to VersionHistorySection
    * so only the in-flight row shows the spinner, not every draft row.
@@ -73,13 +71,11 @@ export function DataModelDetail({
   onEdit,
   onDelete,
   onDuplicate,
-  onCreateVersion,
   onPublish,
   onPublishVersion,
   onEditType,
   onDeleteType,
   isPublishing,
-  isCreatingVersion,
   publishingVersionId,
   versionActionError,
   elementsLoading = false,
@@ -231,18 +227,6 @@ export function DataModelDetail({
             Duplicate
           </Button>
         )}
-        {canEdit && onCreateVersion && (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={onCreateVersion}
-            disabled={isCreatingVersion}
-          >
-            <Plus className="mr-1.5 h-3.5 w-3.5" />
-            New Version
-          </Button>
-        )}
         {canEdit && isDraft && onPublish && (
           <>
             {!hasElements && !elementsLoading && (
@@ -277,7 +261,9 @@ export function DataModelDetail({
             Delete
           </Button>
         )}
-        {canEdit && isDraft && onEdit && (
+        {/* No New Version button: Edit on a published model
+            saves into a new draft version, and the edit sheet warns. */}
+        {canEdit && (isDraft || dataModel.versionStatus === "PUBLISHED") && onEdit && (
           <Button type="button" variant="primary-gradient" size="sm" onClick={onEdit}>
             <Edit className="mr-1.5 h-3.5 w-3.5" />
             Edit

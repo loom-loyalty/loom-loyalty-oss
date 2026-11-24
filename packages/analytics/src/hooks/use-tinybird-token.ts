@@ -93,11 +93,41 @@ function clampRefreshDelay(expiresIn: number): number {
   return Math.min(Math.max(expiresIn - TOKEN_REFRESH_BUFFER_MS, MIN_REFRESH_MS), MAX_REFRESH_MS);
 }
 
+/** A caller the app has told can't mint a token: never fetched, and handled like the missing-scope refusal. */
+const DISABLED_STATE: TinybirdTokenData = {
+  token: null,
+  expiresAt: null,
+  baseUrl: null,
+  pipes: [],
+  hasPremium: false,
+  datasources: [],
+  sqlEnabled: false,
+  isLoading: false,
+  error: { type: "AUTH_ERROR", message: "Your account doesn't have access to analytics" },
+};
+
+export interface UseTinybirdTokenOptions {
+  /**
+   * False when the caller can't mint a token (the app checks its scopes), so the token endpoint is never called and
+   * no access is reported. Defaults to true. Turning it on later fetches without a remount.
+   */
+  enabled?: boolean;
+}
+
+async function noRetry(): Promise<void> {}
+
+/** Whether a token expiring at this time is still outside the refresh buffer, so no refresh is due yet. */
+function isUsable(expiresAt: Date | null): boolean {
+  return (expiresAt?.getTime() ?? 0) - Date.now() > TOKEN_REFRESH_BUFFER_MS;
+}
+
 export function useTinybirdToken(
-  fetchToken: () => Promise<AnalyticsTokenResponse>
+  fetchToken: () => Promise<AnalyticsTokenResponse>,
+  { enabled = true }: UseTinybirdTokenOptions = {}
 ): TinybirdTokenState {
   const [state, setState] = useState<TinybirdTokenData>(() => {
-    const cached = getCachedToken();
+    // A disabled caller sees DISABLED_STATE (below) and never this; it starts loading for when it's enabled.
+    const cached = enabled ? getCachedToken() : null;
     if (cached) {
       const ds = cached.datasources ?? [];
       return {
@@ -126,16 +156,20 @@ export function useTinybirdToken(
   });
 
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isMountedRef = useRef(true);
+  // Bumped whenever the effect below starts or stops, so a fetch begun under an earlier run (before an unmount, or
+  // before the caller lost access) drops its result instead of storing a token and scheduling a refresh.
+  const generationRef = useRef(0);
   const fetchTokenRef = useRef(fetchToken);
   fetchTokenRef.current = fetchToken;
 
   const doFetch = useCallback(async () => {
+    const generation = generationRef.current;
+    const stale = () => generation !== generationRef.current;
     try {
       setState((prev) => ({ ...prev, isLoading: true, error: null }));
       const response = await fetchTokenRef.current();
+      if (stale()) return;
       setCachedToken(response);
-      if (!isMountedRef.current) return;
 
       const ds = response.datasources ?? [];
       setState({
@@ -157,7 +191,7 @@ export function useTinybirdToken(
         void doFetch();
       }, refreshIn);
     } catch (err: unknown) {
-      if (!isMountedRef.current) return;
+      if (stale()) return;
       const apiError = err as { status?: number; message?: string; code?: unknown };
       let tokenError: TinybirdTokenError;
       if (apiError.status === 403 && isPlanRequired(apiError)) {
@@ -204,8 +238,15 @@ export function useTinybirdToken(
   }, []);
 
   useEffect(() => {
-    isMountedRef.current = true;
-    if (!state.token) {
+    const generation = ++generationRef.current;
+    const stop = () => {
+      if (generationRef.current === generation) generationRef.current++;
+      if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+      refreshTimerRef.current = null;
+    };
+    if (!enabled) return stop;
+    // A token retained while disabled may be due for refresh, or expired, by now: fetch a fresh one at once.
+    if (!state.token || !isUsable(state.expiresAt)) {
       void doFetch();
     } else {
       const expiresIn = (state.expiresAt?.getTime() ?? 0) - Date.now();
@@ -214,11 +255,15 @@ export function useTinybirdToken(
         void doFetch();
       }, refreshIn);
     }
-    return () => {
-      isMountedRef.current = false;
-      if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
-    };
-  }, [doFetch]);
+    return stop;
+    // state.token is read once per enable, not tracked: a refresh reschedules itself.
+  }, [doFetch, enabled]);
 
+  if (!enabled) return { ...DISABLED_STATE, retry: noRetry };
+  if (state.token && (state.expiresAt?.getTime() ?? 0) <= Date.now()) {
+    // Never hand out an expired token while the effect above fetches its replacement. A token merely inside the
+    // refresh buffer stays in use, as during any scheduled refresh.
+    return { ...state, token: null, isLoading: true, error: null, retry: doFetch };
+  }
   return { ...state, retry: doFetch };
 }

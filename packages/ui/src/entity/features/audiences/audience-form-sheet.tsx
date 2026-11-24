@@ -104,6 +104,7 @@ export function AudienceFormSheet({
   renderSegmentBuilder,
   schema,
   extendedFields = [],
+  notice,
 }: AudienceFormSheetProps): ReactNode {
   // Derive initial engine from segment data
   const initialEngine = initialData?.type === "CUSTOMER_SEGMENT" ? initialData.engine : undefined;
@@ -305,6 +306,7 @@ export function AudienceFormSheet({
       fieldErrors={fieldErrors}
     >
       <div className="space-y-6">
+        {notice}
         {/* Type selector */}
         <div className="space-y-2">
           <Label htmlFor="audience-type">

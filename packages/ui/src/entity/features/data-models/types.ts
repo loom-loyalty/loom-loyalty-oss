@@ -14,6 +14,7 @@ import type {
   UpdateDataModel,
   UpdateDataModelType,
 } from "@loom-loyalty/sdk";
+import type { ReactNode } from "react";
 
 import type { FormFieldError } from "../../../forms/field-errors.js";
 import type { FormSheetError } from "../../../forms/form-sheet.js";
@@ -282,6 +283,8 @@ export interface DataModelFormSheetProps {
   error?: FormSheetError | null;
   /** Server field errors; each shows under its field, the rest with `error` */
   fieldErrors?: readonly FormFieldError[];
+  /** Shown above the fields, e.g. the warning that saving a live model starts a draft. */
+  notice?: ReactNode;
 }
 
 /**

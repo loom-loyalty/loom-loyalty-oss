@@ -25,10 +25,20 @@ import { cn } from "../../../lib/utils.js";
 import { Badge } from "../../../primitives/badge.js";
 import { Input } from "../../../primitives/input.js";
 import { Label } from "../../../primitives/label.js";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../../primitives/select.js";
 import { ToggleGroup, ToggleGroupItem } from "../../../primitives/toggle-group.js";
 import { extractExtendedFields } from "../../entity-field-utils.js";
 import { ExtendedFieldsSection } from "../../extended-fields-section.js";
+import { PREFERRED_LANGUAGE_OPTIONS, supportedPreferredLanguage } from "./preferred-language.js";
 import { getSDKCustomerName, type CustomerFormSheetProps } from "./types.js";
+
+const PREFERRED_LANGUAGE_HINT_ID = "customer-preferred-language-hint";
 
 type IdentityType = "individual" | "corporate";
 
@@ -63,6 +73,7 @@ function extractInitialValues(customer?: SDKCustomer) {
       fraudStatusCode: "",
       enrollmentCode: "",
       externalId: "",
+      preferredLanguage: "",
     };
   }
 
@@ -105,6 +116,9 @@ function extractInitialValues(customer?: SDKCustomer) {
     fraudStatusCode: (c.fraudStatusCode as string) ?? fraudStatus?.code ?? "",
     enrollmentCode: (c.enrollmentCode as string) ?? enrollment?.code ?? "",
     externalId: (c.externalId as string) ?? "",
+    // An unsupported stored value shows as unset, and an unset one is never sent: on update the
+    // API keeps whatever is stored, and there is no clearing in v1.
+    preferredLanguage: supportedPreferredLanguage(c.preferredLanguage) ?? "",
   };
 }
 
@@ -157,6 +171,7 @@ export function CustomerFormSheet({
   const [fraudStatusCode, setFraudStatusCode] = useState(initial.fraudStatusCode);
   const [enrollmentCode, setEnrollmentCode] = useState(initial.enrollmentCode);
   const [externalId, setExternalId] = useState(initial.externalId);
+  const [preferredLanguage, setPreferredLanguage] = useState<string>(initial.preferredLanguage);
 
   // Suggested metadata tracking — auto-create when submitting
   const [statusIsSuggested, setStatusIsSuggested] = useState(false);
@@ -203,6 +218,7 @@ export function CustomerFormSheet({
     setFraudStatusCode(vals.fraudStatusCode);
     setEnrollmentCode(vals.enrollmentCode);
     setExternalId(vals.externalId);
+    setPreferredLanguage(vals.preferredLanguage);
     setStatusIsSuggested(false);
     setFraudStatusIsSuggested(false);
     setEnrollmentIsSuggested(false);
@@ -268,6 +284,7 @@ export function CustomerFormSheet({
       ...(canEditFraudStatus ? { fraudStatusCode: resolvedFraudStatusCode || undefined } : {}),
       enrollmentCode: resolvedEnrollmentCode || undefined,
       externalId: externalId || undefined,
+      ...(preferredLanguage ? { preferredLanguage } : {}),
       ...(identityType === "individual"
         ? {
             identity: {
@@ -555,6 +572,42 @@ export function CustomerFormSheet({
                 />
               )}
             </WithFieldError>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="customer-preferred-language">Language</Label>
+            <WithFieldError field="preferredLanguage" value={preferredLanguage}>
+              {(fe) => (
+                <Select
+                  value={preferredLanguage}
+                  onValueChange={setPreferredLanguage}
+                  disabled={isSubmitting}
+                >
+                  <SelectTrigger
+                    {...fe.inputProps}
+                    aria-describedby={
+                      [fe.inputProps["aria-describedby"], PREFERRED_LANGUAGE_HINT_ID]
+                        .filter(Boolean)
+                        .join(" ") || undefined
+                    }
+                    id="customer-preferred-language"
+                    data-widget="select"
+                  >
+                    <SelectValue placeholder="English (default)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PREFERRED_LANGUAGE_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value} lang={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </WithFieldError>
+            <p id={PREFERRED_LANGUAGE_HINT_ID} className="text-muted-foreground text-xs">
+              Unset means English.
+            </p>
           </div>
         </section>
 

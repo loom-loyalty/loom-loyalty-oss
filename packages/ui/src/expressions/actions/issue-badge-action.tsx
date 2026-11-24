@@ -12,6 +12,7 @@ import { DateTimeInput } from "../../forms/date-time-input.js";
 import { Label } from "../../primitives/label.js";
 import { Switch } from "../../primitives/switch.js";
 import { FieldsetLegend } from "../components/fieldset-legend.js";
+import { useInlineRecordPicker } from "../inline-create/use-inline-record-picker.js";
 import type { ActionComponentProps, IssueCustomerBadgeAction } from "../types";
 
 type IssueBadgeData = IssueCustomerBadgeAction["issueCustomerBadge"];
@@ -42,15 +43,19 @@ export const IssueBadgeActionComponent = memo(function IssueBadgeActionComponent
   }, [value.badgeId, value.badgeCode, badges]);
 
   const handleBadgeChange = useCallback(
-    (badgeId: string) => {
+    (badgeId: string, record?: { code?: string }) => {
       const badge = findBadge(badgeId);
       update({
         badgeId: badgeId || undefined,
-        badgeCode: badge?.code ?? undefined,
+        badgeCode: record?.code ?? badge?.code ?? undefined,
       });
     },
     [update, findBadge]
   );
+  const { pickerProps: badgePickerProps, createSheet: badgeCreateSheet } = useInlineRecordPicker({
+    kind: "badge",
+    onSelect: handleBadgeChange,
+  });
 
   return (
     <div className={className}>
@@ -65,7 +70,9 @@ export const IssueBadgeActionComponent = memo(function IssueBadgeActionComponent
             onValueChange={handleBadgeChange}
             placeholder="Select badge..."
             disabled={disabled}
+            {...badgePickerProps}
           />
+          {badgeCreateSheet}
         </div>
 
         <fieldset className="border-border bg-card space-y-3 rounded-lg border p-3">

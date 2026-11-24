@@ -11,6 +11,7 @@ import { TierField } from "../../forms/tier-field/index.js";
 import { Label } from "../../primitives/label.js";
 import { Switch } from "../../primitives/switch.js";
 import { FieldsetLegend } from "../components/fieldset-legend.js";
+import { useInlineRecordPicker } from "../inline-create/use-inline-record-picker.js";
 import type { ActionComponentProps, IssueCustomerTierAction } from "../types";
 
 type IssueTierData = IssueCustomerTierAction["issueCustomerTier"];
@@ -36,6 +37,16 @@ export const IssueTierActionComponent = memo(function IssueTierActionComponent({
     },
     [update]
   );
+  // A just-created tier is selected by its code (the field's id here).
+  const selectCreatedTier = useCallback(
+    (tierId: string, record?: { code?: string }) => handleTierChange(record?.code ?? tierId),
+    [handleTierChange]
+  );
+  const { pickerProps: tierPickerProps, createSheet: tierCreateSheet } = useInlineRecordPicker({
+    kind: "tier",
+    onSelect: selectCreatedTier,
+    idField: "code",
+  });
 
   return (
     <div className={className}>
@@ -51,7 +62,9 @@ export const IssueTierActionComponent = memo(function IssueTierActionComponent({
             onValueChange={handleTierChange}
             placeholder="Select tier..."
             disabled={disabled}
+            {...tierPickerProps}
           />
+          {tierCreateSheet}
         </div>
         <div className="bg-card space-y-2 rounded-md p-2">
           <label className="flex items-center gap-2">

@@ -84,7 +84,26 @@ export interface TargetFormSheetProps {
    * else already refers to by code (a drafted rule's addCounterData).
    */
   lockCode?: boolean;
+  /**
+   * "compact" asks for a name and a number only, for creating a target from
+   * inside another sheet; "More options" expands the full form in place.
+   * Create mode only. Defaults to "full".
+   */
+  variant?: "full" | "compact";
+  /** What a compact create starts from. Defaults to "counter". */
+  preset?: TargetCreatePreset;
+  /** Programs a compact create belongs to (the rule's programs). */
+  defaultProgramIds?: string[];
+  /** IANA zone a limit preset's day or week resets in (the organization's zone). */
+  defaultTimeZone?: string;
 }
+
+/**
+ * Starting points for a compact target create: a counter to reach, a capping
+ * counter that stops a rule for the member until the day or week resets, or a
+ * completion target.
+ */
+export type TargetCreatePreset = "counter" | "daily-limit" | "weekly-limit" | "completion";
 
 /**
  * Standard target fields - these have rich UI components

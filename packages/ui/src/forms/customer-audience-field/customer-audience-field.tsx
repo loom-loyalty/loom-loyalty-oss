@@ -5,7 +5,7 @@
 import type { ReactNode } from "react";
 import * as React from "react";
 
-import { EntitySelectBox } from "../entity-select-box";
+import { EntitySelectBox, type EntityOption } from "../entity-select-box";
 import { useCustomerAudienceField } from "./use-customer-audience-field";
 
 export interface CustomerAudienceFieldProps {
@@ -27,6 +27,8 @@ export interface CustomerAudienceFieldProps {
   "aria-describedby"?: string;
   /** ID for the trigger element */
   id?: string;
+  /** An audience just created from "+ New"; see EntitySelectBox. */
+  createdOption?: EntityOption;
 }
 
 export function CustomerAudienceField({
@@ -39,6 +41,7 @@ export function CustomerAudienceField({
   "aria-invalid": ariaInvalid,
   "aria-describedby": ariaDescribedBy,
   id,
+  createdOption,
 }: CustomerAudienceFieldProps): ReactNode {
   const {
     options,
@@ -66,6 +69,7 @@ export function CustomerAudienceField({
         value={value}
         onValueChange={onValueChange}
         onCreateNew={renderCreateSheet ? () => setIsCreateOpen(true) : undefined}
+        createdOption={createdOption}
         isLoading={isLoading}
         error={displayError}
         disabled={disabled}

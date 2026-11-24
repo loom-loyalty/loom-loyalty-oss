@@ -46,6 +46,7 @@ import { useDebouncedValue } from "../../hooks/use-debounced-value";
 import { useAllDataModelTypes } from "../data-model-field/use-all-data-model-types";
 import type { MetadataOption, SuggestedOption } from "../metadata-select-box";
 import { filterDataModelTypeOptions } from "../metadata-sub-type-fields/use-metadata-sub-type-data";
+import { useMetadataReadAccess } from "./metadata-read-access";
 import { SUGGESTED_OPTIONS_MAP } from "./suggested-options";
 
 type AnyMetadataEntity = Metadata | DataType | Location | Item;
@@ -109,6 +110,7 @@ export function useMetadataField(
   const queryClient = useQueryClient();
   const [searchValue, setSearchValue] = useState("");
   const debouncedSearch = useDebouncedValue(searchValue, SEARCH_DEBOUNCE_MS);
+  const access = useMetadataReadAccess();
 
   const {
     data: metadataTypeResponse,
@@ -116,7 +118,7 @@ export function useMetadataField(
     error: typeError,
   } = useMetadataManagementGetMetadataTypeByCode(typeCode, {
     query: {
-      enabled: !!typeCode,
+      enabled: !!typeCode && access.types,
       staleTime: 10 * 60 * 1000,
       retry: false,
     },
@@ -160,11 +162,13 @@ export function useMetadataField(
     initialPageParam: 0,
     getNextPageParam: (lastPage) =>
       lastPage.pageNumber + 1 < lastPage.totalPages ? lastPage.pageNumber + 1 : undefined,
-    enabled: !!typeCode && !!category,
+    enabled: !!typeCode && !!category && access.entries,
     staleTime: 5 * 60 * 1000,
   });
 
-  const dataModelTypesQuery = useAllDataModelTypes(category === "DATA_TYPE");
+  const dataModelTypesQuery = useAllDataModelTypes(
+    category === "DATA_TYPE" && access.dataModelTypes
+  );
 
   const dataModelTypeOptions = useMemo<MetadataOption[]>(
     () => filterDataModelTypeOptions(dataModelTypesQuery.items, typeCode),

@@ -1,6 +1,7 @@
+import { es } from "date-fns/locale";
 import { describe, expect, it } from "vitest";
 
-import { formatUpcomingTime, toISODateUTC } from "./dates";
+import { formatDate, formatUpcomingTime, toISODateUTC } from "./dates";
 
 describe("formatUpcomingTime", () => {
   it("shows only the clock time for a moment later today", () => {
@@ -31,5 +32,43 @@ describe("toISODateUTC", () => {
 
   it("returns an empty string for an invalid date", () => {
     expect(toISODateUTC(new Date(Number.NaN))).toBe("");
+  });
+});
+
+describe("formatDate locale option", () => {
+  // Bilingual wallet-pass brief: the Spanish Latest Offer date reads "18 nov". Every month is
+  // pinned so a date-fns upgrade that changes an abbreviation fails here, not on a member's pass.
+  const SPANISH_MONTHS = [
+    "ene",
+    "feb",
+    "mar",
+    "abr",
+    "may",
+    "jun",
+    "jul",
+    "ago",
+    "sep",
+    "oct",
+    "nov",
+    "dic",
+  ];
+
+  it.each(SPANISH_MONTHS.map((month, index) => [index, month] as const))(
+    "formats month %i as %s in Spanish with d MMM",
+    (monthIndex, month) => {
+      const isoDay = `2026-${String(monthIndex + 1).padStart(2, "0")}-18`;
+
+      expect(formatDate(isoDay, "d MMM", { locale: es })).toBe(`18 ${month}`);
+    }
+  );
+
+  it("is unchanged without a locale", () => {
+    expect(formatDate("2026-11-18", "MMM d")).toBe("Nov 18");
+    expect(formatDate("2026-11-18", "MMM d", {})).toBe("Nov 18");
+  });
+
+  it("still returns empty for an empty or invalid date with a locale", () => {
+    expect(formatDate(null, "d MMM", { locale: es })).toBe("");
+    expect(formatDate("not a date", "d MMM", { locale: es })).toBe("");
   });
 });
